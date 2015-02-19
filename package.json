@@ -1,0 +1,51 @@
+{
+  "name": "flora-mysql",
+  "version": "0.0.0",
+  "description": "MySQL connection for Flora",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "author": {
+    "name": "BörseGo AG",
+    "email": "it@boerse-go.de"
+  },
+  "homepage": "https://github.com/godmodelabs/flora-mysql",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/godmodelabs/flora-mysql.git"
+  },
+  "contributors": [
+    {
+      "name": "Marco Baumgartl",
+      "email": "marco.baumgartl@boerse-go.de"
+    },
+    {
+      "name": "Nico Kaiser",
+      "email": "nico.kaiser@boerse-go.de"
+    },
+    {
+      "name": "Mark Plomer",
+      "email": "mark.plomer@boerse-go.de"
+    }
+  ],
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "dependencies": {
+    "lodash": "3.5.x",
+    "mariasql": "mscdex/node-mariasql#874bdd79e9f9a4c6f07b57cae44fedd82a7f258b",
+    "generic-pool": "2.1.x",
+    "node-query": "mbaumgartl/nquery#93856a6d7c18b72fc095237eea5460250fce96e3"
+  },
+  "devDependencies": {
+    "chai": "2.1.x",
+    "eslint": "0.17.0",
+    "istanbul": "0.3.x",
+    "mocha": "2.1.x",
+    "proxyquire": "1.4.x",
+    "sinon": "1.13.x",
+    "sinon-chai": "2.7.x"
+  }
+}
