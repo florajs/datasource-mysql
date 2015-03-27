@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "lodash": "3.5.x",
-    "mariasql": "mscdex/node-mariasql#874bdd79e9f9a4c6f07b57cae44fedd82a7f258b",
+    "mariasql": "~0.1.22",
     "generic-pool": "2.1.x",
     "node-query": "mbaumgartl/nquery#93856a6d7c18b72fc095237eea5460250fce96e3"
   },
