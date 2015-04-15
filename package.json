@@ -4,7 +4,8 @@
   "description": "MySQL connection for Flora",
   "main": "index.js",
   "scripts": {
-    "test": "make test"
+    "test": "grunt test",
+    "lint": "grunt lint"
   },
   "author": {
     "name": "BörseGo AG",
@@ -34,16 +35,24 @@
     "node": ">=0.10.0"
   },
   "dependencies": {
+    "generic-pool": "2.1.x",
     "lodash": "3.5.x",
     "mariasql": "~0.1.22",
-    "generic-pool": "2.1.x",
     "node-query": "mbaumgartl/nquery#93856a6d7c18b72fc095237eea5460250fce96e3"
   },
   "devDependencies": {
     "chai": "2.1.x",
     "eslint": "0.17.0",
+    "grunt": "0.4.x",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-clean": "0.6.x",
+    "grunt-eslint": "9.0.x",
+    "grunt-mocha-istanbul": "2.3.x",
+    "grunt-mocha-test": "0.12.x",
     "istanbul": "0.3.x",
+    "load-grunt-tasks": "^3.1.0",
     "mocha": "2.1.x",
+    "mocha-bamboo-reporter": "^1.1.0",
     "proxyquire": "1.4.x",
     "sinon": "1.13.x",
     "sinon-chai": "2.7.x"
