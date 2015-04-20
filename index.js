@@ -2,6 +2,7 @@
 
 var poolModule = require('generic-pool'),
     nodeQuery = require('node-query'),
+    async = require('async'),
     generateAST = require('./lib/sql-query-builder'),
     checkAST = require('./lib/sql-query-checker'),
     optimizeAST = require('./lib/sql-query-optimizer'),
@@ -16,6 +17,7 @@ var Parser = nodeQuery.Parser,
  * @param {Object} config
  */
 var DataSource = module.exports = function (api, config) {
+    this.log = api.log.child({component: 'flora-mysql'});
     this.config = config;
     this.pools = {};
     this.queryFnPool = {}; // cache query functions for pagination queries (see paginatedQuery function)
@@ -79,6 +81,8 @@ DataSource.prototype.process = function (request, callback) {
         return callback(e);
     }
 
+    this.log.trace({sql: sql}, 'processing request');
+
     if (! request.page) {
         this.simpleQuery(db, sql, function (err, result) {
             if (err) return callback(err);
@@ -93,8 +97,17 @@ DataSource.prototype.process = function (request, callback) {
  * @param {Function} callback
  */
 DataSource.prototype.close = function (callback) {
-    // TODO: implement
-    if (callback) callback();
+    var self = this;
+
+    async.parallel(Object.keys(this.pools).map(function (database) {
+        return function (next) {
+            self.log.trace('closing MySQL pool "%s"', database);
+            self.pools[database].drain(function () {
+                self.pools[database].destroyAllNow();
+                next();
+            });
+        };
+    }), callback);
 };
 
 /**
@@ -107,6 +120,8 @@ DataSource.prototype.getConnectionPool = function (database) {
     var self = this;
 
     if (this.pools[database]) return this.pools[database];
+
+    this.log.trace('creating MySQL pool "%s"', database);
 
     pool = poolModule.Pool({
         name: database,

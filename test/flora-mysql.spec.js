@@ -6,13 +6,19 @@ var _           = require('lodash'),
     sinon       = require('sinon'),
     Connection  = require('../lib/connection'),
     FloraMysql  = require('../index'),
-    proxyquire  = require('proxyquire');
+    proxyquire  = require('proxyquire'),
+    bunyan      = require('bunyan');
 
 chai.use(require('sinon-chai'));
 
-describe('flora-mysql DataSource', function () {
-    var api = {};
+var log = bunyan.createLogger({name: 'null', streams: []});
 
+// mock Api instance
+var api = {
+    log: log
+};
+
+describe('flora-mysql DataSource', function () {
     var ds,
         serverCfg = {
             server: {
