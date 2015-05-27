@@ -5,17 +5,17 @@ var queryBuilder = require('../lib/sql-query-builder'),
     expect = require('chai').expect,
     astFixture = {
         type: 'select',
-        distinct: '',
+        distinct: null,
         columns: [
-            { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: '' },
-            { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: '' },
+            { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
+            { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'columnAlias' }
         ],
-        from: [{ db: '', table: 't', as: '' }],
-        where: '',
-        groupby: '',
-        orderby: '',
-        limit: ''
+        from: [{ db: null, table: 't', as: null }],
+        where: null,
+        groupby: null,
+        orderby: null,
+        limit: null
     };
 
 describe('SQL query builder', function () {
@@ -279,16 +279,16 @@ describe('SQL query builder', function () {
                 ],
                 queryAST: {
                     type: 'select',
-                    distinct: '',
+                    distinct: null,
                     columns: [
-                        { expr: { type: 'column_ref', table: 't', column: 'instrumentId' }, as: '' },
-                        { expr: { type: 'column_ref', table: 't', column: 'exchangeId' }, as: '' }
+                        { expr: { type: 'column_ref', table: 't', column: 'instrumentId' }, as: null },
+                        { expr: { type: 'column_ref', table: 't', column: 'exchangeId' }, as: null }
                     ],
-                    from: [{ db: '', table: 't', as: '' }],
-                    where: '',
-                    groupby: '',
-                    orderby: '',
-                    limit: ''
+                    from: [{ db: null, table: 't', as: null }],
+                    where: null,
+                    groupby: null,
+                    orderby: null,
+                    limit: null
                 }
             });
 

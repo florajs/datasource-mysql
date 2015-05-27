@@ -9,12 +9,12 @@ describe('SQL query optimizer', function () {
     it('should clone AST', function () {
         ast = {
             type: 'select',
-            columns: [{ expr: { type: 'column_ref', table: 't', column: 'col1' }, as: '' }],
-            from: [{ db: '', table: 't1', as: '' }],
-            where: '',
-            groupby: '',
-            orderby: '',
-            limit: ''
+            columns: [{ expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null }],
+            from: [{ db: '', table: 't1', as: null }],
+            where: null,
+            groupby: null,
+            orderby: null,
+            limit: null
         };
 
         optimized = optimize(ast, ['col1']);
@@ -31,20 +31,20 @@ describe('SQL query optimizer', function () {
         ast = {
             type: 'select',
             columns: [
-                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: '' },
-                { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: '' },
+                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
+                { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null },
                 { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' },
-                { expr: { type: 'column_ref', table: 't', column: 'col4' }, as: '' }
+                { expr: { type: 'column_ref', table: 't', column: 'col4' }, as: null }
             ],
-            from: [{ db: '', table: 't1', as: '' }],
-            where: '',
-            groupby: '',
-            orderby: ''
+            from: [{ db: null, table: 't1', as: null }],
+            where: null,
+            groupby: null,
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1', 'alias']);
         expect(optimized.columns).to.eql([
-            { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: '' },
+            { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' }
         ]);
     });
@@ -53,21 +53,21 @@ describe('SQL query optimizer', function () {
         ast = {
             type: 'select',
             columns: [
-                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' },
-                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: '' }
+                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null },
+                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: null }
             ],
             from: [
-                { db: '', table: 't1', as: '' },
-                { db: '', table: 't2', as: '', join: 'INNER JOIN', on: {
+                { db: null, table: 't1', as: null },
+                { db: null, table: 't2', as: null, join: 'INNER JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
                     right: { type: 'column_ref', table: 't2', column: 'id' }
                 }}
             ],
-            where: '',
-            groupby: '',
-            orderby: ''
+            where: null,
+            groupby: null,
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1']);
@@ -79,25 +79,25 @@ describe('SQL query optimizer', function () {
         ast = {
             type: 'select',
             columns: [
-                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' },
-                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: '' }
+                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null },
+                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: null }
             ],
             from: [
-                { db: '', table: 't', as: '' },
-                { db: '', table: 't2', as: '', join: 'LEFT JOIN', on: {
+                { db: null, table: 't', as: null },
+                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
                     right: { type: 'column_ref', table: 't2', column: 'id' }
                 }}
             ],
-            where: '',
-            groupby: '',
-            orderby: ''
+            where: null,
+            groupby: null,
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql([{ db: '', table: 't', as: '' }]);
+        expect(optimized.from).to.eql([{ db: null, table: 't', as: null }]);
     });
 
     it('should pay attention to table aliases', function () {
@@ -105,34 +105,34 @@ describe('SQL query optimizer', function () {
         ast = {
             type: 'select',
             columns: [
-                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' },
-                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: '' },
-                { expr: { type: 'column_ref', table: 'alias', column: 'col3' }, as: '' }
+                { expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null },
+                { expr: { type: 'column_ref', table: 't2', column: 'col2' }, as: null },
+                { expr: { type: 'column_ref', table: 'alias', column: 'col3' }, as: null }
             ],
             from: [
-                { db: '', table: 't', as: '' },
-                { db: '', table: 't2', as: '', join: 'LEFT JOIN', on: {
+                { db: null, table: 't', as: null },
+                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: '', column: 'id' }
+                    right: { type: 'column_ref', table: null, column: 'id' }
                 }},
-                { db: '', table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
+                { db: null, table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
                     right: { type: 'column_ref', table: 'alias', column: 'id' }
                 }}
             ],
-            where: '',
-            groupby: '',
-            orderby: ''
+            where: null,
+            groupby: null,
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1', 'col3']);
         expect(optimized.from).to.eql([
-            { db: '', table: 't', as: '' },
-            { db: '', table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
+            { db: null, table: 't', as: null },
+            { db: null, table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
                 type: 'binary_expr',
                 operator: '=',
                 left: { type: 'column_ref', table: 't1', column: 'id' },
@@ -144,10 +144,10 @@ describe('SQL query optimizer', function () {
     it('should not remove LEFT JOIN if joined table is referenced in WHERE clause', function () {
         ast = {
             type: 'select',
-            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' }],
+            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
-                { db: '', table: 't', as: '' },
-                { db: '', table: 't2', as: '', join: 'LEFT JOIN', on: {
+                { db: null, table: 't', as: null },
+                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
@@ -170,8 +170,8 @@ describe('SQL query optimizer', function () {
                     right: { type: 'string', value: 'foobar' }
                 }
             },
-            groupby: '',
-            orderby: ''
+            groupby: null,
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1']);
@@ -181,22 +181,22 @@ describe('SQL query optimizer', function () {
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', function () {
         ast = {
             type: 'select',
-            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' }],
+            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
-                { db: '', table: 't', as: '' },
-                { db: '', table: 't2', as: '', join: 'LEFT JOIN', on: {
+                { db: null, table: 't', as: null },
+                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
                     right: { type: 'column_ref', table: 't2', column: 'id' }
                 }}
             ],
-            where: '',
+            where: null,
             groupby: [
                 { type: 'column_ref', table: 't1', column: 'col1' },
                 { type: 'column_ref', table: 't2', column: 'col2' }
             ],
-            orderby: ''
+            orderby: null
         };
 
         optimized = optimize(ast, ['col1']);
@@ -206,18 +206,18 @@ describe('SQL query optimizer', function () {
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', function () {
         ast = {
             type: 'select',
-            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: '' }],
+            columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
-                { db: '', table: 't', as: '' },
-                { db: '', table: 't2', as: '', join: 'LEFT JOIN', on: {
+                { db: null, table: 't', as: null },
+                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't1', column: 'id' },
                     right: { type: 'column_ref', table: 't2', column: 'id' }
                 }}
             ],
-            where: '',
-            groupby: '',
+            where: null,
+            groupby: null,
             orderby: [
                 { expr: { type: 'column_ref', table: 't1', column: 'col1' }, type: 'ASC' },
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
@@ -231,21 +231,21 @@ describe('SQL query optimizer', function () {
     it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', function () {
         ast = {
             type: 'select',
-            distinct: '',
+            distinct: null,
             columns: [
-                { expr: { type: 'column_ref', table: 'instrument', column: 'id' }, as: '' },
+                { expr: { type: 'column_ref', table: 'instrument', column: 'id' }, as: null },
                 { expr: { type: 'column_ref', table: 'ctde', column: 'name' }, as: 'nameDE' },
                 { expr: { type: 'column_ref', table: 'cten', column: 'name' }, as: 'nameEN' }
             ],
             from: [
-                { db: '', table: 'instrument', as: '' },
-                { db: '', table: 'country', as: 'c', join: 'LEFT JOIN', on: {
+                { db: null, table: 'instrument', as: null },
+                { db: null, table: 'country', as: 'c', join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
                     right: { type: 'column_ref', table: 'c', column: 'id' }
                 }},
-                { db: '', table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
+                { db: null, table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: 'AND',
                     left: {
@@ -261,7 +261,7 @@ describe('SQL query optimizer', function () {
                         right: { type: 'string', value: 'de' }
                     }
                 }},
-                { db: '', table: 'country_translation', as: 'cten', join: 'LEFT JOIN', on: {
+                { db: null, table: 'country_translation', as: 'cten', join: 'LEFT JOIN', on: {
                     type: 'binary_expr',
                     operator: 'AND',
                     left: {
@@ -278,22 +278,22 @@ describe('SQL query optimizer', function () {
                     }
                 }}
             ],
-            where: '',
-            groupby: '',
-            orderby: '',
-            limit: ''
+            where: null,
+            groupby: null,
+            orderby: null,
+            limit: null
         };
 
         optimized = optimize(ast, ['id', 'nameDE']);
         expect(optimized.from).to.eql([
-            { db: '', table: 'instrument', as: '' },
-            { db: '', table: 'country', as: 'c', join: 'LEFT JOIN', on: {
+            { db: null, table: 'instrument', as: null },
+            { db: null, table: 'country', as: 'c', join: 'LEFT JOIN', on: {
                 type: 'binary_expr',
                 operator: '=',
                 left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
                 right: { type: 'column_ref', table: 'c', column: 'id' }
             }},
-            { db: '', table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
+            { db: null, table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
                 type: 'binary_expr',
                 operator: 'AND',
                 left: {

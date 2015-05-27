@@ -47,18 +47,18 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
     } else {
         ast = {
             type: 'select',
-            distinct: '',
+            distinct: null,
             columns: Array.isArray(attributes) ? attributes.map(function (attribute) {
                 return {
                     expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
-                    as: ''
+                    as: null
                 };
             }) : '',
-            from: [{ db: '', table: dsConfig.table, as: '' }],
-            where: '',
-            groupby: '',
-            orderby: '',
-            limit: ''
+            from: [{ db: null, table: dsConfig.table, as: null }],
+            where: null,
+            groupby: null,
+            orderby: null,
+            limit: null
         };
     }
 

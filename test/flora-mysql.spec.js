@@ -29,16 +29,16 @@ describe('flora-mysql DataSource', function () {
         },
         astTpl = {
             type: 'select',
-            distinct: '',
+            distinct: null,
             columns: [
-                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: '' },
-                { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: '' }
+                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
+                { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null }
             ],
-            from: [{ db: '', table: 't', as: '' }],
-            where: '',
-            groupby: '',
-            orderby: '',
-            limit: ''
+            from: [{ db: null, table: 't', as: null }],
+            where: null,
+            groupby: null,
+            orderby: null,
+            limit: null
         };
 
     before(function () {
@@ -157,8 +157,7 @@ describe('flora-mysql DataSource', function () {
     });
 
     describe('flora request processing', function () {
-        var ast,
-            floraMysql = proxyquire('../', { connection: Connection });
+        var ast;
 
         beforeEach(function () {
             ast = _.cloneDeep(astTpl);
@@ -198,7 +197,7 @@ describe('flora-mysql DataSource', function () {
 
             sinon.stub(Connection.prototype, 'query').yields(null, []);  // simulate empty result set
             ds.process(sampleRequest, function (err, result) {
-                expect(err).to.be.null;
+                expect(err).to.eql(null);
                 expect(result).to.eql({ totalCount: null, data: [] });
                 done();
             });
