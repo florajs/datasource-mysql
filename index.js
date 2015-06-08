@@ -39,7 +39,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
             ast = Parser.parse(dsConfig.query);
         } catch (e) {
             // Fix pegjs throwing SyntaxErrors without stack
-            if (!err.stack) Error.captureStackTrace(err, err.constructor);
+            if (!e.stack) Error.captureStackTrace(e, e.constructor);
 
             e.query = dsConfig.query;
             throw e;
