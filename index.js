@@ -1,15 +1,13 @@
 'use strict';
 
 var poolModule = require('generic-pool'),
-    nodeQuery = require('node-query'),
+    Parser = require('flora-sql-parser').Parser,
+    astUtil = require('flora-sql-parser').util,
     async = require('async'),
     generateAST = require('./lib/sql-query-builder'),
     checkAST = require('./lib/sql-query-checker'),
     optimizeAST = require('./lib/sql-query-optimizer'),
     Connection = require('./lib/connection');
-
-var Parser = nodeQuery.Parser,
-    Adapter = nodeQuery.Adapter;
 
 /**
  * @constructor
@@ -18,6 +16,7 @@ var Parser = nodeQuery.Parser,
  */
 var DataSource = module.exports = function (api, config) {
     this.log = api.log.child({component: 'flora-mysql'});
+    this.parser = new Parser();
     this.config = config;
     this.pools = {};
     this.queryFnPool = {}; // cache query functions for pagination queries (see paginatedQuery function)
@@ -36,7 +35,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
 
     if (dsConfig.query && dsConfig.query.trim() !== '') {
         try { // add query to exception
-            ast = Parser.parse(dsConfig.query);
+            ast = this.parser.parse(dsConfig.query);
         } catch (e) {
             // Fix pegjs throwing SyntaxErrors without stack
             if (!e.stack) Error.captureStackTrace(e, e.constructor);
@@ -249,7 +248,7 @@ function buildSql(request) {
 
     ast = optimizeAST(ast, request.attributes);
 
-    return Adapter.toSQL(ast);
+    return astUtil.astToSQL(ast);
 }
 
 /**
