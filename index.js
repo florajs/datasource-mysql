@@ -49,6 +49,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
     } else {
         ast = {
             type: 'select',
+            options: null,
             distinct: null,
             columns: Array.isArray(attributes) ? attributes.map(function (attribute) {
                 return {

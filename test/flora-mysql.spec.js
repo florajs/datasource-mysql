@@ -29,6 +29,7 @@ describe('flora-mysql DataSource', function () {
         },
         astTpl = {
             type: 'select',
+            options: null,
             distinct: null,
             columns: [
                 { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
