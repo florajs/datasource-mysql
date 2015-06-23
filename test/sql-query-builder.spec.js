@@ -299,7 +299,7 @@ describe('SQL query builder', function () {
                         right: { type: 'number', value: 22 }
                     }
                 },
-                paren: true
+                parentheses: true
             });
         });
     });
