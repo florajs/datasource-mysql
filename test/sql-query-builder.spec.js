@@ -240,34 +240,6 @@ describe('SQL query builder', function () {
             });
         });
 
-        var operators = { equal: 'IN', notEqual: 'NOT IN' };
-        Object.keys(operators).forEach(function (operator) {
-            var apiOperator = operator,
-                sqlOperator = operators[operator];
-
-            it('should map "' + apiOperator + '" operator and array values to "' + sqlOperator + '" expr', function () {
-                ast = queryBuilder({
-                    filter: [
-                        [{ attribute: 'col1', operator: apiOperator, value: [1, 3, 5] }]
-                    ],
-                    queryAST: astFixture
-                });
-                expect(ast.where).to.eql({
-                    type: 'binary_expr',
-                    operator: sqlOperator,
-                    left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: {
-                        type: 'expr_list',
-                        value: [
-                            { type: 'number', value: 1 },
-                            { type: 'number', value: 3 },
-                            { type: 'number', value: 5 }
-                        ]
-                    }
-                });
-            });
-        });
-
         it('should support arrays as attribute filters', function () {
             ast = queryBuilder({
                 filter: [
