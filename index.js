@@ -19,7 +19,7 @@ var DataSource = module.exports = function (api, config) {
     this.parser = new Parser();
     this.config = config;
     this.pools = {};
-    this.queryFnPool = {}; // cache query functions for pagination queries (see paginatedQuery function)
+    this.queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
 };
 
 /**
@@ -87,12 +87,12 @@ DataSource.prototype.process = function (request, callback) {
     this.log.trace({sql: sql}, 'processing request');
 
     if (! request.page) {
-        this.simpleQuery(db, sql, function (err, result) {
+        this.query(db, sql, function (err, result) {
             if (err) return callback(err);
             callback(null, { totalCount: null, data: result });
         });
     } else {
-        this.paginatedQuery(db, sql, callback);
+        this._paginatedQuery(db, sql, callback);
     }
 };
 
@@ -118,7 +118,7 @@ DataSource.prototype.close = function (callback) {
  * @return {Object}
  * @private
  */
-DataSource.prototype.getConnectionPool = function (database) {
+DataSource.prototype._getConnectionPool = function (database) {
     var pool;
     var self = this;
 
@@ -162,10 +162,9 @@ DataSource.prototype.getConnectionPool = function (database) {
  * @param {string} db
  * @param {string} sql
  * @param {Function} callback
- * @private
  */
-DataSource.prototype.simpleQuery = function (db, sql, callback) {
-    var pool = this.getConnectionPool(db);
+DataSource.prototype.query = function (db, sql, callback) {
+    var pool = this._getConnectionPool(db);
 
     pool.acquire(function (connectionErr, connection) {
         var queryTimeout;
@@ -208,12 +207,12 @@ DataSource.prototype.simpleQuery = function (db, sql, callback) {
  * @return {*}
  * @private
  */
-DataSource.prototype.paginatedQuery = function (db, sql, callback) {
+DataSource.prototype._paginatedQuery = function (db, sql, callback) {
     var queryFn;
 
     if (this.queryFnPool[db]) return this.queryFnPool[db](sql, callback);
 
-    queryFn = this.getConnectionPool(db).pooled(function (connection, sqlQuery, cb) {
+    queryFn = this._getConnectionPool(db).pooled(function (connection, sqlQuery, cb) {
         connection.query(sqlQuery, function (queryError, rows) {
             var result;
 
