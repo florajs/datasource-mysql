@@ -15,11 +15,11 @@ var poolModule = require('generic-pool'),
  * @param {Object} config
  */
 var DataSource = module.exports = function (api, config) {
-    this.log = api.log.child({component: 'flora-mysql'});
-    this.parser = new Parser();
-    this.config = config;
-    this.pools = {};
-    this.queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
+    this._log = api.log.child({component: 'flora-mysql'});
+    this._parser = new Parser();
+    this._config = config;
+    this._pools = {};
+    this._queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
 };
 
 /**
@@ -35,7 +35,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
 
     if (dsConfig.query && dsConfig.query.trim() !== '') {
         try { // add query to exception
-            ast = this.parser.parse(dsConfig.query);
+            ast = this._parser.parse(dsConfig.query);
         } catch (e) {
             // Fix pegjs throwing SyntaxErrors without stack
             if (!e.stack) Error.captureStackTrace(e, e.constructor);
@@ -84,7 +84,7 @@ DataSource.prototype.process = function (request, callback) {
         return callback(e);
     }
 
-    this.log.trace({sql: sql}, 'processing request');
+    this._log.trace({sql: sql}, 'processing request');
 
     if (! request.page) {
         this.query(db, sql, function (err, result) {
@@ -102,11 +102,11 @@ DataSource.prototype.process = function (request, callback) {
 DataSource.prototype.close = function (callback) {
     var self = this;
 
-    async.parallel(Object.keys(this.pools).map(function (database) {
+    async.parallel(Object.keys(this._pools).map(function (database) {
         return function (next) {
-            self.log.trace('closing MySQL pool "%s"', database);
-            self.pools[database].drain(function () {
-                self.pools[database].destroyAllNow();
+            self._log.trace('closing MySQL pool "%s"', database);
+            self._pools[database].drain(function () {
+                self._pools[database].destroyAllNow();
                 next();
             });
         };
@@ -122,19 +122,19 @@ DataSource.prototype._getConnectionPool = function (database) {
     var pool;
     var self = this;
 
-    if (this.pools[database]) return this.pools[database];
+    if (this._pools[database]) return this._pools[database];
 
-    this.log.trace('creating MySQL pool "%s"', database);
+    this._log.trace('creating MySQL pool "%s"', database);
 
     pool = poolModule.Pool({
         name: database,
-        max: this.config.server.poolSize || 10,
+        max: this._config.server.poolSize || 10,
         idleTimeoutMillis: 30000,
         create: function (callback) {
             var db = new Connection({
-                host: self.config.server.host,
-                user: self.config.server.user,
-                password: self.config.server.password,
+                host: self._config.server.host,
+                user: self._config.server.user,
+                password: self._config.server.password,
                 db: database
             });
             db.connect(function (err) {
@@ -150,8 +150,8 @@ DataSource.prototype._getConnectionPool = function (database) {
         }
     });
 
-    pool.flora = { queryTimeout: this.config.server.queryTimeout || 60000 };
-    this.pools[database] = pool;
+    pool.flora = { queryTimeout: this._config.server.queryTimeout || 60000 };
+    this._pools[database] = pool;
     return pool;
 };
 
@@ -210,7 +210,7 @@ DataSource.prototype.query = function (db, sql, callback) {
 DataSource.prototype._paginatedQuery = function (db, sql, callback) {
     var queryFn;
 
-    if (this.queryFnPool[db]) return this.queryFnPool[db](sql, callback);
+    if (this._queryFnPool[db]) return this._queryFnPool[db](sql, callback);
 
     queryFn = this._getConnectionPool(db).pooled(function (connection, sqlQuery, cb) {
         connection.query(sqlQuery, function (queryError, rows) {
@@ -227,7 +227,7 @@ DataSource.prototype._paginatedQuery = function (db, sql, callback) {
         });
     });
 
-    this.queryFnPool[db] = queryFn;
+    this._queryFnPool[db] = queryFn;
     queryFn(sql, callback);
 };
 
