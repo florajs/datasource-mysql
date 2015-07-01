@@ -21,10 +21,8 @@ var api = {
 describe('flora-mysql DataSource', function () {
     var ds,
         serverCfg = {
-            server: {
-                host: 'db-server',
-                user: 'joe',
-                password: 'test'
+            servers: {
+                server: { host: 'db-server', user: 'joe', password: 'test' }
             }
         },
         astTpl = {
@@ -125,9 +123,7 @@ describe('flora-mysql DataSource', function () {
             });
 
             it('should throw an error if columns are not fully qualified', function () {
-                var resourceConfig = {
-                    query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id'
-                };
+                var resourceConfig = { query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id' };
 
                 expect(function () {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -135,9 +131,7 @@ describe('flora-mysql DataSource', function () {
             });
 
             it('should throw an error if columns are not unique', function () {
-                var resourceConfig = {
-                    query: 'SELECT t.col1, someAttr AS col1 FROM t'
-                };
+                var resourceConfig = { query: 'SELECT t.col1, someAttr AS col1 FROM t' };
 
                 expect(function () {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -171,6 +165,8 @@ describe('flora-mysql DataSource', function () {
 
         it('should generate SQL statement from flora request object', function (done) {
             var floraRequest = {
+                    server: 'server',
+                    database: 'db',
                     attributes: ['col1'],
                     queryAST: ast,
                     filter: [
@@ -191,10 +187,7 @@ describe('flora-mysql DataSource', function () {
         });
 
         it('should return query results in a callback', function (done) {
-            var sampleRequest = {
-                    attributes: ['col1'],
-                    queryAST: ast
-                };
+            var sampleRequest = { server: 'server', database: 'db', attributes: ['col1'], queryAST: ast };
 
             sinon.stub(Connection.prototype, 'query').yields(null, []);  // simulate empty result set
             ds.process(sampleRequest, function (err, result) {
@@ -268,13 +261,18 @@ describe('flora-mysql DataSource', function () {
         });
 
         it('should abort long running SELECT queries', function (done) {
-            var opts = _.merge({ server: { queryTimeout: 30 }}, serverCfg),
+            var ds,
+                cfg = _.cloneDeep(serverCfg),
                 FloraMysql = proxyquire('../', { connection: Connection }),
-                ds = new FloraMysql(api, opts),
                 floraRequest = {
+                    server: 'server',
+                    database: 'db',
                     attributes: ['col1'],
                     queryAST: _.cloneDeep(astTpl)
                 };
+
+            cfg.servers.server.queryTimeout = 30;
+            ds = new FloraMysql(api, cfg);
 
             ds.process(floraRequest, function (err) {
                 expect(err).to.be.an.instanceof(Error);
@@ -300,6 +298,8 @@ describe('flora-mysql DataSource', function () {
 
     describe('pagination', function () {
         var floraRequest = {
+                server: 'server',
+                database: 'db',
                 attributes: ['col1', 'col2'],
                 queryAST: _.cloneDeep(astTpl),
                 limit: 15,
@@ -330,6 +330,69 @@ describe('flora-mysql DataSource', function () {
                 expect(result.totalCount).to.equal(5);
                 done();
             });
+        });
+    });
+
+    describe('connection pooling', function () {
+        var request1, request2,
+            emptyFn = function () {},
+            basicConfig = {
+                servers: {
+                    server1: { host: 'db-host1', user: 'joe', password: 'test' },
+                    server2: { host: 'db-host2', user: 'joe', password: 'test' }
+                }
+            };
+
+        beforeEach(function () {
+            sinon.stub(Connection.prototype, 'query').yields(null, []);
+            request1 = { server: 'server1', database: 'foo', attributes: ['col1'], queryAST: _.cloneDeep(astTpl) };
+            request2 = { server: 'server2', database: 'bar', attributes: ['col2'], queryAST: _.cloneDeep(astTpl) };
+        });
+
+        afterEach(function () {
+            Connection.prototype.query.restore();
+        });
+
+        it('should create separate pools per server and database', function () {
+            var ds = new FloraMysql(api, basicConfig);
+
+            ds.process(request1, emptyFn);
+            ds.process(request2, emptyFn);
+
+            expect(ds._pools).to.have.keys('server1', 'server2');
+            expect(ds._pools.server1).to.have.keys('foo');
+            expect(ds._pools.server2).to.have.keys('bar');
+        });
+
+        it('should set default pool size to 10', function () {
+            var ds = new FloraMysql(api, basicConfig);
+            ds.process(request1, emptyFn);
+            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(10);
+        });
+
+        it('should make pool size configurable per server', function () {
+            var cfg = _.cloneDeep(basicConfig),
+                ds = new FloraMysql(api, cfg);
+
+            cfg.servers.server1.poolSize = 100;
+            ds.process(request1, emptyFn);
+
+            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(100);
+        });
+
+        it('should inherit pool size from datasource config', function () {
+            var cfg = _.cloneDeep(basicConfig),
+                ds;
+
+            cfg.poolSize = 15;
+            cfg.servers.server2.poolSize = 100;
+            ds = new FloraMysql(api, cfg);
+
+            ds.process(request1, emptyFn);
+            ds.process(request2, emptyFn);
+
+            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(15);
+            expect(ds._pools.server2.bar.getMaxPoolSize()).to.equal(100);
         });
     });
 });

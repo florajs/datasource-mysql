@@ -75,7 +75,8 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
  * @param {Function} callback
  */
 DataSource.prototype.process = function (request, callback) {
-    var db = request.database,
+    var server = request.server,
+        db = request.database,
         sql;
 
     try {
@@ -87,12 +88,12 @@ DataSource.prototype.process = function (request, callback) {
     this._log.trace({sql: sql}, 'processing request');
 
     if (! request.page) {
-        this.query(db, sql, function (err, result) {
+        this.query(server, db, sql, function (err, result) {
             if (err) return callback(err);
             callback(null, { totalCount: null, data: result });
         });
     } else {
-        this._paginatedQuery(db, sql, callback);
+        this._paginatedQuery(server, db, sql, callback);
     }
 };
 
@@ -114,29 +115,31 @@ DataSource.prototype.close = function (callback) {
 };
 
 /**
+ * @param {string} server
  * @param {string} database
  * @return {Object}
  * @private
  */
-DataSource.prototype._getConnectionPool = function (database) {
+DataSource.prototype._getConnectionPool = function (server, database) {
     var pool;
     var self = this;
 
-    if (this._pools[database]) return this._pools[database];
+    if (this._pools[server] && this._pools[server][database]) return this._pools[server][database];
 
     this._log.trace('creating MySQL pool "%s"', database);
 
     pool = poolModule.Pool({
         name: database,
-        max: this._config.server.poolSize || 10,
+        max: this._config.servers[server].poolSize || this._config.poolSize || 10,
         idleTimeoutMillis: 30000,
         create: function (callback) {
-            var db = new Connection({
-                host: self._config.server.host,
-                user: self._config.server.user,
-                password: self._config.server.password,
-                db: database
-            });
+            var serverCfg = self._config.servers[server],
+                db = new Connection({
+                    host: serverCfg.host,
+                    user: serverCfg.user,
+                    password: serverCfg.password,
+                    db: database
+                });
             db.connect(function (err) {
                 if (err) return callback(err);
                 callback(null, db);
@@ -150,8 +153,12 @@ DataSource.prototype._getConnectionPool = function (database) {
         }
     });
 
-    pool.flora = { queryTimeout: this._config.server.queryTimeout || 60000 };
-    this._pools[database] = pool;
+    if (this._config.servers[server].queryTimeout) {
+        pool.flora = { queryTimeout: this._config.servers[server].queryTimeout };
+    }
+
+    if (typeof this._pools[server] !== 'object') this._pools[server] = {};
+    this._pools[server][database] = pool;
     return pool;
 };
 
@@ -163,15 +170,15 @@ DataSource.prototype._getConnectionPool = function (database) {
  * @param {string} sql
  * @param {Function} callback
  */
-DataSource.prototype.query = function (db, sql, callback) {
-    var pool = this._getConnectionPool(db);
+DataSource.prototype.query = function (server, db, sql, callback) {
+    var pool = this._getConnectionPool(server, db);
 
     pool.acquire(function (connectionErr, connection) {
         var queryTimeout;
 
         if (connectionErr) return callback(connectionErr);
 
-        if (sql.toLowerCase().indexOf('select') === 0) {
+        if (pool.flora && pool.flora.queryTimeout && sql.toLowerCase().indexOf('select') === 0) {
             queryTimeout = setTimeout(function handleQueryTimeout() {
                 queryTimeout = null;
                 pool.release(connection);
@@ -201,18 +208,19 @@ DataSource.prototype.query = function (db, sql, callback) {
  * We cannot safely rely on getting same connection from
  * pool to run 'SELECT FOUND_ROWS()' after original query.
  *
+ * @param {string} server
  * @param {string} db
  * @param {string} sql
  * @param {Function} callback
  * @return {*}
  * @private
  */
-DataSource.prototype._paginatedQuery = function (db, sql, callback) {
+DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
     var queryFn;
 
-    if (this._queryFnPool[db]) return this._queryFnPool[db](sql, callback);
+    if (this._queryFnPool[server] && this._queryFnPool[server][db]) return this._queryFnPool[server][db](sql, callback);
 
-    queryFn = this._getConnectionPool(db).pooled(function (connection, sqlQuery, cb) {
+    queryFn = this._getConnectionPool(server, db).pooled(function (connection, sqlQuery, cb) {
         connection.query(sqlQuery, function (queryError, rows) {
             var result;
 
@@ -227,7 +235,8 @@ DataSource.prototype._paginatedQuery = function (db, sql, callback) {
         });
     });
 
-    this._queryFnPool[db] = queryFn;
+    if (typeof this._queryFnPool[server] !== 'object') this._queryFnPool[server] = {};
+    this._queryFnPool[server][db] = queryFn;
     queryFn(sql, callback);
 };
 
