@@ -22,7 +22,7 @@ describe('flora-mysql DataSource', function () {
     var ds,
         serverCfg = {
             servers: {
-                server: { host: 'db-server', user: 'joe', password: 'test' }
+                default: { host: 'db-server', user: 'joe', password: 'test' }
             }
         },
         astTpl = {
@@ -165,7 +165,6 @@ describe('flora-mysql DataSource', function () {
 
         it('should generate SQL statement from flora request object', function (done) {
             var floraRequest = {
-                    server: 'server',
                     database: 'db',
                     attributes: ['col1'],
                     queryAST: ast,
@@ -187,7 +186,7 @@ describe('flora-mysql DataSource', function () {
         });
 
         it('should return query results in a callback', function (done) {
-            var sampleRequest = { server: 'server', database: 'db', attributes: ['col1'], queryAST: ast };
+            var sampleRequest = { database: 'db', attributes: ['col1'], queryAST: ast };
 
             sinon.stub(Connection.prototype, 'query').yields(null, []);  // simulate empty result set
             ds.process(sampleRequest, function (err, result) {
@@ -265,13 +264,12 @@ describe('flora-mysql DataSource', function () {
                 cfg = _.cloneDeep(serverCfg),
                 FloraMysql = proxyquire('../', { connection: Connection }),
                 floraRequest = {
-                    server: 'server',
                     database: 'db',
                     attributes: ['col1'],
                     queryAST: _.cloneDeep(astTpl)
                 };
 
-            cfg.servers.server.queryTimeout = 30;
+            cfg.servers.default.queryTimeout = 30;
             ds = new FloraMysql(api, cfg);
 
             ds.process(floraRequest, function (err) {
@@ -298,7 +296,6 @@ describe('flora-mysql DataSource', function () {
 
     describe('pagination', function () {
         var floraRequest = {
-                server: 'server',
                 database: 'db',
                 attributes: ['col1', 'col2'],
                 queryAST: _.cloneDeep(astTpl),
@@ -338,19 +335,24 @@ describe('flora-mysql DataSource', function () {
             emptyFn = function () {},
             basicConfig = {
                 servers: {
-                    server1: { host: 'db-host1', user: 'joe', password: 'test' },
+                    default: { host: 'db-host1', user: 'joe', password: 'test' },
                     server2: { host: 'db-host2', user: 'joe', password: 'test' }
                 }
             };
 
         beforeEach(function () {
             sinon.stub(Connection.prototype, 'query').yields(null, []);
-            request1 = { server: 'server1', database: 'foo', attributes: ['col1'], queryAST: _.cloneDeep(astTpl) };
+            request1 = { database: 'foo', attributes: ['col1'], queryAST: _.cloneDeep(astTpl) };
             request2 = { server: 'server2', database: 'bar', attributes: ['col2'], queryAST: _.cloneDeep(astTpl) };
         });
 
         afterEach(function () {
             Connection.prototype.query.restore();
+        });
+
+        it('should use "default" if no server is specified', function (done) {
+            var ds = new FloraMysql(api, basicConfig);
+            ds.process(request1, done);
         });
 
         it('should create separate pools per server and database', function () {
@@ -359,25 +361,25 @@ describe('flora-mysql DataSource', function () {
             ds.process(request1, emptyFn);
             ds.process(request2, emptyFn);
 
-            expect(ds._pools).to.have.keys('server1', 'server2');
-            expect(ds._pools.server1).to.have.keys('foo');
+            expect(ds._pools).to.have.keys('default', 'server2');
+            expect(ds._pools.default).to.have.keys('foo');
             expect(ds._pools.server2).to.have.keys('bar');
         });
 
         it('should set default pool size to 10', function () {
             var ds = new FloraMysql(api, basicConfig);
             ds.process(request1, emptyFn);
-            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(10);
+            expect(ds._pools.default.foo.getMaxPoolSize()).to.equal(10);
         });
 
         it('should make pool size configurable per server', function () {
             var cfg = _.cloneDeep(basicConfig),
                 ds = new FloraMysql(api, cfg);
 
-            cfg.servers.server1.poolSize = 100;
+            cfg.servers.default.poolSize = 100;
             ds.process(request1, emptyFn);
 
-            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(100);
+            expect(ds._pools.default.foo.getMaxPoolSize()).to.equal(100);
         });
 
         it('should inherit pool size from datasource config', function () {
@@ -391,7 +393,7 @@ describe('flora-mysql DataSource', function () {
             ds.process(request1, emptyFn);
             ds.process(request2, emptyFn);
 
-            expect(ds._pools.server1.foo.getMaxPoolSize()).to.equal(15);
+            expect(ds._pools.default.foo.getMaxPoolSize()).to.equal(15);
             expect(ds._pools.server2.bar.getMaxPoolSize()).to.equal(100);
         });
     });

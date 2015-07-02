@@ -75,7 +75,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
  * @param {Function} callback
  */
 DataSource.prototype.process = function (request, callback) {
-    var server = request.server,
+    var server = request.server || 'default',
         db = request.database,
         sql;
 
