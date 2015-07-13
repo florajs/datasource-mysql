@@ -1,5 +1,8 @@
-Flora MySQL-DataSource
+Flora MySQL DataSource
 ======================
+
+[![Build Status](https://travis-ci.org/godmodelabs/flora-mysql.svg?branch=master)](https://travis-ci.org/godmodelabs/flora-mysql)
+[![NPM version](https://badge.fury.io/js/flora-mysql.svg)](https://www.npmjs.com/package/flora-mysql)
 
 MySQL connection for [Flora](https://github.com/godmodelabs/flora).
 
@@ -10,5 +13,6 @@ Features
 
 
 License
-=======
-MIT
+-------
+
+[MIT](LICENSE)
