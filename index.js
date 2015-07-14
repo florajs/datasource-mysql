@@ -85,8 +85,6 @@ DataSource.prototype.process = function (request, callback) {
         return callback(e);
     }
 
-    this._log.trace({sql: sql}, 'processing request');
-
     if (! request.page) {
         this.query(server, db, sql, function (err, result) {
             if (err) return callback(err);
@@ -172,6 +170,7 @@ DataSource.prototype._getConnectionPool = function (server, database) {
  */
 DataSource.prototype.query = function (server, db, sql, callback) {
     var pool = this._getConnectionPool(server, db);
+    var self = this;
 
     pool.acquire(function (connectionErr, connection) {
         var queryTimeout;
@@ -185,6 +184,8 @@ DataSource.prototype.query = function (server, db, sql, callback) {
                 callback(new Error('Query execution was interrupted (query timeout exceeded).'));
             }, pool.flora.queryTimeout);
         }
+
+        self._log.trace({sql: sql}, 'executing query');
 
         connection.query(sql, function (queryError, result) {
             if (queryError) {
@@ -217,10 +218,13 @@ DataSource.prototype.query = function (server, db, sql, callback) {
  */
 DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
     var queryFn;
+    var self = this;
 
     if (this._queryFnPool[server] && this._queryFnPool[server][db]) return this._queryFnPool[server][db](sql, callback);
 
     queryFn = this._getConnectionPool(server, db).pooled(function (connection, sqlQuery, cb) {
+        self._log.trace({sql: sql}, 'executing paginated query');
+
         connection.query(sqlQuery, function (queryError, rows) {
             var result;
 
