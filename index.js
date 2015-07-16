@@ -3,7 +3,6 @@
 var poolModule = require('generic-pool'),
     Parser = require('flora-sql-parser').Parser,
     astUtil = require('flora-sql-parser').util,
-    async = require('async'),
     generateAST = require('./lib/sql-query-builder'),
     checkAST = require('./lib/sql-query-checker'),
     optimizeAST = require('./lib/sql-query-optimizer'),
@@ -99,17 +98,13 @@ DataSource.prototype.process = function (request, callback) {
  * @param {Function} callback
  */
 DataSource.prototype.close = function (callback) {
-    var self = this;
-
-    async.parallel(Object.keys(this._pools).map(function (database) {
-        return function (next) {
-            self._log.trace('closing MySQL pool "%s"', database);
-            self._pools[database].drain(function () {
-                self._pools[database].destroyAllNow();
-                next();
-            });
-        };
-    }), callback);
+    for (var server in this._pools) {
+        for (var database in this._pools[server]) {
+            this._log.debug('closing MySQL pool "%s" at "%s"', database, server);
+            this._pools[server][database].destroyAllNow();
+        }
+    }
+    callback();
 };
 
 /**
