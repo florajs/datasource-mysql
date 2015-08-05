@@ -19,6 +19,7 @@ var DataSource = module.exports = function (api, config) {
     this._config = config;
     this._pools = {};
     this._queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
+    this._status = config._status;
 };
 
 /**
@@ -82,6 +83,12 @@ DataSource.prototype.process = function (request, callback) {
         sql = buildSql(request);
     } catch (e) {
         return callback(e);
+    }
+
+    if (request._status) {
+        request._status.set('server', server);
+        request._status.set('database', db);
+        request._status.set('sql', sql);
     }
 
     if (! request.page) {
@@ -180,6 +187,7 @@ DataSource.prototype.query = function (server, db, sql, callback) {
             }, pool.flora.queryTimeout);
         }
 
+        if (self._status) self._status.increment('queries');
         self._log.trace({sql: sql}, 'executing query');
 
         connection.query(sql, function (queryError, result) {
@@ -218,6 +226,7 @@ DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
     if (this._queryFnPool[server] && this._queryFnPool[server][db]) return this._queryFnPool[server][db](sql, callback);
 
     queryFn = this._getConnectionPool(server, db).pooled(function (connection, sqlQuery, cb) {
+        if (self._status) self._status.increment('queries');
         self._log.trace({sql: sql}, 'executing paginated query');
 
         connection.query(sqlQuery, function (queryError, rows) {
@@ -225,6 +234,7 @@ DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
 
             if (queryError) return cb(queryError);
 
+            if (self._status) self._status.increment('queries');
             result = { data: rows };
             runQuery(connection, 'SELECT FOUND_ROWS() AS totalCount', function (err, paginationInfo) {
                 if (err) return cb(err);
