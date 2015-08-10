@@ -91,6 +91,10 @@ DataSource.prototype.process = function (request, callback) {
         request._status.set('sql', sql);
     }
 
+    if (request._explain) {
+        request._explain.executedQuery = sql;
+    }
+
     if (! request.page) {
         this.query(server, db, sql, function (err, result) {
             if (err) return callback(err);
