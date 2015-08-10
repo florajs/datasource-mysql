@@ -140,6 +140,10 @@ DataSource.prototype._getConnectionPool = function (server, database) {
                     password: serverCfg.password,
                     db: database
                 });
+
+            if (self._status) self._status.increment('dataSourceConnects');
+            self._log.trace('connecting to "' + serverCfg.host + '/' + database + '"');
+
             db.connect(function (err) {
                 if (err) return callback(err);
                 callback(null, db);
@@ -187,7 +191,7 @@ DataSource.prototype.query = function (server, db, sql, callback) {
             }, pool.flora.queryTimeout);
         }
 
-        if (self._status) self._status.increment('queries');
+        if (self._status) self._status.increment('dataSourceQueries');
         self._log.trace({sql: sql}, 'executing query');
 
         connection.query(sql, function (queryError, result) {
@@ -226,7 +230,7 @@ DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
     if (this._queryFnPool[server] && this._queryFnPool[server][db]) return this._queryFnPool[server][db](sql, callback);
 
     queryFn = this._getConnectionPool(server, db).pooled(function (connection, sqlQuery, cb) {
-        if (self._status) self._status.increment('queries');
+        if (self._status) self._status.increment('dataSourceQueries');
         self._log.trace({sql: sql}, 'executing paginated query');
 
         connection.query(sqlQuery, function (queryError, rows) {
@@ -234,7 +238,7 @@ DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
 
             if (queryError) return cb(queryError);
 
-            if (self._status) self._status.increment('queries');
+            if (self._status) self._status.increment('dataSourceQueries');
             result = { data: rows };
             runQuery(connection, 'SELECT FOUND_ROWS() AS totalCount', function (err, paginationInfo) {
                 if (err) return cb(err);
