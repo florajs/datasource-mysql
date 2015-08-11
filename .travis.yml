@@ -2,14 +2,3 @@ language: node_js
 node_js:
   - "0.10"
   - "0.12"
-  - "iojs"
-
-before_install: |
-    case ${TRAVIS_NODE_VERSION} in
-        iojs*)
-            echo "Not upgrading npm for iojs."
-            ;;
-        *)
-            npm update -g npm
-            ;;
-    esac
