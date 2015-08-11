@@ -272,7 +272,7 @@ function buildSql(request) {
         ast.options.push('SQL_CALC_FOUND_ROWS');
     }
 
-    ast = optimizeAST(ast, request.attributes);
+    optimizeAST(ast, request.attributes);
 
     return astUtil.astToSQL(ast);
 }

@@ -73,7 +73,7 @@ describe('flora-mysql DataSource', function () {
             ds.prepare(resourceConfig, ['col1', 'col2']);
 
             expect(resourceConfig).to.have.property('queryAST');
-            expect(resourceConfig.queryAST).to.eql(_.cloneDeep(astTpl));
+            expect(resourceConfig.queryAST).to.eql(astTpl);
         });
 
         it('should prepare search attributes', function () {
@@ -147,7 +147,7 @@ describe('flora-mysql DataSource', function () {
             ds.prepare(resourceConfig, attributes);
 
             expect(resourceConfig).to.have.property('queryAST');
-            expect(resourceConfig.queryAST).to.eql(_.cloneDeep(astTpl));
+            expect(resourceConfig.queryAST).to.eql(astTpl);
         });
     });
 
@@ -200,7 +200,7 @@ describe('flora-mysql DataSource', function () {
             it('should throw return an error if selected attribute has no corresponding column', function (done) {
                 var floraRequest = {
                         attributes: ['id', 'nonexistentAttr'],
-                        queryAST: _.assign({}, astTpl, {
+                        queryAST: _.assign({}, ast, {
                             columns: [
                                 { expr: { type: 'column_ref', table: 't', column: 'id' }, as: '' }
                                 // nonexistentAttribute is not defined as column
@@ -220,7 +220,7 @@ describe('flora-mysql DataSource', function () {
             it('should throw return an error if selected attribute has no corresponding alias', function (done) {
                 var floraRequest = {
                         attributes: ['id', 'nonexistentAttr'],
-                        queryAST: _.assign({}, astTpl, {
+                        queryAST: _.assign({}, ast, {
                             columns: [
                                 { expr: { type: 'column_ref', table: 't', column: 'pk_id' }, as: 'id' }
                                 // nonexistentAttribute is not defined as column

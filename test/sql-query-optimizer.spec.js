@@ -1,30 +1,20 @@
 'use strict';
 
 var expect = require('chai').expect,
-    optimize = require('../lib/sql-query-optimizer');
+    optimize = require('../lib/sql-query-optimizer'),
+    _ = require('lodash');
 
 describe('SQL query optimizer', function () {
-    var ast, optimized;
-
-    it('should clone AST', function () {
-        ast = {
-            type: 'select',
-            columns: [{ expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null }],
-            from: [{ db: '', table: 't1', as: null }],
-            where: null,
-            groupby: null,
-            orderby: null,
-            limit: null
-        };
-
-        optimized = optimize(ast, ['col1']);
-        expect(optimized).to.not.equal(ast);
-    });
+    var ast;
 
     it('should only modify SELECT statements', function () {
+        var nonOptimized;
+
         ast = { type: 'UPDATE' };
-        optimized = optimize(ast, ['col1']);
-        expect(optimized).to.eql(ast);
+        nonOptimized = _.clone(ast);
+        optimize(ast, ['col1']);
+
+        expect(nonOptimized).to.eql(ast);
     });
 
     it('should remove unused columns/attributes from AST', function () {
@@ -42,8 +32,8 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1', 'alias']);
-        expect(optimized.columns).to.eql([
+        optimize(ast, ['col1', 'alias']);
+        expect(ast.columns).to.eql([
             { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' }
         ]);
@@ -70,8 +60,8 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql(ast.from);
+        optimize(ast, ['col1']);
+        expect(ast.from).to.eql(ast.from);
     });
 
     it('should remove unreferenced LEFT JOINs from AST', function () {
@@ -96,8 +86,8 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql([{ db: null, table: 't', as: null }]);
+        optimize(ast, ['col1']);
+        expect(ast.from).to.eql([{ db: null, table: 't', as: null }]);
     });
 
     it('should pay attention to table aliases', function () {
@@ -129,8 +119,8 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1', 'col3']);
-        expect(optimized.from).to.eql([
+        optimize(ast, ['col1', 'col3']);
+        expect(ast.from).to.eql([
             { db: null, table: 't', as: null },
             { db: null, table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
                 type: 'binary_expr',
@@ -174,11 +164,13 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql(ast.from);
+        optimize(ast, ['col1']);
+        expect(ast.from).to.eql(ast.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', function () {
+        var nonOptimized;
+
         ast = {
             type: 'select',
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
@@ -199,11 +191,15 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql(ast.from);
+        nonOptimized = _.cloneDeep(ast);
+
+        optimize(ast, ['col1']);
+        expect(ast.from).to.eql(nonOptimized.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', function () {
+        var nonOptimized;
+
         ast = {
             type: 'select',
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
@@ -223,9 +219,10 @@ describe('SQL query optimizer', function () {
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
             ]
         };
+        nonOptimized = _.cloneDeep(ast);
 
-        optimized = optimize(ast, ['col1']);
-        expect(optimized.from).to.eql(ast.from);
+        optimize(ast, ['col1']);
+        expect(ast.from).to.eql(nonOptimized.from);
     });
 
     it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', function () {
@@ -284,8 +281,8 @@ describe('SQL query optimizer', function () {
             limit: null
         };
 
-        optimized = optimize(ast, ['id', 'nameDE']);
-        expect(optimized.from).to.eql([
+        optimize(ast, ['id', 'nameDE']);
+        expect(ast.from).to.eql([
             { db: null, table: 'instrument', as: null },
             { db: null, table: 'country', as: 'c', join: 'LEFT JOIN', on: {
                 type: 'binary_expr',

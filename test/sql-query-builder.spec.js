@@ -21,16 +21,19 @@ var queryBuilder = require('../lib/sql-query-builder'),
 describe('SQL query builder', function () {
     var ast;
 
-    it('should work on cloned AST', function () {
-        ast = queryBuilder({ queryAST: astFixture });
-        expect(ast).to.not.equal(astFixture);
+    beforeEach(function () {
+        ast = _.cloneDeep(astFixture);
+    });
+
+    afterEach(function () {
+        ast = null;
     });
 
     describe('order', function () {
         it('should order by one attribute', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 order: [{ attribute: 'col1', direction: 'asc' }],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.orderby).to.eql([{
                 expr: { type: 'column_ref', table: 't', column: 'col1' },
@@ -39,9 +42,9 @@ describe('SQL query builder', function () {
         });
 
         it('should resolve alias to column', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 order: [{ attribute: 'columnAlias', direction: 'desc' }],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.orderby).to.eql([{
                 expr: { type: 'column_ref', table: 't', column: 'col3' },
@@ -50,12 +53,12 @@ describe('SQL query builder', function () {
         });
 
         it('should order by multiple attributes', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 order: [
                     { attribute: 'col1', direction: 'asc' },
                     { attribute: 'col2', direction: 'desc' }
                 ],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.orderby).to.eql([
                 { expr: { type: 'column_ref', table: 't', column: 'col1' }, type: 'ASC' },
@@ -66,9 +69,9 @@ describe('SQL query builder', function () {
 
     describe('limit', function () {
         it('should set limit', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 limit: 17,
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.limit).to.eql([
                 { type: 'number', value: 0 },
@@ -77,10 +80,10 @@ describe('SQL query builder', function () {
         });
 
         it('should set limit with offset', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 limit: 10,
                 page: 3,
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.limit).to.eql([
                 { type: 'number', value: 20 },
@@ -91,11 +94,11 @@ describe('SQL query builder', function () {
 
     describe('filter', function () {
         it('should add single "AND" condition', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [{ attribute: 'col1', operator: 'equal', value: 0 }]
                 ],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -106,14 +109,14 @@ describe('SQL query builder', function () {
         });
 
         it('should add multiple "AND" conditions', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [
                         { attribute: 'col1', operator: 'greater', value: 10 },
                         { attribute: 'col1', operator: 'less', value: 20 }
                     ]
                 ],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -134,12 +137,12 @@ describe('SQL query builder', function () {
         });
 
         it('should add mulitple "OR" conditions', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [{ attribute: 'col1', operator: 'greater', value: 10 }],
                     [{ attribute: 'col1', operator: 'less', value: 20 }]
                 ],
-                queryAST: astFixture
+                queryAST: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -160,7 +163,7 @@ describe('SQL query builder', function () {
         });
 
         it('should not overwrite existing where conditions (single filter)', function () {
-            ast = _.assign({}, astFixture, {
+            ast = _.assign({}, ast, {
                 where: {
                     type: 'binary_expr',
                     operator: '=',
@@ -169,7 +172,7 @@ describe('SQL query builder', function () {
                 }
             });
 
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [{ attribute: 'col2', operator: 'greater', value: 100 }]
                 ],
@@ -204,7 +207,7 @@ describe('SQL query builder', function () {
                 }
             });
 
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [{ attribute: 'col2', operator: 'greater', value: 100 }],
                     [{ attribute: 'columnAlias', operator: 'lessOrEqual', value: 100 }]
@@ -241,7 +244,21 @@ describe('SQL query builder', function () {
         });
 
         it('should support arrays as attribute filters', function () {
-            ast = queryBuilder({
+            var ast = {
+                type: 'select',
+                distinct: null,
+                columns: [
+                    { expr: { type: 'column_ref', table: 't', column: 'instrumentId' }, as: null },
+                    { expr: { type: 'column_ref', table: 't', column: 'exchangeId' }, as: null }
+                ],
+                from: [{ db: null, table: 't', as: null }],
+                where: null,
+                groupby: null,
+                orderby: null,
+                limit: null
+            };
+
+            queryBuilder({
                 filter: [
                     [{
                         attribute: ['instrumentId', 'exchangeId'],
@@ -249,19 +266,7 @@ describe('SQL query builder', function () {
                         value: [[133962, 4], [133962, 22]]
                     }]
                 ],
-                queryAST: {
-                    type: 'select',
-                    distinct: null,
-                    columns: [
-                        { expr: { type: 'column_ref', table: 't', column: 'instrumentId' }, as: null },
-                        { expr: { type: 'column_ref', table: 't', column: 'exchangeId' }, as: null }
-                    ],
-                    from: [{ db: null, table: 't', as: null }],
-                    where: null,
-                    groupby: null,
-                    orderby: null,
-                    limit: null
-                }
+                queryAST: ast
             });
 
             expect(ast.where).to.eql({
@@ -306,10 +311,10 @@ describe('SQL query builder', function () {
 
     describe('full-text search', function () {
         it('should support single attribute', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 searchable: ['col1'],
                 search: 'foobar',
-                queryAST: astFixture
+                queryAST: ast
             });
 
             expect(ast.where).to.eql({
@@ -321,10 +326,10 @@ describe('SQL query builder', function () {
         });
 
         it('should support multiple attributes', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
-                queryAST: astFixture
+                queryAST: ast
             });
 
             expect(ast.where).to.eql({
@@ -346,10 +351,10 @@ describe('SQL query builder', function () {
         });
 
         it('should escape special pattern characters "%" and "_"', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 searchable: ['col1'],
                 search: 'f%o_o%b_ar',
-                queryAST: astFixture
+                queryAST: ast
             });
 
             expect(ast.where).to.eql({
@@ -361,13 +366,13 @@ describe('SQL query builder', function () {
         });
 
         it('should support multiple attributes and non-empty where clause', function () {
-            ast = queryBuilder({
+            queryBuilder({
                 filter: [
                     [{ attribute: 'col2', operator: 'equal', value: 5 }]
                 ],
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
-                queryAST: astFixture
+                queryAST: ast
             });
 
             expect(ast.where).to.eql({
