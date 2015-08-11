@@ -5,4 +5,11 @@ node_js:
   - "iojs"
 
 before_install: |
-  - case ${TRAVIS_NODE_VERSION} in 0.8*|0.10*) npm update -g npm ;; esac
+    case ${TRAVIS_NODE_VERSION} in
+        iojs*)
+            echo "Not upgrading npm for iojs."
+            ;;
+        *)
+            npm update -g npm
+            ;;
+    esac
