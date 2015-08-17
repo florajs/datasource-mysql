@@ -47,5 +47,4 @@ describe('SQL query checker', function () {
             check(ast);
         }).to.throw(Error, 'Column "attr" must be fully qualified');
     });
-
 });
