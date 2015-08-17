@@ -8,13 +8,13 @@ describe('SQL query optimizer', function () {
     var ast;
 
     it('should only modify SELECT statements', function () {
-        var nonOptimized;
+        var initialAST;
 
         ast = { type: 'UPDATE' };
-        nonOptimized = _.clone(ast);
+        initialAST = _.clone(ast);
         optimize(ast, ['col1']);
 
-        expect(nonOptimized).to.eql(ast);
+        expect(initialAST).to.eql(ast);
     });
 
     it('should remove unused columns/attributes from AST', function () {
@@ -41,7 +41,7 @@ describe('SQL query optimizer', function () {
     });
 
     it('should not remove INNER JOINs from AST', function () {
-        var nonOptimized;
+        var initialAST;
 
         // SELECT t1.col1, t2.col2 FROM t1 INNER JOIN t2 ON t1.id = t2.id
         ast = {
@@ -64,10 +64,10 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        nonOptimized = _.cloneDeep(ast);
+        initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
-        expect(ast.from).to.eql(nonOptimized.from);
+        expect(ast.from).to.eql(initialAST.from);
     });
 
     it('should remove unreferenced LEFT JOINs from AST', function () {
@@ -178,7 +178,7 @@ describe('SQL query optimizer', function () {
     });
 
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', function () {
-        var nonOptimized;
+        var initialAST;
 
         // SELECT t1.col1 FROM t LEFT JOIN t2 ON t1.id = t2.id GROUP BY t1.col1, t2.col2
         ast = {
@@ -201,14 +201,14 @@ describe('SQL query optimizer', function () {
             orderby: null
         };
 
-        nonOptimized = _.cloneDeep(ast);
+        initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
-        expect(ast.from).to.eql(nonOptimized.from);
+        expect(ast.from).to.eql(initialAST.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', function () {
-        var nonOptimized;
+        var initialAST;
 
         ast = {
             type: 'select',
@@ -229,10 +229,10 @@ describe('SQL query optimizer', function () {
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
             ]
         };
-        nonOptimized = _.cloneDeep(ast);
+        initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
-        expect(ast.from).to.eql(nonOptimized.from);
+        expect(ast.from).to.eql(initialAST.from);
     });
 
     it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', function () {
