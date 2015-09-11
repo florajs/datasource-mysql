@@ -98,8 +98,14 @@ describe('SQL query optimizer', function () {
     });
 
     it('should pay attention to table aliases', function () {
-        // t3 must not be removed because it's used by it's alias
-        // SELECT t1.col1, t2.col2, alias.col3 FROM t LEFT JOIN t2 ON t1.id = id LEFT JOIN t3 AS alias ON t1.id = alias.id
+        /**
+         * t3 must not be removed because it's used by it's alias
+         *
+         * SELECT t1.col1, t2.col2, alias.col3
+         * FROM t
+         *   LEFT JOIN t2 ON t1.id = id
+         *   LEFT JOIN t3 AS alias ON t1.id = alias.id
+         */
         ast = {
             type: 'select',
             columns: [
@@ -333,74 +339,14 @@ describe('SQL query optimizer', function () {
         ]);
     });
 
-    it('should not remove alias if it\'s used in WHERE clause', function () {
-        // SELECT id, IFNULL(foo, "bar") AS alias FROM t WHERE id > 1 AND alias != "bar" AND 1 = 1
-        ast = {
-            type: 'select',
-            options: null,
-            distinct: null,
-            columns: [
-                { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
-                { expr: { type: 'function', name: 'IFNULL', args: {
-                    type: 'expr_list',
-                    value: [
-                        { type: 'column_ref', table: null, column: 'foo' },
-                        { type: 'string', value: 'bar' }
-                    ]
-                }}, as: 'alias' }
-            ],
-            from: [{ db: null, table: 't', as: null }],
-            where: {
-                type: 'binary_expr',
-                operator: 'AND',
-                left: {
-                    type: 'binary_expr',
-                    operator: 'AND',
-                    left: {
-                        type: 'binary_expr',
-                        operator: '>',
-                        left: { type: 'column_ref', table: null, column: 'id' },
-                        right: { type: 'number', value: 1 } },
-                    right: {
-                        type: 'binary_expr',
-                        operator: '!=',
-                        left: { type: 'column_ref', table: null, column: 'alias' },
-                        right: { type: 'string', value: 'bar' }
-                    }
-                },
-                right: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'number', value: 1 },
-                    right: { type: 'number', value: 1 }
-                }
-            },
-            groupby: null,
-            orderby: null,
-            limit: null
-        };
-
-        optimize(ast, ['id']);
-        expect(ast.columns).to.eql([
-            { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
-            { expr: { type: 'function', name: 'IFNULL', args: {
-                type: 'expr_list',
-                value: [
-                    { type: 'column_ref', table: null, column: 'foo' },
-                    { type: 'string', value: 'bar' }
-                ]
-            }}, as: 'alias' }
-        ]);
-    });
-
     it('should not remove alias if it\'s used in GROUP BY clause', function () {
-        // SELECT id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
+        // SELECT t.id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
             type: 'select',
             options: null,
             distinct: null,
             columns: [
-                { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
+                { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
                 { expr: { type: 'function', name: 'IFNULL', args: {
                     type: 'expr_list',
                     value: [
@@ -420,7 +366,7 @@ describe('SQL query optimizer', function () {
 
         optimize(ast, ['id']);
         expect(ast.columns).to.eql([
-            { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
+            { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
             { expr: { type: 'function', name: 'IFNULL', args: {
                 type: 'expr_list',
                 value: [
