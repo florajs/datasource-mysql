@@ -36,6 +36,7 @@ describe('flora-mysql DataSource', function () {
             from: [{ db: null, table: 't', as: null }],
             where: null,
             groupby: null,
+            having: null,
             orderby: null,
             limit: null
         };

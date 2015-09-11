@@ -60,6 +60,7 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
             from: [{ db: null, table: dsConfig.table, as: null }],
             where: null,
             groupby: null,
+            having: null,
             orderby: null,
             limit: null
         };
