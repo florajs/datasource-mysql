@@ -136,12 +136,21 @@ DataSource.prototype._getConnectionPool = function (server, database) {
         idleTimeoutMillis: 30000,
         create: function (callback) {
             var serverCfg = self._config.servers[server],
-                db = new Connection({
-                    host: serverCfg.host,
+                cfg = {
                     user: serverCfg.user,
                     password: serverCfg.password,
                     db: database
-                });
+                },
+                db;
+
+            if (!serverCfg.hasOwnProperty('socket')) {
+                cfg.host = serverCfg.host;
+                cfg.port = serverCfg.port || 3306;
+            } else {
+                cfg.unixSocket = serverCfg.socket;
+            }
+
+            db = new Connection(cfg);
 
             if (self._status) self._status.increment('dataSourceConnects');
             self._log.trace('connecting to "' + serverCfg.host + '/' + database + '"');

@@ -42,7 +42,7 @@ describe('flora-mysql DataSource', function () {
         };
 
     before(function () {
-        sinon.stub(Connection.prototype, 'connect').yields(); // don't connect to database
+        sinon.stub(Connection.prototype, 'connect').yields(null, []); // don't connect to database
         sinon.stub(Connection.prototype, 'isConnected').returns(true);
     });
 
@@ -59,6 +59,71 @@ describe('flora-mysql DataSource', function () {
 
         it('should export a prepare function', function () {
             expect(ds.prepare).to.be.a('function');
+        });
+    });
+
+    describe('connection params', function () {
+        var ConnectionMock = sinon.spy(Connection),
+            FloraMysql = proxyquire('../index', { './lib/connection': ConnectionMock });
+
+        before(function () {
+            sinon.stub(ConnectionMock.prototype, 'query').yields(null, []);
+        });
+
+        after(function () {
+            ConnectionMock.prototype.query.restore();
+        });
+
+        it('should use host and default port', function (done) {
+            var ds = new FloraMysql(api, serverCfg);
+
+            ds.query('default', 'db', 'SELECT 1', function () {
+                expect(ConnectionMock).to.have.been.calledWith({
+                    host: 'db-server',
+                    port: 3306,
+                    db: 'db',
+                    user: 'joe',
+                    password: 'test'
+                });
+                done();
+            });
+        });
+
+        it('should use custom port', function (done) {
+            var ds = new FloraMysql(api, {
+                servers: {
+                    default: { host: 'db-server', port: 3307, user: 'joe', password: 'test' }
+                }
+            });
+
+            ds.query('default', 'db', 'SELECT 1', function () {
+                expect(ConnectionMock).to.have.been.calledWith({
+                    host: 'db-server',
+                    port: 3307,
+                    db: 'db',
+                    user: 'joe',
+                    password: 'test'
+                });
+                done();
+            });
+        });
+
+        it('should use socket', function (done) {
+            var ds = new FloraMysql(api, {
+                servers: {
+                    default: { socket: '/path/to/socket.sock', user: 'joe', password: 'test' }
+                }
+            });
+
+            ds.query('default', 'db', 'SELECT 1', function () {
+                expect(ConnectionMock).to.have.been.calledWith({
+                    unixSocket: '/path/to/socket.sock',
+                    db: 'db',
+                    user: 'joe',
+                    password: 'test'
+                });
+                done();
+            });
         });
     });
 
