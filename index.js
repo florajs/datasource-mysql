@@ -1,6 +1,7 @@
 'use strict';
 
-var poolModule = require('generic-pool'),
+var Promise = require('when').Promise,
+    poolModule = require('generic-pool'),
     Parser = require('flora-sql-parser').Parser,
     astUtil = require('flora-sql-parser').util,
     generateAST = require('./lib/sql-query-builder'),
@@ -107,13 +108,24 @@ DataSource.prototype.process = function (request, callback) {
  * @param {Function} callback
  */
 DataSource.prototype.close = function (callback) {
+    var connectionPools = [];
+
+    function drain(pool) {
+        return new Promise(function (resolve) {
+            pool.drain(function () {
+                pool.destroyAllNow(resolve);
+            });
+        });
+    }
+
     for (var server in this._pools) {
         for (var database in this._pools[server]) {
             this._log.debug('closing MySQL pool "%s" at "%s"', database, server);
-            this._pools[server][database].destroyAllNow();
+            connectionPools.push(drain(this._pools[server][database]));
         }
     }
-    callback();
+
+    Promise.all(connectionPools).then(callback);
 };
 
 /**

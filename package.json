@@ -37,7 +37,8 @@
   "dependencies": {
     "flora-sql-parser": "^0.2.0",
     "generic-pool": "2.2.x",
-    "mariasql": "~0.1.22"
+    "mariasql": "~0.1.22",
+    "when": "^3.7.3"
   },
   "devDependencies": {
     "bunyan": "1.4.x",
