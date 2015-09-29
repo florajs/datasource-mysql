@@ -9,7 +9,7 @@
     "curly": [2, "multi-line"],
     "complexity": [0, 11],
     "dot-notation": 0,
-    "indent": 4,
+    "indent": [2, 4],
     "max-depth": [2, 6],
     "max-len": [1, 120, 4],
     "max-nested-callbacks": [2, 4],
