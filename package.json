@@ -35,9 +35,10 @@
     "node": ">=0.10.0"
   },
   "dependencies": {
-    "flora-sql-parser": "^0.2.0",
+    "flora-sql-parser": "^0.2.1",
     "generic-pool": "2.2.x",
-    "mariasql": "~0.1.22",
+    "lodash": "3.10.x",
+    "mariasql": "0.2.1",
     "when": "^3.7.3"
   },
   "devDependencies": {
