@@ -246,7 +246,7 @@ describe('flora-mysql DataSource', function () {
             });
 
             ds.process(floraRequest, function () {
-                expect(sql).to.equal('SELECT t.col1 FROM t WHERE t.col1 = \'foo\'');
+                expect(sql).to.equal('SELECT "t"."col1" FROM "t" WHERE "t"."col1" = \'foo\'');
                 done();
             });
         });
