@@ -38,6 +38,9 @@ DataSource.prototype.prepare = function (dsConfig, attributes) {
         try { // add query to exception
             ast = this._parser.parse(dsConfig.query);
         } catch (e) {
+            if (e.location) {
+                e.message += ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
+            }
             e.query = dsConfig.query;
             throw e;
         }
