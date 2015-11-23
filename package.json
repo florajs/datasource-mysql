@@ -36,7 +36,7 @@
     "iojs": ">=2.0"
   },
   "dependencies": {
-    "flora-sql-parser": "^0.2.2",
+    "flora-sql-parser": "^0.2.3",
     "generic-pool": "^2.2.0",
     "lodash": "^3.10.0",
     "mariasql": "^0.2.1",
