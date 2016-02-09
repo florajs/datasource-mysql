@@ -16,7 +16,8 @@ var queryBuilder = require('../lib/sql-query-builder'),
         groupby: null,
         orderby: null,
         limit: null
-    };
+    },
+    ImplementationError = require('flora-errors').ImplementationError;
 
 describe('SQL query builder', function () {
     var ast;
@@ -402,6 +403,17 @@ describe('SQL query builder', function () {
                     paren: true
                 }
             });
+        });
+    });
+
+    describe('sub-resource grouping', function () {
+        it('should throw error if "groupAttribute" key is set', function () {
+            expect(function () {
+                queryBuilder({
+                    groupAttribute: 'someId',
+                    queryAST: ast
+                });
+            }).to.throw(ImplementationError, /does not support "groupAttribute"/);
         });
     });
 });

@@ -36,6 +36,7 @@
     "iojs": ">=2.0"
   },
   "dependencies": {
+    "flora-errors": "^0.2.0",
     "flora-sql-parser": "^0.2.3",
     "generic-pool": "^2.3.1",
     "lodash": "^4.0.0",
