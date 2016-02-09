@@ -406,14 +406,14 @@ describe('SQL query builder', function () {
         });
     });
 
-    describe('sub-resource grouping', function () {
-        it('should throw error if "groupAttribute" key is set', function () {
+    describe('limitPer', function () {
+        it('should throw error if "limitPer" key is set', function () {
             expect(function () {
                 queryBuilder({
-                    groupAttribute: 'someId',
+                    limitPer: 'someId',
                     queryAST: ast
                 });
-            }).to.throw(ImplementationError, /does not support "groupAttribute"/);
+            }).to.throw(ImplementationError, /does not support "limitPer"/);
         });
     });
 });
