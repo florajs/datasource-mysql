@@ -22,25 +22,27 @@ var DataSource = module.exports = function (api, config) {
     this._queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
     this._status = config._status;
 
-    var self = this;
-    this._status.onStatus(function () {
-        var stats = {};
+    if (this._status) {
+        var self = this;
+        this._status.onStatus(function () {
+            var stats = {};
 
-        Object.keys(self._pools).forEach(function (server) {
-            if (!stats[server]) stats[server] = {};
-            Object.keys(self._pools[server]).forEach(function (db) {
-                var pool = self._getConnectionPool(server, db);
+            Object.keys(self._pools).forEach(function (server) {
+                if (!stats[server]) stats[server] = {};
+                Object.keys(self._pools[server]).forEach(function (db) {
+                    var pool = self._getConnectionPool(server, db);
 
-                stats[server][db] = {
-                    open: pool.getPoolSize(),
-                    sleeping: pool.availableObjectsCount(),
-                    waiting: pool.waitingClientsCount()
-                };
+                    stats[server][db] = {
+                        open: pool.getPoolSize(),
+                        sleeping: pool.availableObjectsCount(),
+                        waiting: pool.waitingClientsCount()
+                    };
+                });
             });
-        });
 
-        this.set('pools', stats);
-    });
+            this.set('pools', stats);
+        });
+    }
 };
 
 /**
