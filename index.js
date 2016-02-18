@@ -21,6 +21,26 @@ var DataSource = module.exports = function (api, config) {
     this._pools = {};
     this._queryFnPool = {}; // cache query functions for pagination queries (see _paginatedQuery function)
     this._status = config._status;
+
+    var self = this;
+    this._status.onStatus(function () {
+        var stats = {};
+
+        Object.keys(self._pools).forEach(function (server) {
+            if (!stats[server]) stats[server] = {};
+            Object.keys(self._pools[server]).forEach(function (db) {
+                var pool = self._getConnectionPool(server, db);
+
+                stats[server][db] = {
+                    open: pool.getPoolSize(),
+                    sleeping: pool.availableObjectsCount(),
+                    waiting: pool.waitingClientsCount()
+                };
+            });
+        });
+
+        this.set('pools', stats);
+    });
 };
 
 /**
@@ -93,11 +113,9 @@ DataSource.prototype.process = function (request, callback) {
         request._status.set('sql', sql);
     }
 
-    if (request._explain) {
-        request._explain.executedQuery = sql;
-    }
+    if (request._explain) request._explain.executedQuery = sql;
 
-    if (! request.page) {
+    if (!request.page) {
         this.query(server, db, sql, function (err, result) {
             if (err) return callback(err);
             callback(null, { totalCount: null, data: result });
