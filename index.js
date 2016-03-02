@@ -7,7 +7,8 @@ var Promise = require('when').Promise,
     generateAST = require('./lib/sql-query-builder'),
     checkAST = require('./lib/sql-query-checker'),
     optimizeAST = require('./lib/sql-query-optimizer'),
-    Connection = require('./lib/connection');
+    Connection = require('./lib/connection'),
+    Transaction = require('./lib/transaction');
 
 /**
  * @constructor
@@ -153,6 +154,25 @@ DataSource.prototype.close = function (callback) {
             callback();
         })
         .catch(callback);
+};
+
+/**
+ * @param {String} server
+ * @param {String} db
+ * @param {Function} callback
+ */
+DataSource.prototype.transaction = function (server, db, callback) {
+    var pool = this._getConnectionPool(server, db);
+
+    pool.acquire(function (poolErr, connection) {
+        if (poolErr) return callback(poolErr);
+
+        var trx = new Transaction(connection, pool);
+        trx.begin(function (trxErr) {
+            if (trxErr) return callback(trxErr);
+            callback(null, trx);
+        });
+    });
 };
 
 /**
