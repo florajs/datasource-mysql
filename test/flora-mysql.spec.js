@@ -360,6 +360,79 @@ describe('flora-mysql DataSource', function () {
             });*/
     });
 
+    describe('transactions', function () {
+        var queryFn;
+
+        afterEach(function () {
+            queryFn.restore();
+        });
+
+        it('should acquire a connection and start the transaction', function (done) {
+            var ds = new FloraMysql(api, serverCfg);
+
+            queryFn = sinon.stub(Connection.prototype, 'query');
+            queryFn.onFirstCall().yields(null);
+
+            ds.transaction('default', 'db', function (err, trx) {
+                expect(err).to.be.null;
+                expect(queryFn).to.be.calledOnce;
+                expect(queryFn.firstCall.args[0]).to.equal('START TRANSACTION');
+                done();
+            });
+        });
+
+        it('should pass the query to the connection', function (done) {
+            var ds = new FloraMysql(api, serverCfg);
+
+            queryFn = sinon.stub(Connection.prototype, 'query');
+            queryFn.onFirstCall().yields(null);
+            queryFn.onSecondCall().yields(null);
+
+            ds.transaction('default', 'db', function (err, trx) {
+                expect(err).to.be.null;
+                trx.query('SELECT id FROM user', function (commitErr) {
+                    expect(queryFn).to.be.calledTwice;
+                    expect(queryFn.secondCall.args[0]).to.equal('SELECT id FROM user');
+                    done();
+                });
+            });
+        });
+
+        it('should send COMMIT on commit()', function (done) {
+            var ds = new FloraMysql(api, serverCfg);
+
+            queryFn = sinon.stub(Connection.prototype, 'query');
+            queryFn.onFirstCall().yields(null);
+            queryFn.onSecondCall().yields(null);
+
+            ds.transaction('default', 'db', function (err, trx) {
+                expect(err).to.be.null;
+                trx.commit(function (commitErr) {
+                    expect(queryFn).to.be.calledTwice;
+                    expect(queryFn.secondCall.args[0]).to.equal('COMMIT');
+                    done();
+                });
+            });
+        });
+
+        it('should send ROLLBACK on rollback()', function (done) {
+            var ds = new FloraMysql(api, serverCfg);
+
+            queryFn = sinon.stub(Connection.prototype, 'query');
+            queryFn.onFirstCall().yields(null);
+            queryFn.onSecondCall().yields(null);
+
+            ds.transaction('default', 'db', function (err, trx) {
+                expect(err).to.be.null;
+                trx.rollback(function (rollbackErr) {
+                    expect(queryFn).to.be.calledTwice;
+                    expect(queryFn.secondCall.args[0]).to.equal('ROLLBACK');
+                    done();
+                });
+            });
+        });
+    });
+
     describe('pagination', function () {
         var floraRequest = {
                 database: 'db',
