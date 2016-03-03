@@ -148,7 +148,11 @@ DataSource.prototype.close = function (callback) {
         }
     }
 
-    Promise.all(connectionPools).then(callback);
+    Promise.all(connectionPools)
+        .then(function () {
+            callback();
+        })
+        .catch(callback);
 };
 
 /**
