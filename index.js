@@ -335,6 +335,8 @@ DataSource.prototype._paginatedQuery = function (server, db, sql, callback) {
  * @return {string}
  */
 function buildSql(request) {
+    request.queryAST = cloneDeep(request.queryAST);
+
     /** @type {Object} */
     var ast = generateAST(request);
 
@@ -348,6 +350,16 @@ function buildSql(request) {
     optimizeAST(ast, request.attributes);
 
     return astUtil.astToSQL(ast);
+}
+
+/**
+ * Deep-clone an object and try to be efficient
+ *
+ * @param {object} obj
+ * @return {object}
+ */
+function cloneDeep(obj) {
+    return JSON.parse(JSON.stringify(obj));
 }
 
 /**
