@@ -214,12 +214,10 @@ DataSource.prototype._getConnectionPool = function (server, database) {
             if (self._status) self._status.increment('dataSourceConnects');
             self._log.trace('connecting to "' + (serverCfg.host ? serverCfg.host : 'socket') + '/' + database + '"');
 
-            /*
             db.connection.on('error', function (err) {
                 self._log.warn(err, 'Connection error');
                 pool.destroy(db);
             });
-            */
 
             db.connect(function (err) {
                 if (err) return callback(err);
