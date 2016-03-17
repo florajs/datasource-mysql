@@ -215,7 +215,7 @@ DataSource.prototype._getConnectionPool = function (server, database) {
             self._log.trace('connecting to "' + (serverCfg.host ? serverCfg.host : 'socket') + '/' + database + '"');
 
             db.connection.on('error', function (err) {
-                self._log.warn(err, 'Connection error');
+                self._log.warn(err, 'Connection error, destroying connection to "' + (serverCfg.host ? serverCfg.host : 'socket') + '/' + database + '"');
                 pool.destroy(db);
             });
 
