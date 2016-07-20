@@ -308,6 +308,26 @@ describe('SQL query builder', function () {
                 parentheses: true
             });
         });
+
+        _({'equal': 'IS', 'notEqual': 'IS NOT'}).forEach(function (sqlOperator, filterOperator) {
+            it('should support ' + filterOperator + ' operator and null values', function () {
+                var ast = _.assign({}, astFixture);
+
+                queryBuilder({
+                    filter: [
+                        [{ attribute: 'col1', operator: filterOperator, value: null }]
+                    ],
+                    queryAST: ast
+                });
+
+                expect(ast.where).to.eql({
+                    type: 'binary_expr',
+                    operator: sqlOperator,
+                    left: { type: 'column_ref', table: 't', column: 'col1' },
+                    right: { type: 'null', value: null }
+                });
+            });
+        });
     });
 
     describe('full-text search', function () {
