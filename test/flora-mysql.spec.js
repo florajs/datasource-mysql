@@ -63,7 +63,8 @@ describe('flora-mysql DataSource', () => {
         });
     });
 
-    xdescribe('connection params', () => {
+    /*
+    describe('connection params', () => {
         var ConnectionMock = sinon.spy(Connection),
             FloraMysql = proxyquire('../index', { './lib/connection': ConnectionMock });
 
@@ -127,6 +128,7 @@ describe('flora-mysql DataSource', () => {
             });
         });
     });
+    */
 
     describe('generate AST DataSource config', () => {
 
