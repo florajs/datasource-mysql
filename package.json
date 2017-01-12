@@ -13,10 +13,7 @@
   },
   "homepage": "https://github.com/godmodelabs/flora-mysql",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/godmodelabs/flora-mysql.git"
-  },
+  "repository": "godmodelabs/flora-mysql",
   "contributors": [
     {
       "name": "Marco Baumgartl",
