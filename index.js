@@ -112,7 +112,7 @@ class DataSource {
                     });
                 });
 
-                this.set('pools', stats);
+                this._status.set('pools', stats);
             });
         }
     }
