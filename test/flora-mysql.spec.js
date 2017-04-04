@@ -20,7 +20,7 @@ const api = {
 };
 
 describe('flora-mysql DataSource', () => {
-    var ds,
+    let ds,
         serverCfg = {
             servers: {
                 default: { host: 'db-server', user: 'joe', password: 'test' }
@@ -53,7 +53,7 @@ describe('flora-mysql DataSource', () => {
     });
 
     describe('interface', () => {
-        var ds = new FloraMysql(api, serverCfg);
+        const ds = new FloraMysql(api, serverCfg);
         it('should export a query function', () => {
             expect(ds.process).to.be.a('function');
         });
@@ -137,7 +137,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should generate AST from SQL query', () => {
-            var resourceConfig = { query: 'SELECT t.col1, t.col2 FROM t' };
+            const resourceConfig = { query: 'SELECT t.col1, t.col2 FROM t' };
 
             ds.prepare(resourceConfig, ['col1', 'col2']);
 
@@ -146,7 +146,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should prepare search attributes', () => {
-            var resourceConfig = {
+            const resourceConfig = {
                 searchable: 'col1,col2',
                 query: 'SELECT t.col1, t.col2 FROM t'
             };
@@ -160,9 +160,9 @@ describe('flora-mysql DataSource', () => {
 
         describe('error handling', () => {
             it('should append query on a parse error', () => {
-                var sql = 'SELECT col1 FRO t',
-                    resourceConfig = { query: sql },
-                    exceptionThrown = false;
+                const sql = 'SELECT col1 FRO t';
+                const resourceConfig = { query: sql };
+                let exceptionThrown = false;
 
                 try {
                     ds.prepare(resourceConfig, ['col1']);
@@ -176,7 +176,7 @@ describe('flora-mysql DataSource', () => {
             });
 
             it('should throw an error if an attribute is not available in SQL query', () => {
-                var resourceConfig = { query: 'SELECT t.col1 FROM t' };
+                const resourceConfig = { query: 'SELECT t.col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -184,7 +184,7 @@ describe('flora-mysql DataSource', () => {
             });
 
             it('should throw an error if an attribute is not available as column alias', () => {
-                var resourceConfig = { query: 'SELECT t.someWeirdColumnName AS col1 FROM t' };
+                const resourceConfig = { query: 'SELECT t.someWeirdColumnName AS col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -192,7 +192,7 @@ describe('flora-mysql DataSource', () => {
             });
 
             it('should throw an error if columns are not fully qualified', () => {
-                var resourceConfig = { query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id' };
+                const resourceConfig = { query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -200,7 +200,7 @@ describe('flora-mysql DataSource', () => {
             });
 
             it('should throw an error if columns are not unique', () => {
-                var resourceConfig = { query: 'SELECT t.col1, someAttr AS col1 FROM t' };
+                const resourceConfig = { query: 'SELECT t.col1, someAttr AS col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -210,8 +210,8 @@ describe('flora-mysql DataSource', () => {
 
 
         it('should generate AST from DataSource config if no SQL query is available', () => {
-            var resourceConfig = { table: 't' },
-                attributes = ['col1', 'col2'];
+            const resourceConfig = { table: 't' };
+            const attributes = ['col1', 'col2'];
 
             ds.prepare(resourceConfig, attributes);
 
@@ -221,7 +221,7 @@ describe('flora-mysql DataSource', () => {
     });
 
     describe('flora request processing', () => {
-        var ast;
+        let ast;
 
         beforeEach(() => {
             ast = _.cloneDeep(astTpl);
@@ -233,15 +233,15 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should generate SQL statement from flora request object', function (done) {
-            var floraRequest = {
-                    database: 'db',
-                    attributes: ['col1'],
-                    queryAST: ast,
-                    filter: [
-                        [{ attribute: 'col1', operator: 'equal', value: 'foo' }]
-                    ]
-                },
-                sql = '';
+            const floraRequest = {
+                database: 'db',
+                attributes: ['col1'],
+                queryAST: ast,
+                filter: [
+                    [{ attribute: 'col1', operator: 'equal', value: 'foo' }]
+                ]
+            };
+            let sql = '';
 
             sinon.stub(Connection.prototype, 'query', function (query, callback) {
                 sql = query;
@@ -255,7 +255,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should return query results in a callback', function (done) {
-            var sampleRequest = { database: 'db', attributes: ['col1'], queryAST: ast };
+            const sampleRequest = { database: 'db', attributes: ['col1'], queryAST: ast };
 
             sinon.stub(Connection.prototype, 'query').yields(null, []);  // simulate empty result set
             ds.process(sampleRequest, function (err, result) {
@@ -267,15 +267,15 @@ describe('flora-mysql DataSource', () => {
 
         describe('error handling', () => {
             it('should throw return an error if selected attribute has no corresponding column', function (done) {
-                var floraRequest = {
-                        attributes: ['id', 'nonexistentAttr'],
-                        queryAST: _.assign({}, ast, {
-                            columns: [
-                                { expr: { type: 'column_ref', table: 't', column: 'id' }, as: '' }
-                                // nonexistentAttribute is not defined as column
-                            ]
-                        })
-                    };
+                const floraRequest = {
+                    attributes: ['id', 'nonexistentAttr'],
+                    queryAST: _.assign({}, ast, {
+                        columns: [
+                            { expr: { type: 'column_ref', table: 't', column: 'id' }, as: '' }
+                            // nonexistentAttribute is not defined as column
+                        ]
+                    })
+                };
 
                 sinon.stub(Connection.prototype, 'query').yields(null, []);
 
@@ -287,15 +287,15 @@ describe('flora-mysql DataSource', () => {
             });
 
             it('should throw return an error if selected attribute has no corresponding alias', function (done) {
-                var floraRequest = {
-                        attributes: ['id', 'nonexistentAttr'],
-                        queryAST: _.assign({}, ast, {
-                            columns: [
-                                { expr: { type: 'column_ref', table: 't', column: 'pk_id' }, as: 'id' }
-                                // nonexistentAttribute is not defined as column
-                            ]
-                        })
-                    };
+                const floraRequest = {
+                    attributes: ['id', 'nonexistentAttr'],
+                    queryAST: _.assign({}, ast, {
+                        columns: [
+                            { expr: { type: 'column_ref', table: 't', column: 'pk_id' }, as: 'id' }
+                            // nonexistentAttribute is not defined as column
+                        ]
+                    })
+                };
 
                 sinon.stub(Connection.prototype, 'query').yields(null, []);
 
@@ -329,14 +329,14 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should abort long running SELECT queries', function (done) {
-            var ds,
-                cfg = _.cloneDeep(serverCfg),
-                FloraMysql = proxyquire('../', { connection: Connection }),
-                floraRequest = {
-                    database: 'db',
-                    attributes: ['col1'],
-                    queryAST: _.cloneDeep(astTpl)
-                };
+            const FloraMysql = proxyquire('../', { connection: Connection });
+            const floraRequest = {
+                database: 'db',
+                attributes: ['col1'],
+                queryAST: _.cloneDeep(astTpl)
+            };
+            let ds;
+            let cfg = _.cloneDeep(serverCfg);
 
             cfg.servers.default.queryTimeout = 30;
             ds = new FloraMysql(api, cfg);
@@ -364,14 +364,14 @@ describe('flora-mysql DataSource', () => {
     });
 
     describe('transactions', () => {
-        var queryFn;
+        let queryFn;
 
         afterEach(() => {
             queryFn.restore();
         });
 
         it('should acquire a connection and start the transaction', function (done) {
-            var ds = new FloraMysql(api, serverCfg);
+            const ds = new FloraMysql(api, serverCfg);
 
             queryFn = sinon.stub(Connection.prototype, 'query');
             queryFn.onFirstCall().yields(null);
@@ -385,7 +385,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should pass the query to the connection', function (done) {
-            var ds = new FloraMysql(api, serverCfg);
+            const ds = new FloraMysql(api, serverCfg);
 
             queryFn = sinon.stub(Connection.prototype, 'query');
             queryFn.onFirstCall().yields(null);
@@ -402,7 +402,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should send COMMIT on commit()', function (done) {
-            var ds = new FloraMysql(api, serverCfg);
+            const ds = new FloraMysql(api, serverCfg);
 
             queryFn = sinon.stub(Connection.prototype, 'query');
             queryFn.onFirstCall().yields(null);
@@ -419,7 +419,7 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should send ROLLBACK on rollback()', function (done) {
-            var ds = new FloraMysql(api, serverCfg);
+            const ds = new FloraMysql(api, serverCfg);
 
             queryFn = sinon.stub(Connection.prototype, 'query');
             queryFn.onFirstCall().yields(null);
@@ -437,29 +437,29 @@ describe('flora-mysql DataSource', () => {
     });
 
     describe('pagination', () => {
-        var floraRequest = {
-                database: 'db',
-                attributes: ['col1', 'col2'],
-                queryAST: _.cloneDeep(astTpl),
-                limit: 15,
-                page: 3
-            },
-            queryFn;
+        const floraRequest = {
+            database: 'db',
+            attributes: ['col1', 'col2'],
+            queryAST: _.cloneDeep(astTpl),
+            limit: 15,
+            page: 3
+        };
+        let queryFn;
 
         afterEach(() => {
             queryFn.restore();
         });
 
         it('should query available results if "page" attribute is set in request', function (done) {
-            var ds = new FloraMysql(api, serverCfg);
+            const ds = new FloraMysql(api, serverCfg);
 
             queryFn = sinon.stub(Connection.prototype, 'query');
             queryFn.onFirstCall().yields(null, [])
                 .onSecondCall().yields(null, [{ totalCount: '5' }]);
 
             ds.process(floraRequest, function (err, result) {
-                var firstQuery = queryFn.firstCall.args[0],
-                    secondQuery = queryFn.secondCall.args[0];
+                const firstQuery = queryFn.firstCall.args[0];
+                const secondQuery = queryFn.secondCall.args[0];
 
                 expect(queryFn).to.be.calledTwice;
 
@@ -473,14 +473,15 @@ describe('flora-mysql DataSource', () => {
     });
 
     describe('connection pooling', () => {
-        var request1, request2,
-            emptyFn = () => {},
-            basicConfig = {
-                servers: {
-                    default: { host: 'db-host1', user: 'joe', password: 'test' },
-                    server2: { host: 'db-host2', user: 'joe', password: 'test' }
-                }
-            };
+        let request1;
+        let request2;
+        const emptyFn = () => {};
+        const basicConfig = {
+            servers: {
+                default: { host: 'db-host1', user: 'joe', password: 'test' },
+                server2: { host: 'db-host2', user: 'joe', password: 'test' }
+            }
+        };
 
         beforeEach(() => {
             sinon.stub(Connection.prototype, 'query').yields(null, []);
@@ -493,12 +494,12 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should use "default" if no server is specified', function (done) {
-            var ds = new FloraMysql(api, basicConfig);
+            const ds = new FloraMysql(api, basicConfig);
             ds.process(request1, done);
         });
 
         it('should create separate pools per server and database', () => {
-            var ds = new FloraMysql(api, basicConfig);
+            const ds = new FloraMysql(api, basicConfig);
 
             ds.process(request1, emptyFn);
             ds.process(request2, emptyFn);
@@ -509,13 +510,13 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should set default pool size to 10', () => {
-            var ds = new FloraMysql(api, basicConfig);
+            const ds = new FloraMysql(api, basicConfig);
             ds.process(request1, emptyFn);
             expect(ds._pools.default.foo.getMaxPoolSize()).to.equal(10);
         });
 
         it('should make pool size configurable per server', () => {
-            var cfg = _.cloneDeep(basicConfig),
+            const cfg = _.cloneDeep(basicConfig),
                 ds = new FloraMysql(api, cfg);
 
             cfg.servers.default.poolSize = 100;
@@ -525,13 +526,12 @@ describe('flora-mysql DataSource', () => {
         });
 
         it('should inherit pool size from datasource config', () => {
-            var cfg = _.cloneDeep(basicConfig),
-                ds;
+            let cfg = _.cloneDeep(basicConfig);
 
             cfg.poolSize = 15;
             cfg.servers.server2.poolSize = 100;
-            ds = new FloraMysql(api, cfg);
 
+            let ds = new FloraMysql(api, cfg);
             ds.process(request1, emptyFn);
             ds.process(request2, emptyFn);
 
