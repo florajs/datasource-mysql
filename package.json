@@ -37,7 +37,8 @@
     "generic-pool": "^2.3.1",
     "has": "^1.0.1",
     "lodash": "^4.0.0",
-    "mariasql": "^0.2.5"
+    "mariasql": "^0.2.5",
+    "mysql2": "^1.2.0"
   },
   "devDependencies": {
     "bunyan": "^1.5.1",

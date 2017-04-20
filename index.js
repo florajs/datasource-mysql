@@ -264,7 +264,7 @@ class DataSource {
                 const cfg = {
                     user: serverCfg.user,
                     password: serverCfg.password,
-                    db: database
+                    database
                 };
 
                 if (!has(serverCfg, 'socket')) {
@@ -290,7 +290,7 @@ class DataSource {
                 });
             },
             destroy: connection => connection.close(),
-            validate: connection => connection.isConnected()
+            validateAsync: (connection, callback) => { connection.isConnected(callback); }
         });
 
         if (this._config.servers[server].queryTimeout) {
