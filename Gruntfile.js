@@ -1,22 +1,28 @@
 'use strict';
 
-module.exports = function(grunt) {
-
+module.exports = function (grunt) {
     grunt.initConfig({
         mochaTest: {
-            test: {
+            unit: {
                 options: {
                     reporter: 'spec',
                     quiet: false
                 },
-                src: ['test/**/*.js']
+                src: ['test/unit/*.spec.js']
+            },
+            integration: {
+                options: {
+                    reporter: 'spec',
+                    quiet: false
+                },
+                src: ['test/integration/*.spec.js']
             },
             bamboo: {
                 options: {
                     reporter: 'mocha-bamboo-reporter',
                     quiet: false
                 },
-                src: ['<%= mochaTest.test.src %>']
+                src: ['<%= mochaTest.unit.src %>']
             }
         },
 
@@ -45,8 +51,9 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default', ['lint', 'test']);
     grunt.registerTask('lint', 'eslint');
-    grunt.registerTask('test', 'mochaTest:test');
+    grunt.registerTask('test-unit', 'mochaTest:unit');
+    grunt.registerTask('test-integration', 'mochaTest:integration');
     grunt.registerTask('test-bamboo', 'mochaTest:bamboo');
     grunt.registerTask('test-cov', ['mocha_istanbul:coverage']);
-
+    grunt.registerTask('test', 'test-unit');
 };

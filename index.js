@@ -1,14 +1,12 @@
 'use strict';
 
-const has = require('has');
-const poolModule = require('generic-pool');
+const mysql = require('mysql2');
 const { Parser } = require('flora-sql-parser');
 const astUtil = require('flora-sql-parser').util;
 
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
-const Connection = require('./lib/connection');
 const Transaction = require('./lib/transaction');
 
 /**
@@ -70,16 +68,6 @@ function buildSql(request) {
     return astUtil.astToSQL(ast);
 }
 
-/**
- * @param conn
- * @param sql
- * @param callback
- * @private
- */
-function runQuery(conn, sql, callback) {
-    conn.query(sql, callback);
-}
-
 class DataSource {
     /**
      * @constructor
@@ -91,10 +79,9 @@ class DataSource {
         this._parser = new Parser();
         this._config = config;
         this._pools = {};
-        // cache query functions for pagination queries (see _paginatedQuery function)
-        this._queryFnPool = {};
         this._status = config._status;
 
+        /* // FIXME!
         if (this._status) {
             this._status.onStatus(() => {
                 const stats = {};
@@ -114,7 +101,7 @@ class DataSource {
 
                 this._status.set('pools', stats);
             });
-        }
+        }*/
     }
 
     /**
@@ -191,16 +178,17 @@ class DataSource {
             request._status.set('sql', sql);
         }
 
+        if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._explain) request._explain.executedQuery = sql;
 
-        if (!request.page) {
-            return this.query(server, db, sql, (err, result) => {
-                if (err) return callback(err);
-                return callback(null, { totalCount: null, data: result });
-            });
-        }
+        return this.query(server, db, sql, (err, results) => {
+            if (err) return callback(err);
 
-        return this._paginatedQuery(server, db, sql, callback);
+            return callback(null, {
+                data: !request.page ? results : results[0],
+                totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
+            });
+        });
     }
 
     /**
@@ -209,10 +197,8 @@ class DataSource {
     close(callback) {
         const connectionPools = [];
 
-        function drain(pool) {
-            return new Promise((resolve) => {
-                pool.drain(() => pool.destroyAllNow(resolve));
-            });
+        function drain(pool) { // TODO: test
+            return new Promise(resolve => pool.end(resolve));
         }
 
         Object.keys(this._pools).forEach((server) => {
@@ -235,10 +221,10 @@ class DataSource {
     transaction(server, db, callback) {
         const pool = this._getConnectionPool(server, db);
 
-        pool.acquire((poolErr, connection) => {
+        pool.getConnection((poolErr, connection) => {
             if (poolErr) return callback(poolErr);
 
-            const trx = new Transaction(connection, pool);
+            const trx = new Transaction(connection);
             return trx.begin((trxErr) => {
                 if (trxErr) return callback(trxErr);
                 return callback(null, trx);
@@ -259,47 +245,18 @@ class DataSource {
 
         this._log.trace('creating MySQL pool "%s"', database);
 
-        const pool = poolModule.Pool({
-            name: database,
-            max: this._config.servers[server].poolSize || this._config.poolSize || 10,
-            idleTimeoutMillis: 30000,
-            create: (callback) => {
-                const serverCfg = this._config.servers[server];
-                const cfg = {
-                    user: serverCfg.user,
-                    password: serverCfg.password,
-                    database
-                };
-
-                if (!has(serverCfg, 'socket')) {
-                    cfg.host = serverCfg.host;
-                    cfg.port = serverCfg.port || 3306;
-                } else {
-                    cfg.unixSocket = serverCfg.socket;
-                }
-
-                const db = new Connection(cfg);
-
-                if (this._status) this._status.increment('dataSourceConnects');
-                this._log.trace('connecting to "' + (serverCfg.host ? serverCfg.host : 'socket') + '/' + database + '"');
-
-                db.connection.on('error', (err) => {
-                    this._log.warn(err, 'Connection error, destroying connection to "' + (serverCfg.host ? serverCfg.host : 'socket') + '/' + database + '"');
-                    pool.destroy(db);
-                });
-
-                db.connect((err) => {
-                    if (err) return callback(err);
-                    return callback(null, db);
-                });
-            },
-            destroy: connection => connection.close(),
-            validateAsync: (connection, callback) => { connection.isConnected(callback); }
+        const serverCfg = this._config.servers[server];
+        const pool = mysql.createPool({
+            host: serverCfg.host,
+            port: serverCfg.port || 3306,
+            user: serverCfg.user,
+            password: serverCfg.password,
+            database,
+            connectionLimit: this._config.servers[server].poolSize || this._config.poolSize || 10,
+            multipleStatements: true // pagination queries
         });
 
-        if (this._config.servers[server].queryTimeout) {
-            pool.flora = { queryTimeout: this._config.servers[server].queryTimeout };
-        }
+        pool.on('connection', connection => connection.query('SET SESSION sql_mode = "ANSI";'));
 
         if (typeof this._pools[server] !== 'object') this._pools[server] = {};
         this._pools[server][database] = pool;
@@ -308,87 +265,22 @@ class DataSource {
 
     /**
      * Low-level query function. Subsequent calls may
-     * may use different connections from connection pool.
-     *
-     * @param {string} db
-     * @param {string} sql
-     * @param {Function} callback
-     */
-    query(server, db, sql, callback) {
-        const pool = this._getConnectionPool(server, db);
-
-        pool.acquire((connectionErr, connection) => {
-            let queryTimeout;
-
-            if (connectionErr) return callback(connectionErr);
-
-            if (pool.flora && pool.flora.queryTimeout && sql.toLowerCase().indexOf('select') === 0) {
-                queryTimeout = setTimeout(() => {
-                    queryTimeout = null;
-                    pool.release(connection);
-                    callback(new Error('Query execution was interrupted (query timeout exceeded).'));
-                }, pool.flora.queryTimeout);
-            }
-
-            if (this._status) this._status.increment('dataSourceQueries');
-            this._log.trace({ sql }, 'executing query');
-
-            return connection.query(sql, (queryError, result) => {
-                if (queryError) {
-                    // remove connection from pool on connection problems
-                    // http://dev.mysql.com/doc/refman/5.6/en/error-messages-client.html
-                    if (queryError && queryError.code >= 2000 && queryError.code < 2100) {
-                        pool.destroy(connection);
-                    } else pool.release(connection);
-                    callback(queryError);
-                    return;
-                }
-
-                if (queryTimeout !== null) {
-                    clearTimeout(queryTimeout);
-                    pool.release(connection);
-                    callback(null, result);
-                }
-            });
-        });
-    }
-
-    /**
-     * We cannot safely rely on getting same connection from
-     * pool to run 'SELECT FOUND_ROWS()' after original query.
+     * use different connections from connection pool.
      *
      * @param {string} server
      * @param {string} db
      * @param {string} sql
      * @param {Function} callback
-     * @return {*}
-     * @private
      */
-    _paginatedQuery(server, db, sql, callback) {
-        if (this._queryFnPool[server] && this._queryFnPool[server][db]) {
-            return this._queryFnPool[server][db](sql, callback);
-        }
+    query(server, db, sql, callback) {
+        if (this._status) this._status.increment('dataSourceQueries');
+        this._log.trace({ sql }, 'executing query');
 
-        const queryFn = this._getConnectionPool(server, db).pooled((connection, sqlQuery, cb) => {
-            if (this._status) this._status.increment('dataSourceQueries');
-            this._log.trace({ sql }, 'executing paginated query');
-
-            connection.query(sqlQuery, (queryError, rows) => {
-                if (queryError) return cb(queryError);
-
-                if (this._status) this._status.increment('dataSourceQueries');
-                const result = { data: rows };
-                return runQuery(connection, 'SELECT FOUND_ROWS() AS totalCount', (err, paginationInfo) => {
-                    if (err) return cb(err);
-                    result.totalCount = parseInt(paginationInfo[0].totalCount, 10);
-                    return cb(null, result);
-                });
-            });
+        const pool = this._getConnectionPool(server, db);
+        pool.query(sql, (err, result) => {
+            if (err) return callback(err);
+            return callback(null, result);
         });
-
-        if (typeof this._queryFnPool[server] !== 'object') this._queryFnPool[server] = {};
-        this._queryFnPool[server][db] = queryFn;
-        return queryFn(sql, callback);
     }
 }
 

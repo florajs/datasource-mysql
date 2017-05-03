@@ -1,6 +1,6 @@
 'use strict';
 
-const queryBuilder = require('../lib/sql-query-builder');
+const queryBuilder = require('../../lib/sql-query-builder');
 const _ = require('lodash');
 const { expect } = require('chai');
 const astFixture = {
@@ -382,7 +382,7 @@ describe('SQL query builder', () => {
                     WHERE __floraFilterPlaceholder__
                  */
                 const ast = {
-                    _meta: { hasFilterPlaceholders: true }, 
+                    _meta: { hasFilterPlaceholders: true },
                     type: 'select',
                     distinct: null,
                     columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],

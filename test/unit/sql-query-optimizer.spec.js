@@ -1,17 +1,15 @@
 'use strict';
 
-const expect = require('chai').expect;
-const optimize = require('../lib/sql-query-optimizer');
+const { expect } = require('chai');
+const optimize = require('../../lib/sql-query-optimizer');
 const _ = require('lodash');
 
 describe('SQL query optimizer', () => {
     let ast;
 
-    it('should only modify SELECT statements', () => {
-        let initialAST;
-
+    it('should only modify SELECT statements', function () {
         ast = { type: 'UPDATE' };
-        initialAST = _.clone(ast);
+        const initialAST = _.clone(ast);
         optimize(ast, ['col1']);
 
         expect(initialAST).to.eql(ast);
@@ -41,8 +39,6 @@ describe('SQL query optimizer', () => {
     });
 
     it('should not remove INNER JOINs from AST', () => {
-        let initialAST;
-
         // SELECT t1.col1, t2.col2 FROM t1 INNER JOIN t2 ON t1.id = t2.id
         ast = {
             type: 'select',
@@ -64,7 +60,7 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        initialAST = _.cloneDeep(ast);
+        const initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
@@ -184,8 +180,6 @@ describe('SQL query optimizer', () => {
     });
 
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', () => {
-        let initialAST;
-
         // SELECT t1.col1 FROM t LEFT JOIN t2 ON t1.id = t2.id GROUP BY t1.col1, t2.col2
         ast = {
             type: 'select',
@@ -207,15 +201,13 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        initialAST = _.cloneDeep(ast);
+        const initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', () => {
-        let initialAST;
-
         ast = {
             type: 'select',
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
@@ -235,7 +227,7 @@ describe('SQL query optimizer', () => {
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
             ]
         };
-        initialAST = _.cloneDeep(ast);
+        const initialAST = _.cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
