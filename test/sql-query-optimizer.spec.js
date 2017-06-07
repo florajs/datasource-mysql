@@ -1,14 +1,14 @@
 'use strict';
 
-var expect = require('chai').expect,
-    optimize = require('../lib/sql-query-optimizer'),
-    _ = require('lodash');
+const expect = require('chai').expect;
+const optimize = require('../lib/sql-query-optimizer');
+const _ = require('lodash');
 
-describe('SQL query optimizer', function () {
-    var ast;
+describe('SQL query optimizer', () => {
+    let ast;
 
-    it('should only modify SELECT statements', function () {
-        var initialAST;
+    it('should only modify SELECT statements', () => {
+        let initialAST;
 
         ast = { type: 'UPDATE' };
         initialAST = _.clone(ast);
@@ -17,7 +17,7 @@ describe('SQL query optimizer', function () {
         expect(initialAST).to.eql(ast);
     });
 
-    it('should remove unused columns/attributes from AST', function () {
+    it('should remove unused columns/attributes from AST', () => {
         // SELECT t.col1, t.col2, t.col3 AS alias, t.col4 FROM t1
         ast = {
             type: 'select',
@@ -40,8 +40,8 @@ describe('SQL query optimizer', function () {
         ]);
     });
 
-    it('should not remove INNER JOINs from AST', function () {
-        var initialAST;
+    it('should not remove INNER JOINs from AST', () => {
+        let initialAST;
 
         // SELECT t1.col1, t2.col2 FROM t1 INNER JOIN t2 ON t1.id = t2.id
         ast = {
@@ -70,7 +70,7 @@ describe('SQL query optimizer', function () {
         expect(ast.from).to.eql(initialAST.from);
     });
 
-    it('should remove unreferenced LEFT JOINs from AST', function () {
+    it('should remove unreferenced LEFT JOINs from AST', () => {
         // should remove LEFT JOIN on t2 because col2 attribute is not requested
         // SELECT t1.col1, t2.col2 FROM t LEFT JOIN t2 ON t1.id = t2.id
         ast = {
@@ -97,7 +97,7 @@ describe('SQL query optimizer', function () {
         expect(ast.from).to.eql([{ db: null, table: 't', as: null }]); // SELECT t1.col1 FROM t
     });
 
-    it('should pay attention to table aliases', function () {
+    it('should pay attention to table aliases', () => {
         /**
          * t3 must not be removed because it's used by it's alias
          *
@@ -145,7 +145,7 @@ describe('SQL query optimizer', function () {
         ]);
     });
 
-    it('should not remove LEFT JOIN if joined table is referenced in WHERE clause', function () {
+    it('should not remove LEFT JOIN if joined table is referenced in WHERE clause', () => {
         // SELECT t1.col1 FROM t LEFT JOIN t2 ON t1.id = t2.id WHERE t1.col1 = 'foo' AND t2.col = 'foobar'
         ast = {
             type: 'select',
@@ -183,8 +183,8 @@ describe('SQL query optimizer', function () {
         expect(ast.from).to.eql(ast.from);
     });
 
-    it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', function () {
-        var initialAST;
+    it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', () => {
+        let initialAST;
 
         // SELECT t1.col1 FROM t LEFT JOIN t2 ON t1.id = t2.id GROUP BY t1.col1, t2.col2
         ast = {
@@ -213,8 +213,8 @@ describe('SQL query optimizer', function () {
         expect(ast.from).to.eql(initialAST.from);
     });
 
-    it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', function () {
-        var initialAST;
+    it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', () => {
+        let initialAST;
 
         ast = {
             type: 'select',
@@ -241,7 +241,7 @@ describe('SQL query optimizer', function () {
         expect(ast.from).to.eql(initialAST.from);
     });
 
-    it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', function () {
+    it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', () => {
         /*
             SELECT
               instrument.id, ctde.name AS nameDE, cten.name AS nameEN
@@ -339,7 +339,7 @@ describe('SQL query optimizer', function () {
         ]);
     });
 
-    it('should not remove alias if it\'s used in GROUP BY clause', function () {
+    it('should not remove alias if it\'s used in GROUP BY clause', () => {
         // SELECT t.id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
             type: 'select',
@@ -377,7 +377,7 @@ describe('SQL query optimizer', function () {
         ]);
     });
 
-    it('should not remove alias if it\'s used in ORDER BY clause', function () {
+    it('should not remove alias if it\'s used in ORDER BY clause', () => {
         // SELECT id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
             type: 'select',

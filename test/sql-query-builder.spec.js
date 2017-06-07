@@ -1,37 +1,37 @@
 'use strict';
 
-var queryBuilder = require('../lib/sql-query-builder'),
-    _ = require('lodash'),
-    expect = require('chai').expect,
-    astFixture = {
-        type: 'select',
-        distinct: null,
-        columns: [
-            { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
-            { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null },
-            { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'columnAlias' }
-        ],
-        from: [{ db: null, table: 't', as: null }],
-        where: null,
-        groupby: null,
-        orderby: null,
-        limit: null
-    },
-    ImplementationError = require('flora-errors').ImplementationError;
+const queryBuilder = require('../lib/sql-query-builder');
+const _ = require('lodash');
+const expect = require('chai').expect;
+const astFixture = {
+    type: 'select',
+    distinct: null,
+    columns: [
+        { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
+        { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null },
+        { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'columnAlias' }
+    ],
+    from: [{ db: null, table: 't', as: null }],
+    where: null,
+    groupby: null,
+    orderby: null,
+    limit: null
+};
+const ImplementationError = require('flora-errors').ImplementationError;
 
-describe('SQL query builder', function () {
-    var ast;
+describe('SQL query builder', () => {
+    let ast;
 
-    beforeEach(function () {
+    beforeEach(() => {
         ast = _.cloneDeep(astFixture);
     });
 
-    afterEach(function () {
+    afterEach(() => {
         ast = null;
     });
 
-    describe('order', function () {
-        it('should order by one attribute', function () {
+    describe('order', () => {
+        it('should order by one attribute', () => {
             queryBuilder({
                 order: [{ attribute: 'col1', direction: 'asc' }],
                 queryAST: ast
@@ -42,7 +42,7 @@ describe('SQL query builder', function () {
             }]);
         });
 
-        it('should resolve alias to column', function () {
+        it('should resolve alias to column', () => {
             queryBuilder({
                 order: [{ attribute: 'columnAlias', direction: 'desc' }],
                 queryAST: ast
@@ -53,7 +53,7 @@ describe('SQL query builder', function () {
             }]);
         });
 
-        it('should order by multiple attributes', function () {
+        it('should order by multiple attributes', () => {
             queryBuilder({
                 order: [
                     { attribute: 'col1', direction: 'asc' },
@@ -68,8 +68,8 @@ describe('SQL query builder', function () {
         });
     });
 
-    describe('limit', function () {
-        it('should set limit', function () {
+    describe('limit', () => {
+        it('should set limit', () => {
             queryBuilder({
                 limit: 17,
                 queryAST: ast
@@ -80,7 +80,7 @@ describe('SQL query builder', function () {
             ]);
         });
 
-        it('should set limit with offset', function () {
+        it('should set limit with offset', () => {
             queryBuilder({
                 limit: 10,
                 page: 3,
@@ -93,8 +93,8 @@ describe('SQL query builder', function () {
         });
     });
 
-    describe('filter', function () {
-        it('should add single "AND" condition', function () {
+    describe('filter', () => {
+        it('should add single "AND" condition', () => {
             queryBuilder({
                 filter: [
                     [{ attribute: 'col1', operator: 'equal', value: 0 }]
@@ -109,7 +109,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should add multiple "AND" conditions', function () {
+        it('should add multiple "AND" conditions', () => {
             queryBuilder({
                 filter: [
                     [
@@ -137,7 +137,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should add mulitple "OR" conditions', function () {
+        it('should add mulitple "OR" conditions', () => {
             queryBuilder({
                 filter: [
                     [{ attribute: 'col1', operator: 'greater', value: 10 }],
@@ -163,7 +163,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should not overwrite existing where conditions (single filter)', function () {
+        it('should not overwrite existing where conditions (single filter)', () => {
             ast = _.assign({}, ast, {
                 where: {
                     type: 'binary_expr',
@@ -198,7 +198,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should not overwrite existing where conditions (multiple filters)', function () {
+        it('should not overwrite existing where conditions (multiple filters)', () => {
             ast = _.assign({}, astFixture, {
                 where: {
                     type: 'binary_expr',
@@ -244,8 +244,8 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should support arrays as attribute filters', function () {
-            var ast = {
+        it('should support arrays as attribute filters', () => {
+            const ast = {
                 type: 'select',
                 distinct: null,
                 columns: [
@@ -309,9 +309,9 @@ describe('SQL query builder', function () {
             });
         });
 
-        _({'equal': 'IS', 'notEqual': 'IS NOT'}).forEach(function (sqlOperator, filterOperator) {
-            it('should support ' + filterOperator + ' operator and null values', function () {
-                var ast = _.assign({}, astFixture);
+        _({'equal': 'IS', 'notEqual': 'IS NOT'}).forEach((sqlOperator, filterOperator) => {
+            it('should support ' + filterOperator + ' operator and null values', () => {
+                const ast = _.assign({}, astFixture);
 
                 queryBuilder({
                     filter: [
@@ -330,8 +330,8 @@ describe('SQL query builder', function () {
         });
     });
 
-    describe('full-text search', function () {
-        it('should support single attribute', function () {
+    describe('full-text search', () => {
+        it('should support single attribute', () => {
             queryBuilder({
                 searchable: ['col1'],
                 search: 'foobar',
@@ -346,7 +346,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should support multiple attributes', function () {
+        it('should support multiple attributes', () => {
             queryBuilder({
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
@@ -371,7 +371,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should escape special pattern characters "%" and "_"', function () {
+        it('should escape special pattern characters "%" and "_"', () => {
             queryBuilder({
                 searchable: ['col1'],
                 search: 'f%o_o%b_ar',
@@ -386,7 +386,7 @@ describe('SQL query builder', function () {
             });
         });
 
-        it('should support multiple attributes and non-empty where clause', function () {
+        it('should support multiple attributes and non-empty where clause', () => {
             queryBuilder({
                 filter: [
                     [{ attribute: 'col2', operator: 'equal', value: 5 }]
@@ -426,9 +426,9 @@ describe('SQL query builder', function () {
         });
     });
 
-    describe('limitPer', function () {
-        it('should throw error if "limitPer" key is set', function () {
-            expect(function () {
+    describe('limitPer', () => {
+        it('should throw error if "limitPer" key is set', () => {
+            expect(() => {
                 queryBuilder({
                     limitPer: 'someId',
                     queryAST: ast
