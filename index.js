@@ -131,6 +131,9 @@ class DataSource {
         if (dsConfig.query && dsConfig.query.trim() !== '') {
             try { // add query to exception
                 ast = this._parser.parse(dsConfig.query);
+
+                ast._meta = ast._meta || {};
+                ast._meta.hasFilterPlaceholders = dsConfig.query.includes('__floraFilterPlaceholder__');
             } catch (e) {
                 if (e.location) {
                     e.message += ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
@@ -143,6 +146,7 @@ class DataSource {
             checkSqlEquivalents(attributes, ast.columns);
         } else {
             ast = {
+                _meta: { hasFilterPlaceholders: false },
                 type: 'select',
                 options: null,
                 distinct: null,

@@ -27,6 +27,7 @@ describe('flora-mysql DataSource', () => {
             }
         },
         astTpl = {
+            _meta: { hasFilterPlaceholders: false },
             type: 'select',
             options: null,
             distinct: null,
@@ -61,6 +62,30 @@ describe('flora-mysql DataSource', () => {
         it('should export a prepare function', () => {
             expect(ds.prepare).to.be.a('function');
         });
+    });
+
+    describe('filter placeholder', () => {
+        it('should add flag to indicate existence of placeholders in AST', () => {
+            const dsConfig = { query: 'SELECT t.col1 FROM t WHERE 1 = 1 AND __floraFilterPlaceholder__' };
+
+            (new FloraMysql(api, serverCfg)).prepare(dsConfig, []);
+
+            expect(dsConfig.queryAST._meta).to.have.property('hasFilterPlaceholders', true);
+        });
+
+        it('should preserve hasFilterPlaceholders flag when AST is cloned', sinon.test((done) => {
+            const dsConfig = { query: 'SELECT t.col1 FROM t WHERE 1 = 1 AND __floraFilterPlaceholder__' };
+            const ds = new FloraMysql(api, serverCfg);
+            const queryFn = sinon.stub(ds, 'query').yields(null, []);
+
+            ds.prepare(dsConfig, ['col1']);
+
+            ds.process({ attributes: ['col1'], queryAST: dsConfig.queryAST }, () => {
+                expect(queryFn).to.have.been.called.once;
+                expect(queryFn.firstCall.args[2]).to.not.contain('__floraFilterPlaceholder__');
+                done();
+            });
+        }));
     });
 
     /*
