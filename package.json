@@ -50,6 +50,7 @@
     "grunt-eslint": "^19.0.0",
     "grunt-mocha-istanbul": "^5.0.2",
     "grunt-mocha-test": "^0.13.2",
+    "grunt-shell": "^2.1.0",
     "istanbul": "^0.4.2",
     "load-grunt-tasks": "^3.4.0",
     "mocha": "^3.2.0",

@@ -1,6 +1,6 @@
 'use strict';
 
-const mysql = require('mysql2');
+const mysql = require('mysql');
 const { Parser } = require('flora-sql-parser');
 const astUtil = require('flora-sql-parser').util;
 
@@ -81,7 +81,7 @@ class DataSource {
         this._pools = {};
         this._status = config._status;
 
-        /* // FIXME!
+        /*
         if (this._status) {
             this._status.onStatus(() => {
                 const stats = {};
@@ -197,7 +197,7 @@ class DataSource {
     close(callback) {
         const connectionPools = [];
 
-        function drain(pool) { // TODO: test
+        function drain(pool) {
             return new Promise(resolve => pool.end(resolve));
         }
 

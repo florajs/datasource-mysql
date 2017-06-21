@@ -5,13 +5,11 @@ Flora MySQL DataSource
 [![NPM version](https://badge.fury.io/js/flora-mysql.svg)](https://www.npmjs.com/package/flora-mysql)
 [![Dependencies](https://img.shields.io/david/godmodelabs/flora-mysql.svg)](https://david-dm.org/godmodelabs/flora-mysql)
 
-MySQL connection for [Flora](https://github.com/godmodelabs/flora).
+Use MySQL as [Flora](https://github.com/godmodelabs/flora) datasource.
 
 Features
 --------
 - Request-specific optimization of defined SQL querys
-- Connection pool
-
 
 License
 -------

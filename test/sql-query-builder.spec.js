@@ -1,6 +1,6 @@
 'use strict';
 
-const queryBuilder = require('../../lib/sql-query-builder');
+const queryBuilder = require('../lib/sql-query-builder');
 const _ = require('lodash');
 const { expect } = require('chai');
 const astFixture = {

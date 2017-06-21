@@ -1,0 +1,21 @@
+version: "3"
+
+services:
+    mysql:
+        image: mysql:5.7
+        tmpfs: /var/lib/mysql:rw
+        volumes:
+            - ./fixtures:/docker-entrypoint-initdb.d
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+            MYSQL_DATABASE: "flora_mysql_testdb"
+    test:
+        image: node:${NODE_VERSION:-6}-alpine
+        volumes:
+            - ../:/usr/src/app
+        working_dir: /usr/src/app
+        environment:
+            NODE_ENV: "development"
+        command: ["./test/wait-for-mysql.sh", "mysql", "./node_modules/.bin/grunt", "${GRUNT_TARGET:-mochaTest:stdout}"]
