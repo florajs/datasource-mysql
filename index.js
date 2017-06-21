@@ -252,7 +252,7 @@ class DataSource {
             user: serverCfg.user,
             password: serverCfg.password,
             database,
-            connectionLimit: this._config.servers[server].poolSize || this._config.poolSize || 10,
+            queueLimit: serverCfg.poolSize || this._config.poolSize || 10,
             multipleStatements: true // pagination queries
         });
 
