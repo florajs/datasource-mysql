@@ -1,6 +1,8 @@
 'use strict';
 
 module.exports = (grunt) => {
+    const uid = process.getuid();
+
     grunt.initConfig({
         shell: {
             cleanup: {
@@ -17,8 +19,13 @@ module.exports = (grunt) => {
                 options: {
                     execOptions: {
                         env: Object.assign({}, process.env, {
+                            UID: uid,
                             GRUNT_TARGET: 'mochaTest:bamboo',
-                            COMPOSE_OPTIONS: '-e GRUNT_TARGET=mochaTest:bamboo' // containerized docker-compose
+                            // containerized docker-compose
+                            COMPOSE_OPTIONS: [
+                                '-e GRUNT_TARGET=mochaTest:bamboo',
+                                `-e UID=${uid}`
+                            ].join(' ')
                         })
                     }
                 }
@@ -28,8 +35,13 @@ module.exports = (grunt) => {
                 options: {
                     execOptions: {
                         env: Object.assign({}, process.env, {
+                            UID: uid,
                             GRUNT_TARGET: 'mocha_istanbul:coverage',
-                            COMPOSE_OPTIONS: '-e GRUNT_TARGET=mocha_istanbul:coverage' // containerized docker-compose
+                            // containerized docker-compose
+                            COMPOSE_OPTIONS: [
+                                '-e GRUNT_TARGET=mocha_istanbul:coverage',
+                                `-e UID=${uid}`
+                            ].join(' ')
                         })
                     }
                 }
@@ -85,7 +97,7 @@ module.exports = (grunt) => {
 
     grunt.registerTask('default', ['lint', 'test']);
     grunt.registerTask('lint', 'eslint');
-    grunt.registerTask('test', ['shell:cleanup', 'shell:mysql', 'shell:test', 'shell:kill']);
-    grunt.registerTask('test-bamboo', ['shell:cleanup', 'shell:mysql', 'shell:bamboo', 'shell:kill']);
-    grunt.registerTask('test-cov', ['shell:cleanup', 'shell:mysql', 'shell:coverage', 'shell:kill']);
+    grunt.registerTask('test', ['shell:cleanup', 'shell:mysql', 'shell:test', 'shell:kill', 'shell:cleanup']);
+    grunt.registerTask('test-bamboo', ['shell:cleanup', 'shell:mysql', 'shell:bamboo', 'shell:kill', 'shell:cleanup']);
+    grunt.registerTask('test-cov', ['shell:cleanup', 'shell:mysql', 'shell:coverage', 'shell:kill', 'shell:cleanup']);
 };

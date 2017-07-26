@@ -13,6 +13,7 @@ services:
             MYSQL_DATABASE: "flora_mysql_testdb"
     test:
         image: node:${NODE_VERSION:-6}-alpine
+        user: ${UID:-0}
         volumes:
             - ../:/usr/src/app
         working_dir: /usr/src/app
