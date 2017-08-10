@@ -1,5 +1,6 @@
 'use strict';
 
+const has = require('has');
 const mysql = require('mysql');
 const { Parser } = require('flora-sql-parser');
 const astUtil = require('flora-sql-parser').util;
@@ -66,6 +67,46 @@ function buildSql(request) {
     optimizeAST(ast, request.attributes);
 
     return astUtil.astToSQL(ast);
+}
+
+/**
+ * Initialize pool connection (proper error handling
+ * is quiet impossible in during pool connection event)
+ *
+ * @param {Connection} connection
+ * @param {Array.<string|Array.<string>|Function>} initConfigs
+ * @return {Promise}
+ */
+function initConnection(connection, initConfigs) {
+    function query(sql) {
+        return new Promise((resolve, reject) => {
+            connection.query(sql, (err) => {
+                if (err) return reject(err);
+                return resolve();
+            });
+        });
+    }
+
+    const initQueries = initConfigs.map((initCfg) => {
+        if (typeof initCfg === 'string') {
+            return query(initCfg);
+        } else if (Array.isArray(initCfg)) {
+            return initCfg.every(item => typeof item === 'string')
+                ? Promise.all(initCfg.map(query))
+                : Promise.reject(new Error('All items must be of type string'));
+        } else if (typeof initCfg === 'function') {
+            return new Promise((resolve, reject) => {
+                initCfg(connection, (err) => {
+                    if (err) return reject(err);
+                    return resolve();
+                });
+            });
+        }
+
+        return Promise.reject(new Error('onConnect can either be a string, an array of strings or a function'));
+    });
+
+    return Promise.all(initQueries);
 }
 
 class DataSource {
@@ -182,6 +223,7 @@ class DataSource {
         if (request._explain) request._explain.executedQuery = sql;
 
         return this.query(server, db, sql, (err, results) => {
+            if (err) this._log.info(err);
             if (err) return callback(err);
 
             return callback(null, {
@@ -219,17 +261,15 @@ class DataSource {
      * @param {Function} callback
      */
     transaction(server, db, callback) {
-        const pool = this._getConnectionPool(server, db);
-
-        pool.getConnection((poolErr, connection) => {
-            if (poolErr) return callback(poolErr);
-
-            const trx = new Transaction(connection);
-            return trx.begin((trxErr) => {
-                if (trxErr) return callback(trxErr);
-                return callback(null, trx);
-            });
-        });
+        this._getConnection(server, db)
+            .then((connection) => {
+                const trx = new Transaction(connection);
+                return trx.begin((trxErr) => {
+                    if (trxErr) return callback(trxErr);
+                    return callback(null, trx);
+                });
+            })
+            .catch(callback);
     }
 
     /**
@@ -257,8 +297,6 @@ class DataSource {
             multipleStatements: true // pagination queries
         });
 
-        pool.on('connection', connection => connection.query('SET SESSION sql_mode = "ANSI";'));
-
         if (typeof this._pools[server] !== 'object') this._pools[server] = {};
         this._pools[server][database] = pool;
         return pool;
@@ -274,13 +312,43 @@ class DataSource {
      * @param {Function} callback
      */
     query(server, db, sql, callback) {
-        if (this._status) this._status.increment('dataSourceQueries');
-        this._log.trace({ sql }, 'executing query');
+        this._getConnection(server, db)
+            .then((connection) => {
+                if (this._status) this._status.increment('dataSourceQueries');
+                this._log.trace({ sql }, 'executing query');
 
-        const pool = this._getConnectionPool(server, db);
-        pool.query(sql, (err, result) => {
-            if (err) return callback(err);
-            return callback(null, result);
+                connection.query(sql, (err, result) => {
+                    connection.release();
+                    if (err) return callback(err);
+                    return callback(null, result);
+                });
+            })
+            .catch(callback);
+    }
+
+    /**
+     * @param {string} server
+     * @param {string} db
+     * @return {Promise.<PoolConnection>}
+     * @private
+     */
+    _getConnection(server, db) {
+        return new Promise((resolve, reject) => {
+            this._getConnectionPool(server, db).getConnection((err, connection) => {
+                if (err) return reject(err);
+                return resolve(connection);
+            });
+        }).then((connection) => {
+            if (has(connection, '_floraInitialized')) return connection;
+
+            const config = this._config;
+            const init = [has(config, 'onConnect') ? config.onConnect : 'SET SESSION sql_mode = \'ANSI\''];
+            if (has(config, server) && has(config[server], 'onConnect')) init.push(config[server].onConnect);
+
+            this._log.trace('initialize connection');
+            return initConnection(connection, init)
+                .then(() => Object.defineProperty(connection, '_floraInitialized', { value: true }))
+                .then(() => connection);
         });
     }
 }

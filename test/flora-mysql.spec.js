@@ -3,7 +3,7 @@
 const chai = require('chai');
 const bunyan = require('bunyan');
 const { expect } = chai;
-const Connection = require('../node_modules/mysql/lib/Connection');
+const PoolConnection = require('../node_modules/mysql/lib/PoolConnection');
 const sinon = require('sinon');
 
 const FloraMysql = require('../index');
@@ -179,7 +179,7 @@ describe('flora-mysql DataSource', () => {
         let queryFnSpy;
 
         beforeEach(() => {
-            queryFnSpy = sinon.spy(Connection.prototype, 'query');
+            queryFnSpy = sinon.spy(PoolConnection.prototype, 'query');
         });
 
         afterEach(() => {
@@ -253,6 +253,112 @@ describe('flora-mysql DataSource', () => {
             ds.process(floraRequest, (err) => {
                 expect(err).to.be.instanceof(Error);
                 expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
+                done();
+            });
+        });
+    });
+
+    describe('init queries', () => {
+        let ds;
+        let querySpy;
+
+        beforeEach(() => querySpy = sinon.spy(PoolConnection.prototype, 'query'));
+
+        afterEach((done) => {
+            querySpy.restore();
+            ds.close(done)
+        });
+
+        it('should set sql_mode to ANSI if no init queries are defined', (done) => {
+            ds =  new FloraMysql(api, serverCfg);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(querySpy).to.have.been.calledWith('SET SESSION sql_mode = \'ANSI\'');
+                done();
+            });
+        });
+
+        it('should execute single init query', (done) => {
+            const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
+            const config = Object.assign({}, serverCfg, { onConnect: initQuery });
+
+            ds = new FloraMysql(api, config);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(querySpy).to.have.been.calledWith(initQuery);
+                done();
+            });
+        });
+
+        it('should execute multiple init queries', (done) => {
+            const initQuery1 = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
+            const initQuery2 = `SET SESSION max_execution_time = 1`;
+            const config = Object.assign({}, serverCfg, { onConnect: [initQuery1, initQuery2] });
+
+            ds = new FloraMysql(api, config);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(querySpy)
+                    .to.have.been.calledWith(initQuery1)
+                    .and.to.have.been.calledWith(initQuery2);
+                done();
+            });
+        });
+
+        it('should execute custom init function', (done) => {
+            const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
+            const onConnect = sinon.spy((connection, done) => {
+                connection.query(initQuery, err => done(err ? err : null));
+            });
+            const config = Object.assign({}, serverCfg, { onConnect });
+
+            ds = new FloraMysql(api, config);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(querySpy).to.have.been.calledWith(initQuery);
+                expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection), sinon.match.func);
+                done();
+            });
+        });
+
+        it('should handle server specific init queries', (done) => {
+            const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
+            const serverInitQuery = 'SET SESSION max_execution_time = 1';
+            const config = Object.assign({}, serverCfg,
+                { onConnect: globalInitQuery },
+                { default: { onConnect: serverInitQuery }}
+            );
+
+            ds = new FloraMysql(api, config);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(querySpy)
+                    .to.have.been.calledWith(globalInitQuery)
+                    .and.to.have.been.calledWith(serverInitQuery);
+                done();
+            });
+        });
+
+        it('should handle errors', (done) => {
+            const config = Object.assign({}, serverCfg, { onConnect: 'SELECT nonExistentAttr FROM t' });
+
+            ds = new FloraMysql(api, config);
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.an('Error');
+                expect(err.code).to.equal('ER_BAD_FIELD_ERROR');
+                done();
+            });
+        });
+    });
+
+    describe('query method', () => {
+        it('should release pool connections manually', (done) => {
+            const releaseSpy = sinon.spy(PoolConnection.prototype, 'release');
+
+            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
+                expect(err).to.be.null;
+                expect(releaseSpy).to.have.been.calledOnce;
+                releaseSpy.restore();
                 done();
             });
         });
