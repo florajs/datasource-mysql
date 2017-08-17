@@ -25,6 +25,7 @@ describe('flora-mysql DataSource', () => {
     };
     const ds = new FloraMysql(api, serverCfg);
     const astTpl = {
+        _meta:  { hasFilterPlaceholders: false },
         type: 'select',
         options: null,
         distinct: null,
