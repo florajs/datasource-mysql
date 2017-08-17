@@ -122,8 +122,7 @@ class DataSource {
         this._pools = {};
         this._status = config._status;
 
-        /*
-        if (this._status) {
+        /* if (this._status) {
             this._status.onStatus(() => {
                 const stats = {};
 
@@ -142,7 +141,7 @@ class DataSource {
 
                 this._status.set('pools', stats);
             });
-        }*/
+        } */
     }
 
     /**
