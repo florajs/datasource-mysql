@@ -292,7 +292,7 @@ class DataSource {
             password: serverCfg.password,
             database,
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
-            queueLimit: serverCfg.poolSize || this._config.poolSize || 10,
+            connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             multipleStatements: true // pagination queries
         });
 
