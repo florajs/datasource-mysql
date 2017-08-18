@@ -222,8 +222,10 @@ class DataSource {
         if (request._explain) request._explain.executedQuery = sql;
 
         return this.query(server, db, sql, (err, results) => {
-            if (err) this._log.info(err);
-            if (err) return callback(err);
+            if (err) {
+                this._log.info(err);
+                return callback(err);
+            }
 
             return callback(null, {
                 data: !request.page ? results : results[0],
