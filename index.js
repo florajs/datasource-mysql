@@ -359,6 +359,9 @@ class DataSource {
             this._log.trace('initialize connection');
             return initConnection(connection, init)
                 .then(() => Object.defineProperty(connection, '_floraInitialized', { value: true }))
+                .then(() => {
+                    if (this._status) this._status.increment('dataSourceConnects');
+                })
                 .then(() => connection);
         });
     }
