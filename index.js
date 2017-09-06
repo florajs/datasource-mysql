@@ -122,26 +122,36 @@ class DataSource {
         this._pools = {};
         this._status = config._status;
 
-        /* if (this._status) {
-            this._status.onStatus(() => {
-                const stats = {};
+        if (this._status) this._status.onStatus(() => this._status.set('pools', this._collectPoolStatus()));
+    }
 
-                Object.keys(this._pools).forEach((server) => {
-                    if (!stats[server]) stats[server] = {};
-                    Object.keys(this._pools[server]).forEach((db) => {
-                        const pool = this._getConnectionPool(server, db);
+    _collectPoolStatus() {
+        const stats = {};
+        const statProps = {
+            open: '_allConnections',
+            sleeping: '_freeConnections',
+            waiting: '_acquiringConnections'
+        };
 
-                        stats[server][db] = {
-                            open: pool.getPoolSize(),
-                            sleeping: pool.availableObjectsCount(),
-                            waiting: pool.waitingClientsCount()
-                        };
-                    });
+        Object.keys(this._pools).forEach((server) => {
+            if (!stats[server]) stats[server] = {};
+            Object.keys(this._pools[server]).forEach((db) => {
+                const pool = this._getConnectionPool(server, db);
+                const poolStats = {};
+
+                Object.keys(statProps).forEach((prop) => {
+                    const statProp = statProps[prop];
+                    if (!pool[statProp] || !Array.isArray(pool[statProp])) return;
+                    poolStats[prop] = pool[statProp].length;
                 });
 
-                this._status.set('pools', stats);
+                poolStats.open -= poolStats.sleeping;
+
+                stats[server][db] = poolStats;
             });
-        } */
+        });
+
+        return stats;
     }
 
     /**
