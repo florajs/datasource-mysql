@@ -305,6 +305,7 @@ class DataSource {
             database,
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
+            dateStrings: true, // force date types to be returned as strings
             multipleStatements: true // pagination queries
         });
 
