@@ -93,6 +93,14 @@ describe('flora-mysql DataSource', () => {
                 expect(exceptionThrown).to.be.equal(true, 'Exception was not thrown');
             });
 
+            it('should throw an error if neither query nor table is set', () => {
+                const resourceConfig = {};
+
+                expect(() => {
+                    ds.prepare(resourceConfig, ['col1']);
+                }).to.throw(Error, 'Option "query" or "table" must be specified');
+            });
+
             it('should throw an error if an attribute is not available in SQL query', () => {
                 const resourceConfig = { query: 'SELECT t.col1 FROM t' };
 

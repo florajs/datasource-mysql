@@ -4,6 +4,7 @@ const has = require('has');
 const mysql = require('mysql');
 const { Parser } = require('flora-sql-parser');
 const astUtil = require('flora-sql-parser').util;
+const { ImplementationError } = require('flora-errors');
 
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
@@ -165,7 +166,7 @@ class DataSource {
 
         if (dsConfig.searchable) dsConfig.searchable = dsConfig.searchable.split(',');
 
-        if (dsConfig.query && dsConfig.query.trim() !== '') {
+        if (dsConfig.query && dsConfig.query.trim().length > 0) {
             try { // add query to exception
                 ast = this._parser.parse(dsConfig.query);
 
@@ -181,7 +182,7 @@ class DataSource {
 
             checkAST(ast); // check if columns are unique and fully qualified
             checkSqlEquivalents(attributes, ast.columns);
-        } else {
+        } else if (dsConfig.table && dsConfig.table.trim().length > 0) {
             ast = {
                 _meta: { hasFilterPlaceholders: false },
                 type: 'select',
@@ -200,6 +201,8 @@ class DataSource {
                 orderby: null,
                 limit: null
             };
+        } else {
+            throw new ImplementationError('Option "query" or "table" must be specified');
         }
 
         dsConfig.queryAST = ast;
