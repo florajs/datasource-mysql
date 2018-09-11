@@ -164,8 +164,6 @@ class DataSource {
     prepare(dsConfig, attributes) {
         let ast;
 
-        if (dsConfig.searchable) dsConfig.searchable = dsConfig.searchable.split(',');
-
         if (dsConfig.query && dsConfig.query.trim().length > 0) {
             try { // add query to exception
                 ast = this._parser.parse(dsConfig.query);
@@ -203,6 +201,14 @@ class DataSource {
             };
         } else {
             throw new ImplementationError('Option "query" or "table" must be specified');
+        }
+
+        if (dsConfig.searchable) {
+            dsConfig.searchable = dsConfig.searchable.split(',');
+            dsConfig.searchable.forEach((attr) => {
+                if (ast.columns.find(col => col.expr.column === attr || col.as === attr)) return;
+                throw new ImplementationError(`Attribute "${attr}" is not available in AST`);
+            });
         }
 
         dsConfig.queryAST = ast;

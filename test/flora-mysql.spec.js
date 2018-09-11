@@ -8,6 +8,7 @@ const sinon = require('sinon');
 
 const FloraMysql = require('../index');
 const Transaction = require('../lib/transaction');
+const { ImplementationError } = require('flora-errors');
 
 const TEST_DB = 'flora_mysql_testdb';
 const log = bunyan.createLogger({ name: 'null', streams: [] });
@@ -131,6 +132,17 @@ describe('flora-mysql DataSource', () => {
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
                 }).to.throw(Error);
+            });
+
+            it('should throw an error if search attribute is not available in AST', () => {
+                const resourceConfig = {
+                    searchable: 'col1,nonExistentAttr',
+                    query: 'SELECT t.col1 FROM t'
+                };
+
+                expect(() => {
+                    ds.prepare(resourceConfig, ['col1']);
+                }).to.throw(ImplementationError, `Attribute "nonExistentAttr" is not available in AST`);
             });
         });
 
