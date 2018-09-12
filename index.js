@@ -15,7 +15,7 @@ const Transaction = require('./lib/transaction');
  * Deep-clone an object and try to be efficient
  *
  * @param {object} obj
- * @return {object}
+ * @returns {object}
  */
 function cloneDeep(obj) {
     return JSON.parse(JSON.stringify(obj));
@@ -26,7 +26,7 @@ function cloneDeep(obj) {
  *
  * @param {string} attribute
  * @param {(Array.<string>|Array.<Object>)} columns
- * @return boolean
+ * @returns boolean
  * @private
  */
 function hasSqlEquivalent(attribute, columns) {
@@ -50,7 +50,7 @@ function checkSqlEquivalents(attributes, columns) {
 
 /**
  * @param {Object} request
- * @return {string}
+ * @returns {string}
  */
 function buildSql(request) {
     request.queryAST = cloneDeep(request.queryAST);
@@ -76,7 +76,7 @@ function buildSql(request) {
  *
  * @param {Connection} connection
  * @param {Array.<string|Array.<string>|Function>} initConfigs
- * @return {Promise}
+ * @returns {Promise}
  */
 function initConnection(connection, initConfigs) {
     function query(sql) {
@@ -240,17 +240,17 @@ class DataSource {
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._explain) request._explain.executedQuery = sql;
 
-        return this.query(server, db, sql, (err, results) => {
-            if (err) {
+        return this.query(server, db, sql)
+            .then((results) => {
+                callback(null, {
+                    data: !request.page ? results : results[0],
+                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
+                });
+            })
+            .catch((err) => {
                 this._log.info(err);
-                return callback(err);
-            }
-
-            return callback(null, {
-                data: !request.page ? results : results[0],
-                totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
+                callback(err);
             });
-        });
     }
 
     /**
@@ -278,24 +278,23 @@ class DataSource {
     /**
      * @param {String} server
      * @param {String} db
-     * @param {Function} callback
+     * @returns {Promise.<Transaction>}
      */
-    transaction(server, db, callback) {
-        this._getConnection(server, db)
+    transaction(server, db) {
+        let trx;
+
+        return this._getConnection(server, db)
             .then((connection) => {
-                const trx = new Transaction(connection);
-                return trx.begin((trxErr) => {
-                    if (trxErr) return callback(trxErr);
-                    return callback(null, trx);
-                });
+                trx = new Transaction(connection);
+                return trx.begin();
             })
-            .catch(callback);
+            .then(() => trx);
     }
 
     /**
      * @param {string} server
      * @param {string} database
-     * @return {Object}
+     * @returns {Object}
      * @private
      */
     _getConnectionPool(server, database) {
@@ -330,27 +329,28 @@ class DataSource {
      * @param {string} server
      * @param {string} db
      * @param {string} sql
-     * @param {Function} callback
+     * @returns {Promise}
      */
-    query(server, db, sql, callback) {
-        this._getConnection(server, db)
+    query(server, db, sql) {
+        return this._getConnection(server, db)
             .then((connection) => {
                 if (this._status) this._status.increment('dataSourceQueries');
                 this._log.trace({ sql }, 'executing query');
 
-                connection.query(sql, (err, result) => {
-                    connection.release();
-                    if (err) return callback(err);
-                    return callback(null, result);
+                return new Promise((resolve, reject) => {
+                    connection.query(sql, (err, results) => {
+                        connection.release();
+                        if (err) return reject(err);
+                        return resolve(results);
+                    });
                 });
-            })
-            .catch(callback);
+            });
     }
 
     /**
      * @param {string} server
      * @param {string} db
-     * @return {Promise.<PoolConnection>}
+     * @returns {Promise}
      * @private
      */
     _getConnection(server, db) {

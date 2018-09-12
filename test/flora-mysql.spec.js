@@ -207,45 +207,32 @@ describe('flora-mysql DataSource', () => {
             queryFnSpy.restore()
         });
 
-        it('should acquire a connection and start the transaction', (done) => {
-            ds.transaction('default', TEST_DB, (err, trx) => {
-                expect(err).to.be.null;
-                expect(trx).to.be.an.instanceOf(Transaction);
-                expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
-                trx.rollback(done);
-            });
+        it('should return a transaction', async () => {
+            const trx = await ds.transaction('default', TEST_DB);
+
+            expect(trx).to.be.instanceOf(Transaction);
+            await trx.rollback();
         });
 
-        it('should pass the query to the connection', (done) => {
-            ds.transaction('default', TEST_DB, (err, trx) => {
-                expect(err).to.be.null;
-                trx.query('SELECT * FROM t LIMIT 1', (queryErr) => {
-                    expect(queryErr).to.be.null;
-                    trx.rollback(done);
-                });
-            });
+        it('should acquire a connection and start the transaction', async () => {
+            const trx = await ds.transaction('default', TEST_DB);
+
+            expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
+            await trx.rollback();
         });
 
-        it('should send COMMIT on commit()', (done) => {
-            ds.transaction('default', TEST_DB, (err, trx) => {
-                expect(err).to.be.null;
-                trx.commit((commitErr) => {
-                    expect(commitErr).to.be.null;
-                    expect(queryFnSpy).to.have.been.calledWith('COMMIT');
-                    done();
-                });
-            });
+        it('should send COMMIT on commit()', async () => {
+            const trx = await ds.transaction('default', TEST_DB);
+
+            await trx.commit();
+            expect(queryFnSpy).to.have.been.calledWith('COMMIT');
         });
 
-        it('should send ROLLBACK on rollback()', (done) => {
-            ds.transaction('default', TEST_DB, (err, trx) => {
-                expect(err).to.be.null;
-                trx.rollback((rollbackErr) => {
-                    expect(rollbackErr).to.be.null;
-                    expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
-                    done();
-                });
-            });
+        it('should send ROLLBACK on rollback()', async () => {
+            const trx = await ds.transaction('default', TEST_DB);
+
+            await trx.rollback();
+            expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
         });
     });
 
@@ -290,43 +277,36 @@ describe('flora-mysql DataSource', () => {
             ds.close(done)
         });
 
-        it('should set sql_mode to ANSI if no init queries are defined', (done) => {
+        it('should set sql_mode to ANSI if no init queries are defined', async () => {
             ds =  new FloraMysql(api, serverCfg);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(querySpy).to.have.been.calledWith('SET SESSION sql_mode = \'ANSI\'');
-                done();
-            });
+
+            await ds.query('default', TEST_DB, 'SELECT 1');
+            expect(querySpy).to.have.been.calledWith('SET SESSION sql_mode = \'ANSI\'');
         });
 
-        it('should execute single init query', (done) => {
+        it('should execute single init query', async () => {
             const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
             const config = Object.assign({}, serverCfg, { onConnect: initQuery });
 
             ds = new FloraMysql(api, config);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(querySpy).to.have.been.calledWith(initQuery);
-                done();
-            });
+            await ds.query('default', TEST_DB, 'SELECT 1');
+            expect(querySpy).to.have.been.calledWith(initQuery);
         });
 
-        it('should execute multiple init queries', (done) => {
+        it('should execute multiple init queries', async () => {
             const initQuery1 = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
             const initQuery2 = `SET SESSION max_execution_time = 1`;
             const config = Object.assign({}, serverCfg, { onConnect: [initQuery1, initQuery2] });
 
             ds = new FloraMysql(api, config);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(querySpy)
-                    .to.have.been.calledWith(initQuery1)
-                    .and.to.have.been.calledWith(initQuery2);
-                done();
-            });
+            await ds.query('default', TEST_DB, 'SELECT 1');
+
+            expect(querySpy)
+                .to.have.been.calledWith(initQuery1)
+                .and.to.have.been.calledWith(initQuery2);
         });
 
-        it('should execute custom init function', (done) => {
+        it('should execute custom init function', async () => {
             const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
             const onConnect = sinon.spy((connection, done) => {
                 connection.query(initQuery, err => done(err ? err : null));
@@ -334,15 +314,13 @@ describe('flora-mysql DataSource', () => {
             const config = Object.assign({}, serverCfg, { onConnect });
 
             ds = new FloraMysql(api, config);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(querySpy).to.have.been.calledWith(initQuery);
-                expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection), sinon.match.func);
-                done();
-            });
+            await ds.query('default', TEST_DB, 'SELECT 1');
+
+            expect(querySpy).to.have.been.calledWith(initQuery);
+            expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection), sinon.match.func);
         });
 
-        it('should handle server specific init queries', (done) => {
+        it('should handle server specific init queries', async () => {
             const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
             const serverInitQuery = 'SET SESSION max_execution_time = 1';
             const config = Object.assign({}, serverCfg,
@@ -351,37 +329,34 @@ describe('flora-mysql DataSource', () => {
             );
 
             ds = new FloraMysql(api, config);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(querySpy)
-                    .to.have.been.calledWith(globalInitQuery)
-                    .and.to.have.been.calledWith(serverInitQuery);
-                done();
-            });
+            await ds.query('default', TEST_DB, 'SELECT 1');
+
+            expect(querySpy)
+                .to.have.been.calledWith(globalInitQuery)
+                .and.to.have.been.calledWith(serverInitQuery);
         });
 
-        it('should handle errors', (done) => {
+        it('should handle errors', async () => {
             const config = Object.assign({}, serverCfg, { onConnect: 'SELECT nonExistentAttr FROM t' });
 
             ds = new FloraMysql(api, config);
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.an('Error');
+
+            try {
+                await ds.query('default', TEST_DB, 'SELECT 1');
+                throw new Error('Expected promise to reject');
+            } catch (err) {
                 expect(err.code).to.equal('ER_BAD_FIELD_ERROR');
-                done();
-            });
+            }
         });
     });
 
     describe('query method', () => {
-        it('should release pool connections manually', (done) => {
+        it('should release pool connections manually', async () => {
             const releaseSpy = sinon.spy(PoolConnection.prototype, 'release');
 
-            ds.query('default', TEST_DB, 'SELECT 1', (err) => {
-                expect(err).to.be.null;
-                expect(releaseSpy).to.have.been.calledOnce;
-                releaseSpy.restore();
-                done();
-            });
+            await ds.query('default', TEST_DB, 'SELECT 1');
+            expect(releaseSpy).to.have.been.calledOnce;
+            releaseSpy.restore();
         });
     });
 });

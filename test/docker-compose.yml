@@ -10,7 +10,7 @@ services:
             MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
             MYSQL_DATABASE: "flora_mysql_testdb"
     test:
-        image: node:${NODE_VERSION:-6}-alpine
+        image: node:${NODE_VERSION:-10}-alpine
         user: ${UID:-0}
         volumes:
             - ../:/usr/src/app
