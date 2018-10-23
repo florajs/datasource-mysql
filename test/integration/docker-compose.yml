@@ -13,8 +13,8 @@ services:
         image: node:${NODE_VERSION:-10}-alpine
         user: ${UID:-0}
         volumes:
-            - ../:/usr/src/app
+            - ../../:/usr/src/app
         working_dir: /usr/src/app
         environment:
             NODE_ENV: "development"
-        command: ["./test/wait-for-mysql.sh", "mysql", "./node_modules/.bin/grunt", "${GRUNT_TARGET:-mochaTest:stdout}"]
+        command: ["./test/integration/wait-for-mysql.sh", "mysql", "./node_modules/.bin/grunt", "${GRUNT_TARGET:-mochaTest:integration}"]

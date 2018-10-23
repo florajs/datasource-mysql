@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const optimize = require('../lib/sql-query-optimizer');
+const optimize = require('../../lib/sql-query-optimizer');
 const _ = require('lodash');
 
 describe('SQL query optimizer', () => {
