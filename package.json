@@ -35,7 +35,7 @@
     "flora-errors": "^0.7.0",
     "flora-sql-parser": "^0.7.7",
     "has": "^1.0.1",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.11",
     "mysql": "^2.15.0"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "@types/mocha": "^5.2.5",
     "@types/sinon-chai": "^3.2.0",
     "bunyan": "^1.5.1",
-    "chai": "^4.1.2",
+    "chai": "^4.2.0",
     "eslint": "^4.18.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.9.0",
@@ -57,7 +57,7 @@
     "istanbul": "^0.4.2",
     "load-grunt-tasks": "^3.4.0",
     "mocha": "^5.0.1",
-    "sinon": "^4.4.2",
-    "sinon-chai": "^2.14.0"
+    "sinon": "^7.0.0",
+    "sinon-chai": "^3.2.0"
   }
 }

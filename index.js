@@ -292,6 +292,44 @@ class DataSource {
     }
 
     /**
+     * @param {Object} serverCfg
+     * @param {string} database
+     * @return {Object}
+     * @private
+     */
+    _prepareServerCfg(serverCfg, database) {
+        const serverTypes = ['masters', 'slaves'];
+        const isMasterSlaveSetup = serverTypes
+            .every(type => has(serverCfg, type)
+                    && Array.isArray(serverCfg[type])
+                    && serverCfg[type].every(item => typeof item === 'object'));
+
+        const baseCfg = {
+            host: serverCfg.host,
+            port: serverCfg.port || 3306,
+            user: serverCfg.user || this._config.user,
+            password: serverCfg.password || this._config.password,
+            database,
+            connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
+            connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
+            dateStrings: true, // force date types to be returned as strings
+            multipleStatements: true // pagination queries
+        };
+
+        if (!isMasterSlaveSetup) return { MASTER: baseCfg };
+
+        const clusterCfg = {};
+        serverTypes.forEach((type) => {
+            const pattern = type.slice(0, -1).toUpperCase();
+            serverCfg[type].forEach((hostCfg) => {
+                clusterCfg[`${pattern}_${hostCfg.host}`] = Object.assign({}, baseCfg, hostCfg);
+            });
+        });
+
+        return clusterCfg;
+    }
+
+    /**
      * @param {string} server
      * @param {string} database
      * @returns {Object}
@@ -304,18 +342,13 @@ class DataSource {
 
         this._log.trace('creating MySQL pool "%s"', database);
 
+        const pool = mysql.createPoolCluster();
         const serverCfg = this._config.servers[server];
-        const pool = mysql.createPool({
-            host: serverCfg.host,
-            port: serverCfg.port || 3306,
-            user: serverCfg.user,
-            password: serverCfg.password,
-            database,
-            connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
-            connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
-            dateStrings: true, // force date types to be returned as strings
-            multipleStatements: true // pagination queries
-        });
+        const clusterCfg = this._prepareServerCfg(serverCfg, database);
+
+        Object.keys(clusterCfg)
+            .filter(serverId => has(clusterCfg, serverId))
+            .forEach(serverId => pool.add(serverId, clusterCfg[serverId]));
 
         if (typeof this._pools[server] !== 'object') this._pools[server] = {};
         this._pools[server][database] = pool;
@@ -355,7 +388,8 @@ class DataSource {
      */
     _getConnection(server, db) {
         return new Promise((resolve, reject) => {
-            this._getConnectionPool(server, db).getConnection((err, connection) => {
+            // TODO throw error if pool doesn't support slave connections?
+            this._getConnectionPool(server, db).getConnection('MASTER*', (err, connection) => {
                 if (err) return reject(err);
                 return resolve(connection);
             });
