@@ -17,6 +17,10 @@ describe('mysql data source', () => {
         it('should export a prepare function', () => {
             expect(ds.prepare).to.be.a('function');
         });
+
+        it('should export a getContext function', () => {
+            expect(ds.getContext).to.be.a('function');
+        });
     });
 
     describe('generate AST data source config', () => {

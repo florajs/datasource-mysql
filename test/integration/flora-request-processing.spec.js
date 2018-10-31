@@ -6,7 +6,17 @@ const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('flora request processing', () => {
-    const ds = FloraMysqlFactory.create();
+    const server = { host: 'mysql' };
+    const ds = FloraMysqlFactory.create({
+        servers: {
+            default: {
+                user: 'root',
+                password: '',
+                masters: [server],
+                slaves: [server],
+            }
+        }
+    });
     const database = 'flora_mysql_testdb';
 
     after(done => ds.close(done));

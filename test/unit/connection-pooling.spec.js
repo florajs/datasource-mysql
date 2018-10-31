@@ -17,8 +17,8 @@ function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
 
-describe.only('connection pooling', () => {
-    const database = 'test';
+describe('connection pooling', () => {
+    const ctxCfg = { db: 'test' };
     let poolSpy;
 
     beforeEach(() => {
@@ -37,7 +37,9 @@ describe.only('connection pooling', () => {
                 cfg.servers.default.password = 'bar';
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { user: 'foo', password: 'bar' });
             });
@@ -50,7 +52,9 @@ describe.only('connection pooling', () => {
                 delete cfg.servers.default.password;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { user: 'root', password: 'secret' });
             });
@@ -59,7 +63,9 @@ describe.only('connection pooling', () => {
         describe('port', () => {
             it('default', async () => {
                 const ds = FloraMysqlFactory.create();
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: 3306 });
             });
@@ -69,7 +75,9 @@ describe.only('connection pooling', () => {
                 cfg.servers.default.port = 1337;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: 1337 });
             });
@@ -78,7 +86,8 @@ describe.only('connection pooling', () => {
         describe('connect timeout', () => {
             it('default', async () => {
                 const ds = FloraMysqlFactory.create();
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 3000 });
             });
@@ -88,7 +97,9 @@ describe.only('connection pooling', () => {
                 cfg.servers.default.connectTimeout = 1000;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 1000 });
             });
@@ -98,7 +109,9 @@ describe.only('connection pooling', () => {
                 cfg.connectTimeout = 1500;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 1500 });
             });
@@ -107,7 +120,9 @@ describe.only('connection pooling', () => {
         describe('pool size', () => {
             it('default', async () => {
                 const ds = FloraMysqlFactory.create();
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 10 });
             });
@@ -117,7 +132,9 @@ describe.only('connection pooling', () => {
                 cfg.servers.default.poolSize = 100;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 100 });
             });
@@ -127,7 +144,9 @@ describe.only('connection pooling', () => {
                 cfg.poolSize = 50;
 
                 const ds = FloraMysqlFactory.create(cfg);
-                await ds.query('default', database, 'SELECT 1');
+                const ctx = ds.getContext(ctxCfg);
+
+                await ctx.exec('SELECT 1 FROM dual');
 
                 expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 50 });
             });
@@ -135,9 +154,10 @@ describe.only('connection pooling', () => {
 
         it('should always use "master" server', async () => {
             const ds = FloraMysqlFactory.create();
+            const ctx = ds.getContext(ctxCfg);
             const connectionSpy = sandbox.spy(PoolCluster.prototype, 'getConnection');
 
-            await ds.query('default', database, 'SELECT 1');
+            await ctx.exec('SELECT 1 FROM dual');
 
             expect(connectionSpy).to.have.been.always.calledWith('MASTER*', sinon.match.any);
         });
@@ -163,8 +183,10 @@ describe.only('connection pooling', () => {
                     }
                 }
             });
+            const ctx = ds.getContext(ctxCfg);
+            const sql = 'SELECT 1 FROM dual';
 
-            await ds.query('default', database, 'SELECT 1');
+            await Promise.all([ctx.exec(sql), ctx.query(sql)]);
 
             const masterCfg = Object.assign({}, baseCfg, { host: 'mysql-master', port: 3306 });
             expect(poolSpy).to.have.been.calledWith('MASTER_mysql-master', sinon.match(masterCfg));

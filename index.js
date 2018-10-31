@@ -9,7 +9,8 @@ const { ImplementationError } = require('flora-errors');
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
-const Transaction = require('./lib/transaction');
+
+const Context = require('./lib/context');
 
 /**
  * Deep-clone an object and try to be efficient
@@ -240,7 +241,7 @@ class DataSource {
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._explain) request._explain.executedQuery = sql;
 
-        return this.query(server, db, sql)
+        return this._query({ type: 'SLAVE', server, db }, sql)
             .then((results) => {
                 callback(null, {
                     data: !request.page ? results : results[0],
@@ -275,20 +276,12 @@ class DataSource {
             .catch(callback);
     }
 
-    /**
-     * @param {String} server
-     * @param {String} db
-     * @returns {Promise.<Transaction>}
-     */
-    transaction(server, db) {
-        let trx;
-
-        return this._getConnection(server, db)
-            .then((connection) => {
-                trx = new Transaction(connection);
-                return trx.begin();
-            })
-            .then(() => trx);
+    getContext(ctx) {
+        if (has(ctx, 'useMaster') && !!ctx.useMaster) {
+            ctx.type = 'MASTER';
+            delete ctx.useMaster;
+        }
+        return new Context(this, ctx);
     }
 
     /**
@@ -359,13 +352,16 @@ class DataSource {
      * Low-level query function. Subsequent calls may
      * use different connections from connection pool.
      *
-     * @param {string} server
-     * @param {string} db
+     * @param {Object}  ctx
+     * @param {string}  ctx.type
+     * @param {string=} ctx.server
+     * @param {string}  ctx.db
      * @param {string} sql
      * @returns {Promise}
+     * @private
      */
-    query(server, db, sql) {
-        return this._getConnection(server, db)
+    _query(ctx, sql) {
+        return this._getConnection(ctx)
             .then((connection) => {
                 if (this._status) this._status.increment('dataSourceQueries');
                 this._log.trace({ sql }, 'executing query');
@@ -381,15 +377,17 @@ class DataSource {
     }
 
     /**
-     * @param {string} server
-     * @param {string} db
+     * @param {Object}  ctx
+     * @param {string}  ctx.type
+     * @param {string}  ctx.server
+     * @param {string}  ctx.db
      * @returns {Promise}
      * @private
      */
-    _getConnection(server, db) {
+    _getConnection({ type, server, db }) {
         return new Promise((resolve, reject) => {
             // TODO throw error if pool doesn't support slave connections?
-            this._getConnectionPool(server, db).getConnection('MASTER*', (err, connection) => {
+            this._getConnectionPool(server, db).getConnection(`${type}*`, (err, connection) => {
                 if (err) return reject(err);
                 return resolve(connection);
             });

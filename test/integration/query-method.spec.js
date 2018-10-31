@@ -8,8 +8,8 @@ const sinon = require('sinon');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('flora-mysql data source', () => {
-    const db = 'flora_mysql_testdb';
     const ds = FloraMysqlFactory.create();
+    const ctx = ds.getContext({ db: 'flora_mysql_testdb', useMaster: true });
 
     after(done => ds.close(done));
 
@@ -17,7 +17,7 @@ describe('flora-mysql data source', () => {
         it('should release pool connections manually', async () => {
             const releaseSpy = sinon.spy(PoolConnection.prototype, 'release');
 
-            await ds.query('default', db, 'SELECT 1');
+            await ctx.query('SELECT 1 FROM dual');
             expect(releaseSpy).to.have.been.calledOnce;
             releaseSpy.restore();
         });

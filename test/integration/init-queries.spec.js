@@ -10,7 +10,7 @@ const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
 chai.use(require('sinon-chai'));
 
 describe('init queries', () => {
-    const db = 'flora_mysql_testdb';
+    const ctxCfg = { db: 'flora_mysql_testdb', useMaster: true };
     let ds;
     let querySpy;
 
@@ -23,8 +23,9 @@ describe('init queries', () => {
 
     it('should set sql_mode to ANSI if no init queries are defined', async () => {
         ds = FloraMysqlFactory.create();
+        const ctx = ds.getContext(ctxCfg);
 
-        await ds.query('default', db, 'SELECT 1');
+        await ctx.query('SELECT 1 FROM dual');
         expect(querySpy).to.have.been.calledWith('SET SESSION sql_mode = \'ANSI\'');
     });
 
@@ -33,7 +34,9 @@ describe('init queries', () => {
         const config = Object.assign({}, defaultCfg, { onConnect: initQuery });
 
         ds = FloraMysqlFactory.create(config);
-        await ds.query('default', db, 'SELECT 1');
+        const ctx = ds.getContext(ctxCfg);
+
+        await ctx.query('SELECT 1 FROM dual');
         expect(querySpy).to.have.been.calledWith(initQuery);
     });
 
@@ -43,7 +46,8 @@ describe('init queries', () => {
         const config = Object.assign({}, defaultCfg, { onConnect: [initQuery1, initQuery2] });
 
         ds = FloraMysqlFactory.create(config);
-        await ds.query('default', db, 'SELECT 1');
+        const ctx = ds.getContext(ctxCfg);
+        await ctx.query('SELECT 1 FROM dual');
 
         expect(querySpy)
             .to.have.been.calledWith(initQuery1)
@@ -58,7 +62,8 @@ describe('init queries', () => {
         const config = Object.assign({}, defaultCfg, { onConnect });
 
         ds = FloraMysqlFactory.create(config);
-        await ds.query('default', db, 'SELECT 1');
+        const ctx = ds.getContext(ctxCfg);
+        await ctx.query('SELECT 1 FROM dual');
 
         expect(querySpy).to.have.been.calledWith(initQuery);
         expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection), sinon.match.func);
@@ -73,7 +78,8 @@ describe('init queries', () => {
         );
 
         ds = FloraMysqlFactory.create(config);
-        await ds.query('default', db, 'SELECT 1');
+        const ctx = ds.getContext(ctxCfg);
+        await ctx.query('SELECT 1 FROM dual');
 
         expect(querySpy)
             .to.have.been.calledWith(globalInitQuery)
@@ -84,8 +90,9 @@ describe('init queries', () => {
         const config = Object.assign({}, defaultCfg, { onConnect: 'SELECT nonExistentAttr FROM t' });
 
         ds = FloraMysqlFactory.create(config);
+        const ctx = ds.getContext(ctxCfg);
         try {
-            await ds.query('default', db, 'SELECT 1');
+            await ctx.query('SELECT 1 FROM dual');
         } catch (err) {
             expect(err).to.include({
                 code: 'ER_BAD_FIELD_ERROR',

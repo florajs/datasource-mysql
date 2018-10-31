@@ -10,7 +10,7 @@ const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('transaction', () => {
     const ds = FloraMysqlFactory.create();
-    const db = 'flora_mysql_testdb';
+    const ctx = ds.getContext({ db: 'flora_mysql_testdb' });
     let queryFnSpy;
 
     beforeEach(() => {
@@ -20,28 +20,28 @@ describe('transaction', () => {
     afterEach(() => queryFnSpy.restore());
 
     it('should return a transaction', async () => {
-        const trx = await ds.transaction('default', db);
+        const trx = await ctx.transaction();
 
         expect(trx).to.be.instanceOf(Transaction);
         await trx.rollback();
     });
 
     it('should acquire a connection and start the transaction', async () => {
-        const trx = await ds.transaction('default', db);
+        const trx = await ctx.transaction();
 
         expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
         await trx.rollback();
     });
 
     it('should send COMMIT on commit()', async () => {
-        const trx = await ds.transaction('default', db);
+        const trx = await ctx.transaction();
 
         await trx.commit();
         expect(queryFnSpy).to.have.been.calledWith('COMMIT');
     });
 
     it('should send ROLLBACK on rollback()', async () => {
-        const trx = await ds.transaction('default', db);
+        const trx = await ctx.transaction();
 
         await trx.rollback();
         expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
