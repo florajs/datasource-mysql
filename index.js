@@ -239,10 +239,11 @@ class DataSource {
         }
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
-        if (request._explain) request._explain.executedQuery = sql;
 
         return this._query({ type: 'SLAVE', server, db }, sql)
-            .then((results) => {
+            .then(({ results, host }) => {
+                if (has(request, '_explain')) Object.assign(request._explain, { host, sql });
+
                 callback(null, {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
@@ -352,25 +353,27 @@ class DataSource {
      * Low-level query function. Subsequent calls may
      * use different connections from connection pool.
      *
-     * @param {Object}  ctx
-     * @param {string}  ctx.type
-     * @param {string=} ctx.server
-     * @param {string}  ctx.db
-     * @param {string} sql
+     * @param {Object}      ctx
+     * @param {string}      ctx.type
+     * @param {string=}     ctx.server
+     * @param {string}      ctx.db
+     * @param {string}      sql
      * @returns {Promise}
      * @private
      */
     _query(ctx, sql) {
         return this._getConnection(ctx)
             .then((connection) => {
+                const { host } = connection.config;
+
                 if (this._status) this._status.increment('dataSourceQueries');
-                this._log.trace({ sql }, 'executing query');
+                this._log.trace({ host, sql }, 'executing query');
 
                 return new Promise((resolve, reject) => {
                     connection.query(sql, (err, results) => {
                         connection.release();
                         if (err) return reject(err);
-                        return resolve(results);
+                        return resolve({ results, host });
                     });
                 });
             });

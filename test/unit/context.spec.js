@@ -48,7 +48,7 @@ describe('context', () => {
         let queryStub;
 
         beforeEach(() => {
-            queryStub = sandbox.stub(ds, '_query').resolves();
+            queryStub = sandbox.stub(ds, '_query').resolves({ results: [] });
         });
 
         it('should use a slave connection', async () => {
@@ -68,7 +68,7 @@ describe('context', () => {
         let queryStub;
 
         beforeEach(() => {
-            queryStub = sandbox.stub(ds, '_query').resolves();
+            queryStub = sandbox.stub(ds, '_query').resolves({ results: [] });
         });
 
         it('should use a master connection', async () => {
