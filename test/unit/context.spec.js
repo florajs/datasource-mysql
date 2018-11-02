@@ -93,12 +93,12 @@ describe('context', () => {
 
         it('should accept data as an object', async () => {
             await ctx.insert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') });
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW());`);
+            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`);
         });
 
         it('should accept data as an array of objects', async () => {
             await ctx.insert('t', [{ col1: 'val1', col2: 1 }, { col1: 'val2', col2: 2 }]);
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2") VALUES ('val1', 1), ('val2', 2);`);
+            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2") VALUES ('val1', 1), ('val2', 2)`);
         });
 
         it('should reject with an error if data is not set', async () => {
@@ -137,12 +137,12 @@ describe('context', () => {
 
         it('should accept data as an object', async () => {
             await ctx.update('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, '1 = 1');
-            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1;`);
+            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1`);
         });
 
         it('should accept where as an object', async () => {
             await ctx.update('t', { col1: 'val1' }, { col2: 1, col3: new Expr('CURDATE()') });
-            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE();`);
+            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE()`);
         });
 
         it('should reject with an error if data is not set', async () => {
@@ -181,12 +181,12 @@ describe('context', () => {
 
         it('should accept where as a string', async () => {
             await ctx.delete('t', '1 = 1');
-            expect(execStub).to.have.been.calledWith('DELETE FROM "t" WHERE 1 = 1;');
+            expect(execStub).to.have.been.calledWith('DELETE FROM "t" WHERE 1 = 1');
         });
 
         it('should accept where as an object', async () => {
             await ctx.delete('t', { col1: 'val1', col2: 1, col3: new Expr('CURDATE()') });
-            expect(execStub).to.have.been.calledWith(`DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE();`);
+            expect(execStub).to.have.been.calledWith(`DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE()`);
         });
 
         it('should reject with an error if where expression is not set', async () => {
