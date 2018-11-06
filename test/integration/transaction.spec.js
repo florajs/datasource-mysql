@@ -47,6 +47,52 @@ describe('transaction', () => {
         expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
     });
 
+    describe('#insert', () => {
+        it('should return last inserted id', async () => {
+            const trx = await ctx.transaction();
+            const { insertId } = await trx.insert('t', { col1: 'test' });
+            await trx.rollback();
+
+            expect(insertId).to.be.at.least(1);
+        });
+
+        it('should return number of affected rows', async () => {
+            const trx = await ctx.transaction();
+            const { affectedRows } = await trx.insert('t', [{ col1: 'test' }, { col1: 'test1' }]);
+            await trx.rollback();
+
+            expect(affectedRows).to.equal(2);
+        });
+    });
+
+    describe('#update', () => {
+        it('should return number of changed rows', async () => {
+            const trx = await ctx.transaction();
+            const { changedRows } = await trx.update('t', { col1: 'test' }, { id: 1 });
+            await trx.rollback();
+
+            expect(changedRows).to.equal(1);
+        });
+
+        it('should return number of affected rows', async () => {
+            const trx = await ctx.transaction();
+            const { affectedRows } = await trx.update('t', { col1: 'test' }, `1 = 1`);
+            await trx.rollback();
+
+            expect(affectedRows).to.be.at.least(1);
+        });
+    });
+
+    describe('#delete', () => {
+        it('should return number of affected rows', async () => {
+            const trx = await ctx.transaction();
+            const { affectedRows } = await trx.delete('t', { id: 1 });
+            await trx.rollback();
+
+            expect(affectedRows).to.equal(1);
+        });
+    });
+
     describe('#query', () => {
         it('should support parameters', async () => {
             const trx = await ctx.transaction();

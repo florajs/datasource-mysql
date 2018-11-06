@@ -156,7 +156,7 @@ describe('context', () => {
         let execStub;
 
         beforeEach(() => {
-            execStub = sandbox.stub(ctx, 'exec').resolves();
+            execStub = sandbox.stub(ctx, 'exec').resolves({ insertId: 1, affectedRow: 1 });
         });
 
         it('should accept data as an object', async () => {
@@ -200,7 +200,7 @@ describe('context', () => {
         let execStub;
 
         beforeEach(() => {
-            execStub = sandbox.stub(ctx, 'exec').resolves();
+            execStub = sandbox.stub(ctx, 'exec').resolves({ changedRows: 1 });
         });
 
         it('should accept data as an object', async () => {
@@ -244,7 +244,7 @@ describe('context', () => {
         let execStub;
 
         beforeEach(() => {
-            execStub = sandbox.stub(ctx, 'exec').resolves();
+            execStub = sandbox.stub(ctx, 'exec').resolves({ affectedRows: 1 });
         });
 
         it('should accept where as a string', async () => {
