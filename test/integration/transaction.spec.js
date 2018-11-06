@@ -46,4 +46,40 @@ describe('transaction', () => {
         await trx.rollback();
         expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
     });
+
+    describe('#query', () => {
+        it('should support parameters', async () => {
+            const trx = await ctx.transaction();
+            await trx.query('SELECT "id" FROM "t" WHERE "col1" = ?', ['foo']);
+            await trx.rollback();
+
+            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+        });
+
+        it('should support named parameters', async () => {
+            const trx = await ctx.transaction();
+            await trx.query('SELECT "id" FROM "t" WHERE "col1" = :col1', { col1: 'foo' });
+            await trx.rollback();
+
+            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+        });
+    });
+
+    describe('#exec', () => {
+        it('should support parameters', async () => {
+            const trx = await ctx.transaction();
+            await trx.query('SELECT "id" FROM "t" WHERE "col1" = ?', ['foo']);
+            await trx.rollback();
+
+            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+        });
+
+        it('should support named parameters', async () => {
+            const trx = await ctx.transaction();
+            await trx.query('SELECT "id" FROM "t" WHERE "col1" = :col1', { col1: 'foo' });
+            await trx.rollback();
+
+            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+        });
+    });
 });

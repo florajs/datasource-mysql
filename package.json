@@ -36,7 +36,9 @@
     "flora-sql-parser": "^0.7.7",
     "has": "^1.0.1",
     "lodash": "^4.17.11",
-    "mysql": "^2.15.0"
+    "mysql": "^2.15.0",
+    "named-placeholders": "^1.1.1",
+    "sqlstring": "^2.3.1"
   },
   "devDependencies": {
     "@types/chai": "^4.1.6",

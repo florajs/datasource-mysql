@@ -1,5 +1,7 @@
 'use strict';
 
+const util = require('util');
+
 const { expect } = require('chai');
 const sinon = require('sinon');
 const sandbox = sinon.createSandbox();
@@ -57,9 +59,15 @@ describe('context', () => {
             expect(queryStub).to.have.been.calledWith({ type: 'SLAVE', db, server: 'default' }, sql);
         });
 
-        xit('should handle named parameters', async () => {
-            const sql = `SELECT id FROM t WHERE col1 = 'val1'`;
-            await ctx.query('SELECT id FROM t WHERE col1 = :col1', { col1: 'val1' });
+        it('should handle placeholders', async () => {
+            const sql = `SELECT id FROM "t" WHERE col1 = 'val1'`;
+            await ctx.exec('SELECT id FROM "t" WHERE col1 = ?', ['val1']);
+            expect(queryStub).to.have.been.calledWith({ type: 'MASTER', db, server: 'default' }, sql);
+        });
+
+        it('should handle named placeholders', async () => {
+            const sql = `SELECT id FROM "t" WHERE col1 = 'val1'`;
+            await ctx.query('SELECT id FROM "t" WHERE col1 = :col1', { col1: 'val1' });
             expect(queryStub).to.have.been.calledWith({ type: 'SLAVE', db, server: 'default' }, sql);
         });
     });
@@ -77,10 +85,70 @@ describe('context', () => {
             expect(queryStub).to.have.been.calledWith({ type: 'MASTER', db, server: 'default' }, sql);
         });
 
-        xit('should handle named parameters', async () => {
-            const sql = `SELECT id FROM t WHERE col1 = 'val1'`;
-            await ctx.exec('SELECT id FROM t WHERE col1 = :col1', { col1: 'val1' });
+        it('should handle placeholders', async () => {
+            const sql = `SELECT id FROM "t" WHERE col1 = 'val1'`;
+            await ctx.exec('SELECT id FROM "t" WHERE col1 = ?', ['val1']);
             expect(queryStub).to.have.been.calledWith({ type: 'MASTER', db, server: 'default' }, sql);
+        });
+
+        it('should handle named placeholders', async () => {
+            const sql = `SELECT id FROM "t" WHERE col1 = 'val1'`;
+            await ctx.exec('SELECT id FROM "t" WHERE col1 = :col1', { col1: 'val1' });
+            expect(queryStub).to.have.been.calledWith({ type: 'MASTER', db, server: 'default' }, sql);
+        });
+    });
+
+    describe('parameter placeholders', () => {
+        let queryStub;
+
+        beforeEach(() => {
+            queryStub = sandbox.stub(ds, '_query').resolves({ results: [] });
+        });
+
+        afterEach(() => sandbox.restore());
+
+        [
+            ['strings', 'val', 'SELECT "id" FROM "t" WHERE "col1" = ?',  `SELECT "id" FROM "t" WHERE "col1" = 'val'`],
+            ['numbers', 1337, 'SELECT "id" FROM "t" WHERE "col1" = ?', 'SELECT "id" FROM "t" WHERE "col1" = 1337'],
+            ['booleans', true, 'SELECT "id" FROM "t" WHERE "col1" = ?', 'SELECT "id" FROM "t" WHERE "col1" = true'],
+            ['dates', new Date(2019, 0, 1, 0, 0, 0, 0), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = '2019-01-01 00:00:00.000'`],
+            ['arrays', [1, 3, 3, 7], 'SELECT "id" FROM "t" WHERE "col1" IN (?)', `SELECT "id" FROM "t" WHERE "col1" IN (1, 3, 3, 7)`],
+            ['sqlstringifiable objects', new Expr('CURDATE()'), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = CURDATE()`],
+            ['null', null, 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = NULL`],
+        ].forEach(([type, value, query, sql]) => {
+            it(`should support ${type}`, async () => {
+                await ctx.exec(query, [value]);
+                expect(queryStub).to.have.been.calledWith(sinon.match.object, sql);
+            });
+        });
+
+        [
+            ['objects', {}, '"values" must not be an empty object'],
+            ['arrays', [], '"values" must not be an empty array']
+        ].forEach(([type, params, msg]) => {
+            it(`throw an error for empty ${type}`, async () => {
+                try {
+                    await ctx.exec('SELECT "id" FROM "t" WHERE "col1" IN (:col1)', params);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Error).with.property('message', msg);
+                    expect(queryStub).to.not.have.been.called;
+                    return;
+                }
+
+                throw new Error('Expected an error');
+            });
+        });
+
+        it('throw an error for non-object or non-array values', async () => {
+            try {
+                await ctx.exec('SELECT "id" FROM "t" WHERE "col1" = ?', 'foo');
+            } catch (e) {
+                expect(e).to.be.instanceOf(Error).with.property('message', '"values" must be an object or an array');
+                expect(queryStub).to.not.have.been.called;
+                return;
+            }
+
+            throw new Error('Expected an error');
         });
     });
 
