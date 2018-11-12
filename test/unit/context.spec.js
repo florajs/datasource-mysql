@@ -1,7 +1,5 @@
 'use strict';
 
-const util = require('util');
-
 const { expect } = require('chai');
 const sinon = require('sinon');
 const sandbox = sinon.createSandbox();
