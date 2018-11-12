@@ -370,10 +370,10 @@ class DataSource {
                 this._log.trace({ host, sql }, 'executing query');
 
                 return new Promise((resolve, reject) => {
-                    connection.query(sql, (err, results) => {
+                    connection.query(sql, (err, results, fields) => {
                         connection.release();
                         if (err) return reject(err);
-                        return resolve({ results, host });
+                        return resolve({ results, fields, host });
                     });
                 });
             });
