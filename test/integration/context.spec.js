@@ -20,6 +20,35 @@ describe('context', () => {
     beforeEach(async () => await ctx.exec('START TRANSACTION'));
     afterEach(async () => await ctx.exec('ROLLBACK'));
 
+    describe('#queryOne', () => {
+        it('should return null for empty results', async () => {
+            const result = await ctx.queryOne('SELECT "col1" FROM "t" WHERE "id" = 1337');
+            expect(result).to.be.null;
+        });
+
+        [
+            ['should resolve to single of value', 'SELECT "col1" FROM "t" WHERE "id" = 1'],
+            ['should handle aliases', 'SELECT "col1" AS "funkyAlias" FROM "t" WHERE "id" = 1'],
+            ['should handle multiple columns', 'SELECT "col1", "id" FROM "t" WHERE "id" = 1'],
+            ['should handle multiple rows', 'SELECT "col1" FROM "t" ORDER BY "id" ASC']
+        ].forEach(([description, sql]) => {
+            it(description, async () => {
+                const result = await ctx.queryOne(sql);
+                expect(result).to.equal('foo');
+            });
+        });
+
+        it('should accept query params as an array', async () => {
+            const result = await ctx.queryOne('SELECT "col1" FROM "t" WHERE "id" = ?', [1]);
+            expect(result).to.equal('foo');
+        });
+
+        it('should accept query params as an object', async () => {
+            const result = await ctx.queryOne('SELECT "col1" FROM "t" WHERE "id" = :id', { id: 1 });
+            expect(result).to.equal('foo');
+        });
+    });
+
     describe('#queryCol', () => {
         [
             ['should resolve to an array of values', 'SELECT "col1" FROM "t"'],

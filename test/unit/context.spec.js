@@ -41,6 +41,10 @@ describe('context', () => {
             expect(ctx.query).to.be.a('function');
         });
 
+        it('should export queryOne function', () => {
+            expect(ctx.queryOne).to.be.a('function');
+        });
+
         it('should export queryCol function', () => {
             expect(ctx.queryCol).to.be.a('function');
         });

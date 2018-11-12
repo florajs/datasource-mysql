@@ -163,6 +163,16 @@ describe('transaction', () => {
         });
     });
 
+    describe('#queryOne', () => {
+        it('should return array of values', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.queryOne('SELECT "col1" FROM "t" WHERE "id" = ?', [1]);
+            await trx.rollback();
+
+            expect(result).to.equal('foo');
+        });
+    });
+
     describe('#queryCol', () => {
         it('should return array of values', async () => {
             const trx = await ctx.transaction();
