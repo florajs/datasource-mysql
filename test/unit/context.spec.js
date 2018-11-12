@@ -33,6 +33,10 @@ describe('context', () => {
             expect(ctx.delete).to.be.a('function');
         });
 
+        it('should export upsert function', () => {
+            expect(ctx.upsert).to.be.a('function');
+        });
+
         it('should export query function', () => {
             expect(ctx.query).to.be.a('function');
         });
@@ -268,6 +272,26 @@ describe('context', () => {
             }
 
             throw new Error('Expected promise to reject');
+        });
+    });
+
+    describe('#upsert', () => {
+        let execStub;
+
+        beforeEach(() => {
+            execStub = sandbox.stub(ctx, 'exec').resolves({});
+        });
+
+        it('should accept assignment list as an array of column names', async () => {
+            const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = VALUES("col1"), "col2" = VALUES("col2")`;
+            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, ['col1', 'col2']);
+            expect(execStub).to.have.been.calledWith(sql);
+        });
+
+        it('should accept assignment list as an object', async () => {
+            const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = 'foo', "col2" = col2 + 1`;
+            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, { col1: 'foo', col2: new Expr('col2 + 1') });
+            expect(execStub).to.have.been.calledWith(sql);
         });
     });
 

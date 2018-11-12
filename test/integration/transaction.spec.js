@@ -4,6 +4,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 
 const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
+const Expr = require('../../lib/expr');
 const Transaction = require('../../lib/transaction');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -90,6 +91,57 @@ describe('transaction', () => {
             await trx.rollback();
 
             expect(affectedRows).to.equal(1);
+        });
+    });
+
+    describe('#upsert', () => {
+        it('should return number of affected rows', async () => {
+            const trx = await ctx.transaction();
+            const { affectedRows } = await trx.upsert('t', { id: 1, col1: 'foo' }, ['col1']);
+            await trx.rollback();
+
+            expect(affectedRows).to.equal(1);
+        });
+
+        it('should return number of changed rows', async () => {
+            const trx = await ctx.transaction();
+            const { changedRows } = await trx.upsert('t', { id: 1, col1: 'test' }, ['col1']);
+            await trx.rollback();
+
+            expect(changedRows).to.equal(0);
+        });
+
+
+        it('should accept data as an object', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.upsert('t', { id: 1, col1: 'test' }, ['col1']);
+            await trx.rollback();
+
+            expect(result).to.be.an('object');
+        });
+
+        it('should accept data as an array of objects', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.upsert('t', [{ id: 1, col1: 'test' }, { id: 1337, col1: 'new' }], ['col1']);
+            await trx.rollback();
+
+            expect(result).to.be.an('object');
+        });
+
+        it('should accept updates as an object', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.upsert('t', { id: 1, col1: 'test' }, { col1: new Expr('MD5(col1)') });
+            await trx.rollback();
+
+            expect(result).to.be.an('object');
+        });
+
+        it('should accept updates as an array', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.upsert('t', { id: 1, col1: 'test' }, ['col1']);
+            await trx.rollback();
+
+            expect(result).to.be.an('object');
         });
     });
 
