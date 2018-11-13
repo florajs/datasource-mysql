@@ -20,6 +20,33 @@ describe('context', () => {
     beforeEach(async () => await ctx.exec('START TRANSACTION'));
     afterEach(async () => await ctx.exec('ROLLBACK'));
 
+    describe('#queryRow', () => {
+        it('should return null for empty results', async () => {
+            const result = await ctx.queryRow('SELECT "col1" FROM "t" WHERE "id" = 1337');
+            expect(result).to.be.null;
+        });
+
+        [
+            ['should resolve to an object', 'SELECT "id", "col1" FROM "t" WHERE "id" = 1'],
+            ['should handle multiple rows', 'SELECT "id", "col1" FROM "t" ORDER BY "id" ASC']
+        ].forEach(([description, sql]) => {
+            it(description, async () => {
+                const result = await ctx.queryRow(sql);
+                expect(result).to.eql({ id: 1, col1: 'foo' });
+            });
+        });
+
+        it('should accept query params as an array', async () => {
+            const result = await ctx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
+            expect(result).to.eql({ id: 1, col1: 'foo' });
+        });
+
+        it('should accept query params as an object', async () => {
+            const result = await ctx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
+            expect(result).to.eql({ id: 1, col1: 'foo' });
+        });
+    });
+
     describe('#queryOne', () => {
         it('should return null for empty results', async () => {
             const result = await ctx.queryOne('SELECT "col1" FROM "t" WHERE "id" = 1337');

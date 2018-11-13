@@ -163,6 +163,16 @@ describe('transaction', () => {
         });
     });
 
+    describe('#queryRow', () => {
+        it('should return an object', async () => {
+            const trx = await ctx.transaction();
+            const result = await trx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
+            await trx.rollback();
+
+            expect(result).to.eql({ id: 1, col1: 'foo' });
+        });
+    });
+
     describe('#queryOne', () => {
         it('should return array of values', async () => {
             const trx = await ctx.transaction();

@@ -19,40 +19,23 @@ describe('context', () => {
     afterEach(() => sandbox.restore());
 
     describe('interface', () => {
-        it('should export insert function', () => {
-            expect(ctx.insert).to.be.a('function');
-        });
+        const methods = [
+            'delete',
+            'exec',
+            'insert',
+            'query',
+            'queryCol',
+            'queryOne',
+            'queryRow',
+            'update',
+            'upsert',
+            'transaction'
+        ];
 
-        it('should export update function', () => {
-            expect(ctx.update).to.be.a('function');
-        });
-
-        it('should export delete function', () => {
-            expect(ctx.delete).to.be.a('function');
-        });
-
-        it('should export upsert function', () => {
-            expect(ctx.upsert).to.be.a('function');
-        });
-
-        it('should export query function', () => {
-            expect(ctx.query).to.be.a('function');
-        });
-
-        it('should export queryOne function', () => {
-            expect(ctx.queryOne).to.be.a('function');
-        });
-
-        it('should export queryCol function', () => {
-            expect(ctx.queryCol).to.be.a('function');
-        });
-
-        it('should export exec function', () => {
-            expect(ctx.exec).to.be.a('function');
-        });
-
-        it('should export transaction function', () => {
-            expect(ctx.transaction).to.be.a('function');
+        methods.forEach(method => {
+            it(`should export ${method} function`, () => {
+                expect(ctx[method]).to.be.a('function');
+            });
         });
     });
 

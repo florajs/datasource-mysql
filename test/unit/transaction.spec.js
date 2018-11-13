@@ -12,6 +12,7 @@ describe('transaction', () => {
             'delete',
             'queryCol',
             'queryOne',
+            'queryRow',
             'rollback',
             'update',
             'upsert'
