@@ -297,11 +297,8 @@ class DataSource {
      * @private
      */
     _prepareServerCfg(serverCfg, database) {
-        const serverTypes = ['masters', 'slaves'];
-        const isMasterSlaveSetup = serverTypes
-            .every(type => has(serverCfg, type)
-                    && Array.isArray(serverCfg[type])
-                    && serverCfg[type].every(item => typeof item === 'object'));
+        serverCfg.masters = serverCfg.masters || [{}];
+        serverCfg.slaves = serverCfg.slaves || [];
 
         const baseCfg = {
             host: serverCfg.host,
@@ -315,10 +312,8 @@ class DataSource {
             multipleStatements: true // pagination queries
         };
 
-        if (!isMasterSlaveSetup) return { MASTER: baseCfg };
-
         const clusterCfg = {};
-        serverTypes.forEach((type) => {
+        ['masters', 'slaves'].forEach((type) => {
             const pattern = type.slice(0, -1).toUpperCase();
             serverCfg[type].forEach((hostCfg) => {
                 clusterCfg[`${pattern}_${hostCfg.host}`] = Object.assign({}, baseCfg, hostCfg);
@@ -394,11 +389,16 @@ class DataSource {
      */
     _getConnection({ type, server, db }) {
         return new Promise((resolve, reject) => {
-            // TODO throw error if pool doesn't support slave connections?
-            this._getConnectionPool(server, db).getConnection(`${type}*`, (err, connection) => {
-                if (err) return reject(err);
-                return resolve(connection);
-            });
+            this._getConnectionPool(server, db)
+                .getConnection(`${type}*`, (err, connection) => {
+                    if (err) {
+                        if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
+                            return resolve(this._getConnection({ type: 'MASTER', server, db }));
+                        }
+                        return reject(err);
+                    }
+                    return resolve(connection);
+                });
         }).then((connection) => {
             if (has(connection, '_floraInitialized')) return connection;
 
