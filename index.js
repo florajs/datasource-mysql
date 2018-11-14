@@ -11,7 +11,6 @@ const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
 
 const Context = require('./lib/context');
-const Expr = require('./lib/expr');
 
 /**
  * Deep-clone an object and try to be efficient
@@ -155,10 +154,6 @@ class DataSource {
         });
 
         return stats;
-    }
-
-    expr(val) {
-        return new Expr(val);
     }
 
     /**

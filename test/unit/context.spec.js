@@ -22,6 +22,7 @@ describe('context', () => {
         const methods = [
             'delete',
             'exec',
+            'expr',
             'insert',
             'query',
             'queryCol',
@@ -88,6 +89,12 @@ describe('context', () => {
             const sql = `SELECT id FROM "t" WHERE col1 = 'val1'`;
             await ctx.exec('SELECT id FROM "t" WHERE col1 = :col1', { col1: 'val1' });
             expect(queryStub).to.have.been.calledWith({ type: 'MASTER', db, server: 'default' }, sql);
+        });
+    });
+
+    describe('#expr', () => {
+        it('should create a SQL expression object', () => {
+            expect(ctx.expr('NOW()')).to.be.instanceOf(Expr);
         });
     });
 
