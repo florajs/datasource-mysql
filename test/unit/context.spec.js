@@ -28,6 +28,7 @@ describe('context', () => {
             'queryCol',
             'queryOne',
             'queryRow',
+            'quote',
             'update',
             'upsert',
             'transaction'
@@ -95,6 +96,12 @@ describe('context', () => {
     describe('#expr', () => {
         it('should create a SQL expression object', () => {
             expect(ctx.expr('NOW()')).to.be.instanceOf(Expr);
+        });
+    });
+
+    describe('#quote', () => {
+        it('should quote values', () => {
+            expect(ctx.quote(`foo\\b'ar`)).to.equal(`'foo\\\\b\\'ar'`);
         });
     });
 
