@@ -9,7 +9,7 @@ describe('error handling', () => {
     const ds = FloraMysqlFactory.create();
     const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
 
-    after(done => ds.close(done));
+    after(() => ds.close());
 
     it('should return an error if selected attribute has no corresponding column', done => {
         const floraRequest = {
@@ -18,11 +18,12 @@ describe('error handling', () => {
             database
         };
 
-        ds.process(floraRequest, (err) => {
-            expect(err).to.be.instanceof(Error);
-            expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-            done();
-        });
+        ds.process(floraRequest)
+            .catch((err) => {
+                expect(err).to.be.instanceof(Error);
+                expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
+                done();
+            });
     });
 
     it('should return an error if selected attribute has no corresponding alias', done => {
@@ -32,10 +33,11 @@ describe('error handling', () => {
             database
         };
 
-        ds.process(floraRequest, (err) => {
-            expect(err).to.be.instanceof(Error);
-            expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-            done();
-        });
+        ds.process(floraRequest)
+            .catch((err) => {
+                expect(err).to.be.instanceof(Error);
+                expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
+                done();
+            });
     });
 });

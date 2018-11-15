@@ -220,19 +220,15 @@ class DataSource {
      * Create SQL statement from flora request and run query against database.
      *
      * @param {Object} request
-     * @param {Function} callback
+     * @returns {Promise}
      */
-    process(request, callback) {
+    async process(request) {
         const server = request.server || 'default';
         const db = request.database;
         const connectionType = request.useMaster ? 'MASTER' : 'SLAVE';
         let sql;
 
-        try {
-            sql = buildSql(request);
-        } catch (e) {
-            return callback(e);
-        }
+        sql = buildSql(request);
 
         if (request._status) {
             request._status.set('server', server);
@@ -246,21 +242,21 @@ class DataSource {
             .then(({ results, host }) => {
                 if (has(request, '_explain')) Object.assign(request._explain, { host, sql });
 
-                callback(null, {
+                return {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
-                });
+                };
             })
             .catch((err) => {
                 this._log.info(err);
-                callback(err);
+                throw err;
             });
     }
 
     /**
-     * @param {Function} callback
+     * @returns {Promise}
      */
-    close(callback) {
+    close() {
         const connectionPools = [];
 
         function drain(pool) {
@@ -274,9 +270,7 @@ class DataSource {
             });
         });
 
-        Promise.all(connectionPools)
-            .then(() => callback())
-            .catch(callback);
+        return Promise.all(connectionPools);
     }
 
     getContext(ctx) {

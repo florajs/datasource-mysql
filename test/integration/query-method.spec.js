@@ -12,7 +12,7 @@ describe('flora-mysql data source', () => {
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db, useMaster: true });
 
-    after(done => ds.close(done));
+    after(() => ds.close());
 
     describe('query method', () => {
         it('should release pool connections manually', async () => {

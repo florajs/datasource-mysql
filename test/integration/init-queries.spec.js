@@ -17,9 +17,9 @@ describe('init queries', () => {
 
     beforeEach(() => querySpy = sinon.spy(PoolConnection.prototype, 'query'));
 
-    afterEach(done => {
+    afterEach(() => {
         querySpy.restore();
-        ds.close(done)
+        return ds.close();
     });
 
     it('should set sql_mode to ANSI if no init queries are defined', async () => {
