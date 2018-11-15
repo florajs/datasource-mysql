@@ -22,13 +22,13 @@ describe('context', () => {
         const methods = [
             'delete',
             'exec',
-            'expr',
             'insert',
             'query',
             'queryCol',
             'queryOne',
             'queryRow',
             'quote',
+            'raw',
             'update',
             'upsert',
             'transaction'
@@ -93,9 +93,13 @@ describe('context', () => {
         });
     });
 
-    describe('#expr', () => {
-        it('should create a SQL expression object', () => {
-            expect(ctx.expr('NOW()')).to.be.instanceOf(Expr);
+    describe('#raw', () => {
+        it('should pass through value', () => {
+            const expr = ctx.raw('NOW()');
+
+            expect(expr).to.be.an('object');
+            expect(expr.toSqlString).to.be.a('function');
+            expect(expr.toSqlString()).to.equal('NOW()');
         });
     });
 
