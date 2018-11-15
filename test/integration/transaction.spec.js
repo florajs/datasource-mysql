@@ -4,7 +4,6 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 
 const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
-const Expr = require('../../lib/expr');
 const Transaction = require('../../lib/transaction');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -133,7 +132,7 @@ describe('transaction', () => {
 
         it('should accept updates as an object', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert('t', { id: 1, col1: 'test' }, { col1: new Expr('MD5(col1)') });
+            const result = await trx.upsert('t', { id: 1, col1: 'test' }, { col1: ctx.raw('MD5(col1)') });
             await trx.rollback();
 
             expect(result).to.be.an('object');

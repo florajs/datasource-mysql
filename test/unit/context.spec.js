@@ -5,7 +5,6 @@ const sinon = require('sinon');
 const sandbox = sinon.createSandbox();
 
 const Connection = require('../../node_modules/mysql/lib/Connection');
-const Expr = require('../../lib/expr');
 const Transaction = require('../../lib/transaction');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -124,7 +123,7 @@ describe('context', () => {
             ['booleans', true, 'SELECT "id" FROM "t" WHERE "col1" = ?', 'SELECT "id" FROM "t" WHERE "col1" = true'],
             ['dates', new Date(2019, 0, 1, 0, 0, 0, 0), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = '2019-01-01 00:00:00.000'`],
             ['arrays', [1, 3, 3, 7], 'SELECT "id" FROM "t" WHERE "col1" IN (?)', `SELECT "id" FROM "t" WHERE "col1" IN (1, 3, 3, 7)`],
-            ['sqlstringifiable objects', new Expr('CURDATE()'), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = CURDATE()`],
+            ['sqlstringifiable objects', ctx.raw('CURDATE()'), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = CURDATE()`],
             ['null', null, 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = NULL`],
         ].forEach(([type, value, query, sql]) => {
             it(`should support ${type}`, async () => {
@@ -171,8 +170,8 @@ describe('context', () => {
         });
 
         it('should accept data as an object', async () => {
-            await ctx.insert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()'), col4: new Date(2018, 10, 16, 15, 24) });
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3", "col4") VALUES ('val1', 1, NOW(), '2018-11-16 15:24:00.000')`);
+            await ctx.insert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') });
+            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`);
         });
 
         it('should accept data as an array of objects', async () => {
@@ -217,12 +216,12 @@ describe('context', () => {
         });
 
         it('should accept data as an object', async () => {
-            await ctx.update('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, '1 = 1');
+            await ctx.update('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, '1 = 1');
             expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1`);
         });
 
         it('should accept where as an object', async () => {
-            await ctx.update('t', { col1: 'val1' }, { col2: 1, col3: new Expr('CURDATE()') });
+            await ctx.update('t', { col1: 'val1' }, { col2: 1, col3: ctx.raw('CURDATE()') });
             expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE()`);
         });
 
@@ -266,7 +265,7 @@ describe('context', () => {
         });
 
         it('should accept where as an object', async () => {
-            await ctx.delete('t', { col1: 'val1', col2: 1, col3: new Expr('CURDATE()') });
+            await ctx.delete('t', { col1: 'val1', col2: 1, col3: ctx.raw('CURDATE()') });
             expect(execStub).to.have.been.calledWith(`DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE()`);
         });
 
@@ -293,13 +292,13 @@ describe('context', () => {
 
         it('should accept assignment list as an array of column names', async () => {
             const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = VALUES("col1"), "col2" = VALUES("col2")`;
-            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, ['col1', 'col2']);
+            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, ['col1', 'col2']);
             expect(execStub).to.have.been.calledWith(sql);
         });
 
         it('should accept assignment list as an object', async () => {
             const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = 'foo', "col2" = col2 + 1`;
-            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') }, { col1: 'foo', col2: new Expr('col2 + 1') });
+            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, { col1: 'foo', col2: ctx.raw('col2 + 1') });
             expect(execStub).to.have.been.calledWith(sql);
         });
     });
