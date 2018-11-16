@@ -160,13 +160,15 @@ describe('context', () => {
         });
 
         it('should accept data as an object', async () => {
-            await ctx.insert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()') });
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`);
+            await ctx.insert('t', { col1: 'val1', col2: 1, col3: new Expr('NOW()'), col4: new Date(2018, 10, 16, 15, 24) });
+            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3", "col4") VALUES ('val1', 1, NOW(), '2018-11-16 15:24:00.000')`);
         });
 
         it('should accept data as an array of objects', async () => {
-            await ctx.insert('t', [{ col1: 'val1', col2: 1 }, { col1: 'val2', col2: 2 }]);
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2") VALUES ('val1', 1), ('val2', 2)`);
+            const date = new Date(2018, 10, 16, 15, 24);
+            const dateStr = '2018-11-16 15:24:00.000';
+            await ctx.insert('t', [{ col1: 'val1', col2: 1, col3: date }, { col1: 'val2', col2: 2, col3: date }]);
+            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, '${dateStr}'), ('val2', 2, '${dateStr}')`);
         });
 
         it('should reject with an error if data is not set', async () => {
