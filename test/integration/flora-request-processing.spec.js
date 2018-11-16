@@ -1,9 +1,13 @@
 'use strict';
 
-const { expect } = require('chai');
+const chai = require('chai');
+const { expect } = chai;
+const sinon = require('sinon');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+
+chai.use(require('sinon-chai'));
 
 describe('flora request processing', () => {
     const ds = FloraMysqlFactory.create({
@@ -53,6 +57,25 @@ describe('flora request processing', () => {
             expect(result)
                 .to.have.property('totalCount')
                 .and.to.be.at.least(1);
+            done();
+        });
+    });
+
+    it('should respect useMaster', done => {
+        const querySpy = sinon.spy(ds, '_query');
+        const floraRequest = {
+            database,
+            useMaster: true,
+            attributes: ['col1'],
+            queryAST: astTpl,
+            limit: 1,
+            page: 2
+        };
+
+        ds.process(floraRequest, (err) => {
+            expect(err).to.be.null;
+            expect(querySpy).to.have.been.calledWithMatch({ type: 'MASTER' });
+            querySpy.restore();
             done();
         });
     });

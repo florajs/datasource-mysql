@@ -213,6 +213,7 @@ class DataSource {
         }
 
         dsConfig.queryAST = ast;
+        dsConfig.useMaster = dsConfig.useMaster === 'true';
     }
 
     /**
@@ -224,6 +225,7 @@ class DataSource {
     process(request, callback) {
         const server = request.server || 'default';
         const db = request.database;
+        const connectionType = request.useMaster ? 'MASTER' : 'SLAVE';
         let sql;
 
         try {
@@ -240,7 +242,7 @@ class DataSource {
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
 
-        return this._query({ type: 'SLAVE', server, db }, sql)
+        return this._query({ type: connectionType, server, db }, sql)
             .then(({ results, host }) => {
                 if (has(request, '_explain')) Object.assign(request._explain, { host, sql });
 
