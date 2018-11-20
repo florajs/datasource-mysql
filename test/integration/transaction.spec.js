@@ -20,6 +20,8 @@ describe('transaction', () => {
 
     afterEach(() => queryFnSpy.restore());
 
+    after(done => ds.close(done));
+
     it('should return a transaction', async () => {
         const trx = await ctx.transaction();
 

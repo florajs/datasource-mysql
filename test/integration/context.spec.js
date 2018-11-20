@@ -20,6 +20,8 @@ describe('context', () => {
     beforeEach(async () => await ctx.exec('START TRANSACTION'));
     afterEach(async () => await ctx.exec('ROLLBACK'));
 
+    after(done => ds.close(done));
+
     describe('#queryRow', () => {
         it('should return null for empty results', async () => {
             const result = await ctx.queryRow('SELECT "col1" FROM "t" WHERE "id" = 1337');
