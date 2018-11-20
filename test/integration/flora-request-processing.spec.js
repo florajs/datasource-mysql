@@ -10,15 +10,7 @@ const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 chai.use(require('sinon-chai'));
 
 describe('flora request processing', () => {
-    const ds = FloraMysqlFactory.create({
-        servers: {
-            default: {
-                host: 'mysql',
-                user: 'root',
-                password: ''
-            }
-        }
-    });
+    const ds = FloraMysqlFactory.create();
     const database = 'flora_mysql_testdb';
 
     after(done => ds.close(done));

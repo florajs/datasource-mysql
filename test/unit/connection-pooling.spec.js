@@ -17,6 +17,8 @@ function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
 }
 
+const PORT = process.env.MYSQL_PORT || 3306;
+
 describe('connection pooling', () => {
     const ctxCfg = { db: 'test' };
     let poolSpy;
@@ -67,7 +69,7 @@ describe('connection pooling', () => {
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: 3306 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: PORT });
             });
 
             it('custom', async () => {

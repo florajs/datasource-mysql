@@ -1,10 +1,12 @@
 'use strict';
 
 const mysql = require('mysql');
+const [,, host, port] = process.argv;
 const connection = mysql.createConnection({
     user: 'root',
     database: 'flora_mysql_testdb',
-    host: 'mysql'
+    host,
+    port
 });
 
 connection.once('error', () => process.exit(1));

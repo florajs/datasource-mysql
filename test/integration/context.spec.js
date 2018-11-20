@@ -5,16 +5,7 @@ const { expect } = require('chai');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('context', () => {
-    const ds = FloraMysqlFactory.create({
-        servers: {
-            default: {
-                user: 'root',
-                password: '',
-                masters: [{ host: 'mysql' }],
-                slaves: [{ host: 'mysql' }]
-            }
-        }
-    });
+    const ds = FloraMysqlFactory.create();
     const ctx = ds.getContext({ db: 'flora_mysql_testdb' });
 
     beforeEach(async () => await ctx.exec('START TRANSACTION'));

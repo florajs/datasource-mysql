@@ -10,7 +10,12 @@ const api = { log };
 
 const defaultCfg = {
     servers: {
-        default: { host: 'mysql', user: 'root', password: '' }
+        default: {
+            host: process.env.MYSQL_HOST || 'localhost' ,
+            port: process.env.MYSQL_PORT || 3306,
+            user: 'root',
+            password: ''
+        }
     }
 };
 

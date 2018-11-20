@@ -4,14 +4,13 @@
   "description": "MySQL connection for Flora",
   "main": "index.js",
   "scripts": {
-    "test:cleanup": "docker-compose -f test/integration/docker-compose.yml rm --force",
-    "test:start-mysql": "docker-compose -f test/integration/docker-compose.yml up -d mysql",
-    "test:mysql": "docker-compose -f test/integration/docker-compose.yml up --abort-on-container-exit test",
-    "test:stop": "docker-compose -f test/integration/docker-compose.yml stop && docker-compose -f test/integration/docker-compose.yml kill",
-    "test:_integration": "mocha test/integration/*.spec.js",
-    "test:integration": "npm run test:cleanup && npm run test:start-mysql && npm run test:mysql; npm run test:stop",
-    "test:unit": "mocha test/unit/*.spec.js",
-    "test": "npm run test:unit && npm run test:integration",
+    "test:cleanup": "docker rm --force mysql",
+    "test:start-mysql": "docker run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=flora_mysql_testdb -p ${MYSQL_PORT:-3306}:3306 -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" mysql:5.7",
+    "test:mysql": "./test/integration/wait-for-mysql.sh ${MYSQL_HOST:-localhost} ${MYSQL_PORT:-3306} && mocha test/integration/*.spec.js",
+    "test:stop": "docker stop mysql",
+    "test-ci": "npm run test:cleanup; npm run test:start-mysql && npm run test:mysql; npm run test:stop",
+    "test-unit": "mocha test/unit/*.spec.js",
+    "test": "npm run test-unit && npm run test-ci",
     "lint": "eslint ."
   },
   "author": {
