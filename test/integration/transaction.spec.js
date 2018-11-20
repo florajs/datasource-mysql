@@ -209,5 +209,23 @@ describe('transaction', () => {
 
             expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
         });
+
+        it(`should resolve/return with insertId property`, async () => {
+            const trx = await ctx.transaction();
+            const { insertId } = await trx.exec(`INSERT INTO t (col1) VALUES ('insertId')`);
+            await trx.rollback();
+
+            expect(insertId).to.be.greaterThan(3);
+        });
+
+        ['affectedRows', 'changedRows'].forEach((property) => {
+            it(`should resolve/return with ${property} property`, async () => {
+                const trx = await ctx.transaction();
+                const result = await trx.exec(`UPDATE t SET col1 = 'affectedRows' WHERE id = 1`);
+                await trx.rollback();
+
+                expect(result).to.have.property(property, 1);
+            });
+        });
     });
 });

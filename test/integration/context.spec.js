@@ -131,4 +131,18 @@ describe('context', () => {
             expect(affectedRows).to.equal(1);
         });
     });
+
+    describe('#exec', () => {
+        it(`should resolve/return with insertId property`, async () => {
+            const { insertId } = await ctx.exec(`INSERT INTO t (col1) VALUES ('insertId')`);
+            expect(insertId).to.be.greaterThan(3);
+        });
+
+        ['affectedRows', 'changedRows'].forEach((property) => {
+            it(`should resolve/return with ${property} property`, async () => {
+                const result = await ctx.exec(`UPDATE t SET col1 = 'changedRows' WHERE id = 1`);
+                expect(result).to.have.property(property, 1);
+            });
+        });
+    });
 });
