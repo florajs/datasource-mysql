@@ -17,4 +17,4 @@ services:
         working_dir: /usr/src/app
         environment:
             NODE_ENV: "development"
-        command: ["./test/integration/wait-for-mysql.sh", "mysql", "./node_modules/.bin/grunt", "${GRUNT_TARGET:-mochaTest:integration}"]
+        command: ["./test/integration/wait-for-mysql.sh", "mysql", "npm", "run", "test:_integration"]

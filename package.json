@@ -4,8 +4,15 @@
   "description": "MySQL connection for Flora",
   "main": "index.js",
   "scripts": {
-    "test": "grunt test",
-    "lint": "grunt lint"
+    "test:cleanup": "docker-compose -f test/integration/docker-compose.yml rm --force",
+    "test:start-mysql": "docker-compose -f test/integration/docker-compose.yml up -d mysql",
+    "test:mysql": "docker-compose -f test/integration/docker-compose.yml up --abort-on-container-exit test",
+    "test:stop": "docker-compose -f test/integration/docker-compose.yml stop && docker-compose -f test/integration/docker-compose.yml kill",
+    "test:_integration": "mocha test/integration/*.spec.js",
+    "test:integration": "npm run test:cleanup && npm run test:start-mysql && npm run test:mysql; npm run test:stop",
+    "test:unit": "mocha test/unit/*.spec.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "lint": "eslint ."
   },
   "author": {
     "name": "BörseGo AG",
@@ -49,15 +56,6 @@
     "eslint": "^4.18.1",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.9.0",
-    "grunt": "^1.0.2",
-    "grunt-cli": "^1.2.0",
-    "grunt-contrib-clean": "^1.0.0",
-    "grunt-eslint": "^20.1.0",
-    "grunt-mocha-istanbul": "^5.0.2",
-    "grunt-mocha-test": "^0.13.3",
-    "grunt-shell": "^2.1.0",
-    "istanbul": "^0.4.2",
-    "load-grunt-tasks": "^3.4.0",
     "mocha": "^5.0.1",
     "sinon": "^7.0.0",
     "sinon-chai": "^3.2.0"
