@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test:cleanup": "docker rm --force mysql",
-    "test:start-mysql": "docker run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=flora_mysql_testdb -p ${MYSQL_PORT:-3306}:3306 -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" mysql:5.7",
-    "test:mysql": "./test/integration/wait-for-mysql.sh ${MYSQL_HOST:-localhost} ${MYSQL_PORT:-3306} && mocha test/integration/*.spec.js",
+    "test:start-mysql": "docker run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=${MYSQL_DATABASE:-flora_mysql_testdb} -p ${MYSQL_PORT:-3306}:3306 -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" mysql:${MYSQL_VERSION:-5.7}",
+    "test:mysql": "./test/integration/tool/wait-for-mysql.sh ${MYSQL_HOST:-localhost} ${MYSQL_PORT:-3306} ${MYSQL_DATABASE:-flora_mysql_testdb} && npm run test:ci",
     "test:stop": "docker stop mysql",
+    "test:ci": "mocha test/integration/*.spec.js",
     "test-ci": "npm run test:cleanup; npm run test:start-mysql && npm run test:mysql; npm run test:stop",
     "test-unit": "mocha test/unit/*.spec.js",
     "test": "npm run test-unit && npm run test-ci",

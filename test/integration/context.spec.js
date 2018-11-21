@@ -6,7 +6,8 @@ const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('context', () => {
     const ds = FloraMysqlFactory.create();
-    const ctx = ds.getContext({ db: 'flora_mysql_testdb' });
+    const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
+    const ctx = ds.getContext({ db });
 
     beforeEach(async () => await ctx.exec('START TRANSACTION'));
     afterEach(async () => await ctx.exec('ROLLBACK'));

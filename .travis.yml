@@ -1,0 +1,40 @@
+language: node_js
+node_js:
+    - "10"
+
+sudo: required
+services:
+    - docker
+
+cache:
+    directories:
+        - node_modules
+
+env:
+    matrix:
+        - "MYSQL_VERSION=5.7"
+
+matrix:
+    include:
+        - node_js: 10
+          env: "MYSQL_VERSION=5.7"
+        # - node_js: 10
+        #  env: "MYSQL_VERSION=8"
+
+before_install:
+    # Update Node.js modules
+    - "test ! -d node_modules || npm prune"
+    - "test ! -d node_modules || npm rebuild"
+
+    # Setup environment
+    - "export MYSQL_DATABASE=flora_mysql_testdb"
+    - "export MYSQL_HOST=localhost"
+    - "export MYSQL_PORT=$(node test/integration/tool/free-port.js)"
+
+install:
+    - "docker run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=$MYSQL_DATABASE -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" -p $MYSQL_PORT:3306 mysql:$MYSQL_VERSION"
+    - "npm install"
+    - "test/integration/tool/wait-for-mysql.sh $MYSQL_HOST $MYSQL_PORT $MYSQL_DATABASE"
+
+script:
+    - "npm run test:ci"

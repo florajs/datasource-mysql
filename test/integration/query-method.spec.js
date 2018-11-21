@@ -9,7 +9,8 @@ const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('flora-mysql data source', () => {
     const ds = FloraMysqlFactory.create();
-    const ctx = ds.getContext({ db: 'flora_mysql_testdb', useMaster: true });
+    const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
+    const ctx = ds.getContext({ db, useMaster: true });
 
     after(done => ds.close(done));
 

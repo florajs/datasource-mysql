@@ -7,7 +7,7 @@ const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 
 describe('error handling', () => {
     const ds = FloraMysqlFactory.create();
-    const database = 'flora_mysql_testdb';
+    const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
 
     after(done => ds.close(done));
 

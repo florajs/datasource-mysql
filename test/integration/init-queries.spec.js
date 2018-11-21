@@ -10,7 +10,8 @@ const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
 chai.use(require('sinon-chai'));
 
 describe('init queries', () => {
-    const ctxCfg = { db: 'flora_mysql_testdb', useMaster: true };
+    const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
+    const ctxCfg = { db, useMaster: true };
     let ds;
     let querySpy;
 
