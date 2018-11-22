@@ -37,4 +37,5 @@ install:
     - "test/integration/tool/wait-for-mysql.sh $MYSQL_HOST $MYSQL_PORT $MYSQL_DATABASE"
 
 script:
-    - "npm run test"
+    - "npm run test-unit"
+    - "npm run test:ci"
