@@ -32,7 +32,7 @@ before_install:
     - "export MYSQL_PORT=$(node test/integration/tool/free-port.js)"
 
 install:
-    - "docker run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=$MYSQL_DATABASE -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" -p $MYSQL_PORT:3306 mysql:$MYSQL_VERSION"
+    - "docker run -d --name flora-mysql-testdb -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=$MYSQL_DATABASE -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" -p $MYSQL_PORT:3306 mysql:$MYSQL_VERSION"
     - "npm install"
     - "test/integration/tool/wait-for-mysql.sh $MYSQL_HOST $MYSQL_PORT $MYSQL_DATABASE"
 
