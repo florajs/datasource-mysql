@@ -97,12 +97,7 @@ function initConnection(connection, initConfigs) {
                 ? Promise.all(initCfg.map(query))
                 : Promise.reject(new Error('All items must be of type string'));
         } else if (typeof initCfg === 'function') {
-            return new Promise((resolve, reject) => {
-                initCfg(connection, (err) => {
-                    if (err) return reject(err);
-                    return resolve();
-                });
-            });
+            return initCfg(connection);
         }
 
         return Promise.reject(new Error('onConnect can either be a string, an array of strings or a function'));

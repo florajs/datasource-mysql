@@ -51,7 +51,7 @@ describe('flora request processing', () => {
             });
     });
 
-    it('should respect useMaster', done => {
+    it('should respect useMaster', () => {
         const querySpy = sinon.spy(ds, '_query');
         const floraRequest = {
             database,
@@ -62,11 +62,9 @@ describe('flora request processing', () => {
             page: 2
         };
 
-        ds.process(floraRequest, (err) => {
-            expect(err).to.be.null;
+        return ds.process(floraRequest).then((result) => {
             expect(querySpy).to.have.been.calledWithMatch({ type: 'MASTER' });
             querySpy.restore();
-            done();
         });
     });
 });

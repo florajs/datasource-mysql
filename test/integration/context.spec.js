@@ -12,7 +12,7 @@ describe('context', () => {
     beforeEach(async () => await ctx.exec('START TRANSACTION'));
     afterEach(async () => await ctx.exec('ROLLBACK'));
 
-    after(done => ds.close(done));
+    after(() => ds.close());
 
     describe('#queryRow', () => {
         it('should return null for empty results', async () => {

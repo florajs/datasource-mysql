@@ -57,9 +57,12 @@ describe('init queries', () => {
 
     it('should execute custom init function', async () => {
         const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const onConnect = sinon.spy((connection, done) => {
-            connection.query(initQuery, err => done(err ? err : null));
-        });
+        const onConnect = sinon.spy((connection) => new Promise((resolve, reject) => {
+            connection.query(initQuery, err => {
+                if (err) return reject(err);
+                resolve();
+            });
+        }));
         const config = Object.assign({}, defaultCfg, { onConnect });
 
         ds = FloraMysqlFactory.create(config);
@@ -67,7 +70,7 @@ describe('init queries', () => {
         await ctx.query('SELECT 1 FROM dual');
 
         expect(querySpy).to.have.been.calledWith(initQuery);
-        expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection), sinon.match.func);
+        expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection));
     });
 
     it('should handle server specific init queries', async () => {
