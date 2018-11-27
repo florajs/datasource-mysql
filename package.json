@@ -45,8 +45,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "flora-errors": "^0.7.0",
-    "flora-sql-parser": "^0.7.7",
+    "flora-errors": "^0.9.1",
+    "flora-sql-parser": "^0.8.0",
     "has": "^1.0.1",
     "lodash": "^4.17.11",
     "mysql": "^2.15.0",

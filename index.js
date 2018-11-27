@@ -193,7 +193,8 @@ class DataSource {
                 groupby: null,
                 having: null,
                 orderby: null,
-                limit: null
+                limit: null,
+                with: null
             };
         } else {
             throw new ImplementationError('Option "query" or "table" must be specified');

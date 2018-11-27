@@ -14,5 +14,6 @@ module.exports = {
     groupby: null,
     having: null,
     orderby: null,
-    limit: null
+    limit: null,
+    with: null
 };
