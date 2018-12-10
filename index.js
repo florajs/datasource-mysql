@@ -323,7 +323,7 @@ class DataSource {
 
         this._log.trace('creating MySQL pool "%s"', database);
 
-        const pool = mysql.createPoolCluster();
+        const pool = mysql.createPoolCluster({ restoreNodeTimeout: 5000 });
         const serverCfg = this._config.servers[server];
         const clusterCfg = this._prepareServerCfg(serverCfg, database);
 
