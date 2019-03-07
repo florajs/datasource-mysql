@@ -14,6 +14,23 @@ describe('context', () => {
 
     after(() => ds.close());
 
+    describe('#query', () => {
+        it('should return an array for empty results', async () => {
+            const result = await ctx.query('SELECT "col1" FROM "t" WHERE "id" = 1337');
+            expect(result).to.be.an('array').and.to.have.length(0);
+        });
+
+        it('should accept query params as an array', async () => {
+            const result = await ctx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
+        });
+
+        it('should accept query params as an object', async () => {
+            const result = await ctx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
+        });
+    });
+
     describe('#queryRow', () => {
         it('should return null for empty results', async () => {
             const result = await ctx.queryRow('SELECT "col1" FROM "t" WHERE "id" = 1337');
@@ -132,10 +149,14 @@ describe('context', () => {
             expect(insertId).to.be.greaterThan(3);
         });
 
-        ['affectedRows', 'changedRows'].forEach((property) => {
+        Object.entries({
+            affectedRows: 1,
+            changedRows: 1,
+            insertId: 0
+        }).forEach(([property, value]) => {
             it(`should resolve/return with ${property} property`, async () => {
                 const result = await ctx.exec(`UPDATE t SET col1 = 'changedRows' WHERE id = 1`);
-                expect(result).to.have.property(property, 1);
+                expect(result).to.have.property(property, value);
             });
         });
     });

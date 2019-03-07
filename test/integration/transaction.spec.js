@@ -148,7 +148,7 @@ describe('transaction', () => {
     });
 
     describe('#query', () => {
-        it('should support parameters', async () => {
+        it('should support parameters as an array', async () => {
             const trx = await ctx.transaction();
             await trx.query('SELECT "id" FROM "t" WHERE "col1" = ?', ['foo']);
             await trx.rollback();
@@ -220,13 +220,17 @@ describe('transaction', () => {
             expect(insertId).to.be.greaterThan(3);
         });
 
-        ['affectedRows', 'changedRows'].forEach((property) => {
+        Object.entries({
+            affectedRows: 1,
+            changedRows: 1,
+            insertId: 0
+        }).forEach(([property, value]) => {
             it(`should resolve/return with ${property} property`, async () => {
                 const trx = await ctx.transaction();
                 const result = await trx.exec(`UPDATE t SET col1 = 'affectedRows' WHERE id = 1`);
                 await trx.rollback();
 
-                expect(result).to.have.property(property, 1);
+                expect(result).to.have.property(property, value);
             });
         });
     });
