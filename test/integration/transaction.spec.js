@@ -12,13 +12,6 @@ describe('transaction', () => {
     const ds = FloraMysqlFactory.create();
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db });
-    let queryFnSpy;
-
-    beforeEach(() => {
-        queryFnSpy = sinon.spy(PoolConnection.prototype, 'query');
-    });
-
-    afterEach(() => queryFnSpy.restore());
 
     after(() => ds.close());
 
@@ -29,25 +22,35 @@ describe('transaction', () => {
         await trx.rollback();
     });
 
-    it('should acquire a connection and start the transaction', async () => {
-        const trx = await ctx.transaction();
+    describe('transaction handling', () => {
+        let queryFnSpy;
 
-        expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
-        await trx.rollback();
-    });
+        beforeEach(() => {
+            queryFnSpy = sinon.spy(PoolConnection.prototype, 'query');
+        });
 
-    it('should send COMMIT on commit()', async () => {
-        const trx = await ctx.transaction();
+        afterEach(() => queryFnSpy.restore());
 
-        await trx.commit();
-        expect(queryFnSpy).to.have.been.calledWith('COMMIT');
-    });
+        it('should acquire a connection and start the transaction', async () => {
+            const trx = await ctx.transaction();
 
-    it('should send ROLLBACK on rollback()', async () => {
-        const trx = await ctx.transaction();
+            expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
+            await trx.rollback();
+        });
 
-        await trx.rollback();
-        expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
+        it('should send COMMIT on commit()', async () => {
+            const trx = await ctx.transaction();
+
+            await trx.commit();
+            expect(queryFnSpy).to.have.been.calledWith('COMMIT');
+        });
+
+        it('should send ROLLBACK on rollback()', async () => {
+            const trx = await ctx.transaction();
+
+            await trx.rollback();
+            expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
+        });
     });
 
     describe('#insert', () => {
@@ -150,18 +153,18 @@ describe('transaction', () => {
     describe('#query', () => {
         it('should support parameters as an array', async () => {
             const trx = await ctx.transaction();
-            await trx.query('SELECT "id" FROM "t" WHERE "col1" = ?', ['foo']);
+            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
             await trx.rollback();
 
-            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it('should support named parameters', async () => {
             const trx = await ctx.transaction();
-            await trx.query('SELECT "id" FROM "t" WHERE "col1" = :col1', { col1: 'foo' });
+            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             await trx.rollback();
 
-            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
     });
 
@@ -198,18 +201,18 @@ describe('transaction', () => {
     describe('#exec', () => {
         it('should support parameters', async () => {
             const trx = await ctx.transaction();
-            await trx.query('SELECT "id" FROM "t" WHERE "col1" = ?', ['foo']);
+            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
             await trx.rollback();
 
-            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it('should support named parameters', async () => {
             const trx = await ctx.transaction();
-            await trx.query('SELECT "id" FROM "t" WHERE "col1" = :col1', { col1: 'foo' });
+            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             await trx.rollback();
 
-            expect(queryFnSpy).to.have.been.calledWith(`SELECT "id" FROM "t" WHERE "col1" = 'foo'`);
+            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it(`should resolve/return with insertId property`, async () => {
