@@ -45,8 +45,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "flora-errors": "^0.9.1",
-    "flora-sql-parser": "^0.8.0",
+    "flora-errors": "^2.0.0-alpha.2",
+    "flora-sql-parser": "^0.9.1",
     "has": "^1.0.1",
     "lodash": "^4.17.11",
     "mysql": "^2.15.0",
@@ -59,10 +59,10 @@
     "@types/sinon-chai": "^3.2.0",
     "bunyan": "^1.5.1",
     "chai": "^4.2.0",
-    "eslint": "^4.18.1",
-    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint": "^5.15.1",
+    "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.9.0",
-    "mocha": "^5.0.1",
+    "mocha": "^6.0.2",
     "sinon": "^7.0.0",
     "sinon-chai": "^3.2.0"
   }
