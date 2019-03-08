@@ -31,7 +31,7 @@ function cloneDeep(obj) {
  * @private
  */
 function hasSqlEquivalent(attribute, columns) {
-    return columns.some(column => (column.expr.column === attribute || column.as === attribute));
+    return columns.some(column => column.expr.column === attribute || column.as === attribute);
 }
 
 /**
@@ -42,7 +42,7 @@ function hasSqlEquivalent(attribute, columns) {
  * @private
  */
 function checkSqlEquivalents(attributes, columns) {
-    attributes.forEach((attribute) => {
+    attributes.forEach(attribute => {
         if (!hasSqlEquivalent(attribute, columns)) {
             throw new Error('Attribute "' + attribute + '" is not provided by SQL query');
         }
@@ -82,21 +82,25 @@ function buildSql(request) {
 function initConnection(connection, initConfigs) {
     function query(sql) {
         return new Promise((resolve, reject) => {
-            connection.query(sql, (err) => {
+            connection.query(sql, err => {
                 if (err) return reject(err);
                 return resolve();
             });
         });
     }
 
-    const initQueries = initConfigs.map((initCfg) => {
+    const initQueries = initConfigs.map(initCfg => {
         if (typeof initCfg === 'string') {
             return query(initCfg);
-        } else if (Array.isArray(initCfg)) {
+        }
+
+        if (Array.isArray(initCfg)) {
             return initCfg.every(item => typeof item === 'string')
                 ? Promise.all(initCfg.map(query))
                 : Promise.reject(new Error('All items must be of type string'));
-        } else if (typeof initCfg === 'function') {
+        }
+
+        if (typeof initCfg === 'function') {
             return initCfg(connection);
         }
 
@@ -130,13 +134,13 @@ class DataSource {
             waiting: '_acquiringConnections'
         };
 
-        Object.keys(this._pools).forEach((server) => {
+        Object.keys(this._pools).forEach(server => {
             if (!stats[server]) stats[server] = {};
-            Object.keys(this._pools[server]).forEach((db) => {
+            Object.keys(this._pools[server]).forEach(db => {
                 const pool = this._getConnectionPool(server, db);
                 const poolStats = {};
 
-                Object.keys(statProps).forEach((prop) => {
+                Object.keys(statProps).forEach(prop => {
                     const statProp = statProps[prop];
                     if (!pool[statProp] || !Array.isArray(pool[statProp])) return;
                     poolStats[prop] = pool[statProp].length;
@@ -161,7 +165,8 @@ class DataSource {
         let ast;
 
         if (dsConfig.query && dsConfig.query.trim().length > 0) {
-            try { // add query to exception
+            try {
+                // add query to exception
                 ast = this._parser.parse(dsConfig.query);
 
                 ast._meta = ast._meta || {};
@@ -184,9 +189,9 @@ class DataSource {
                 distinct: null,
                 columns: Array.isArray(attributes)
                     ? attributes.map(attribute => ({
-                        expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
-                        as: null
-                    }))
+                          expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
+                          as: null
+                      }))
                     : '',
                 from: [{ db: null, table: dsConfig.table, as: null }],
                 where: null,
@@ -202,7 +207,7 @@ class DataSource {
 
         if (dsConfig.searchable) {
             dsConfig.searchable = dsConfig.searchable.split(',');
-            dsConfig.searchable.forEach((attr) => {
+            dsConfig.searchable.forEach(attr => {
                 if (ast.columns.find(col => col.expr.column === attr || col.as === attr)) return;
                 throw new ImplementationError(`Attribute "${attr}" is not available in AST`);
             });
@@ -243,7 +248,7 @@ class DataSource {
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
                 };
             })
-            .catch((err) => {
+            .catch(err => {
                 this._log.info(err);
                 throw err;
             });
@@ -259,8 +264,8 @@ class DataSource {
             return new Promise(resolve => pool.end(resolve));
         }
 
-        Object.keys(this._pools).forEach((server) => {
-            Object.keys(this._pools[server]).forEach((database) => {
+        Object.keys(this._pools).forEach(server => {
+            Object.keys(this._pools[server]).forEach(database => {
                 this._log.debug('closing MySQL pool "%s" at "%s"', database, server);
                 connectionPools.push(drain(this._pools[server][database]));
             });
@@ -300,9 +305,9 @@ class DataSource {
         };
 
         const clusterCfg = {};
-        ['masters', 'slaves'].forEach((type) => {
+        ['masters', 'slaves'].forEach(type => {
             const pattern = type.slice(0, -1).toUpperCase();
-            serverCfg[type].forEach((hostCfg) => {
+            serverCfg[type].forEach(hostCfg => {
                 clusterCfg[`${pattern}_${hostCfg.host}`] = Object.assign({}, baseCfg, hostCfg);
             });
         });
@@ -349,21 +354,20 @@ class DataSource {
      * @private
      */
     _query(ctx, sql) {
-        return this._getConnection(ctx)
-            .then((connection) => {
-                const { host } = connection.config;
+        return this._getConnection(ctx).then(connection => {
+            const { host } = connection.config;
 
-                if (this._status) this._status.increment('dataSourceQueries');
-                this._log.trace({ host, sql }, 'executing query');
+            if (this._status) this._status.increment('dataSourceQueries');
+            this._log.trace({ host, sql }, 'executing query');
 
-                return new Promise((resolve, reject) => {
-                    connection.query(sql, (err, results, fields) => {
-                        connection.release();
-                        if (err) return reject(err);
-                        return resolve({ results, fields, host });
-                    });
+            return new Promise((resolve, reject) => {
+                connection.query(sql, (err, results, fields) => {
+                    connection.release();
+                    if (err) return reject(err);
+                    return resolve({ results, fields, host });
                 });
             });
+        });
     }
 
     /**
@@ -376,21 +380,20 @@ class DataSource {
      */
     _getConnection({ type, server, db }) {
         return new Promise((resolve, reject) => {
-            this._getConnectionPool(server, db)
-                .getConnection(`${type}*`, (err, connection) => {
-                    if (err) {
-                        if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
-                            return resolve(this._getConnection({ type: 'MASTER', server, db }));
-                        }
-                        return reject(err);
+            this._getConnectionPool(server, db).getConnection(`${type}*`, (err, connection) => {
+                if (err) {
+                    if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
+                        return resolve(this._getConnection({ type: 'MASTER', server, db }));
                     }
-                    return resolve(connection);
-                });
-        }).then((connection) => {
+                    return reject(err);
+                }
+                return resolve(connection);
+            });
+        }).then(connection => {
             if (has(connection, '_floraInitialized')) return connection;
 
             const config = this._config;
-            const init = [has(config, 'onConnect') ? config.onConnect : 'SET SESSION sql_mode = \'ANSI\''];
+            const init = [has(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
             if (has(config, server) && has(config[server], 'onConnect')) init.push(config[server].onConnect);
 
             this._log.trace('initialize connection');
