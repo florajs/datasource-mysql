@@ -220,26 +220,25 @@ class DataSource {
     /**
      * Create SQL statement from flora request and run query against database.
      *
-     * @param {Object} request
+     * @param {Object}      request
+     * @param {string}      request.server
+     * @param {string}      request.database
+     * @param {number}      request.page
+     * @param {boolean=}    request.useMaster
+     * @param {Object=}     request._explain
+     * @param {Object=}     request._status
      * @returns {Promise}
      */
     async process(request) {
-        const server = request.server || 'default';
-        const db = request.database;
-        const connectionType = request.useMaster ? 'MASTER' : 'SLAVE';
+        const { server = 'default', database, useMaster = false } = request;
         let sql;
 
         sql = buildSql(request);
 
-        if (request._status) {
-            request._status.set('server', server);
-            request._status.set('database', db);
-            request._status.set('sql', sql);
-        }
-
+        if (request._status) request._status.set({ server, database, sql });
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
 
-        return this._query({ type: connectionType, server, db }, sql)
+        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql)
             .then(({ results, host }) => {
                 if (has(request, '_explain')) Object.assign(request._explain, { host, sql });
 
