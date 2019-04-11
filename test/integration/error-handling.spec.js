@@ -40,4 +40,25 @@ describe('error handling', () => {
                 done();
             });
     });
+
+    it('should log query in case of an error', async () => {
+        const _explain = {};
+        const floraRequest = {
+            attributes: ['col1'],
+            queryAST: Object.assign({}, astTpl, { from: [{ db: null, table: 'nonexistent_table', as: null }] }),
+            database,
+            _explain
+        };
+        let err;
+
+        try {
+            await ds.process(floraRequest);
+        } catch (e) {
+            err = e;
+        }
+
+        expect(err).to.be.an.instanceOf(Error);
+        expect(_explain).to.have.property('sql', 'SELECT "t"."col1" FROM "nonexistent_table"');
+        expect(_explain).to.have.property('host');
+    });
 });

@@ -231,23 +231,26 @@ class DataSource {
      */
     async process(request) {
         const { server = 'default', database, useMaster = false } = request;
+        const hasExplain = has(request, '_explain');
         let sql;
 
         sql = buildSql(request);
 
-        if (request._status) request._status.set({ server, database, sql });
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
+        if (hasExplain) request._explain.sql = sql;
+        if (request._status) request._status.set({ server, database, sql });
 
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql)
             .then(({ results, host }) => {
-                if (has(request, '_explain')) Object.assign(request._explain, { host, sql });
+                if (hasExplain) request._explain.host = host;
 
                 return {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
                 };
             })
-            .catch(err => {
+            .catch(({ err, host }) => {
+                if (hasExplain) request._explain.host = host;
                 this._log.info(err);
                 throw err;
             });
@@ -362,7 +365,7 @@ class DataSource {
             return new Promise((resolve, reject) => {
                 connection.query(sql, (err, results, fields) => {
                     connection.release();
-                    if (err) return reject(err);
+                    if (err) return reject({ err, host });
                     return resolve({ results, fields, host });
                 });
             });
