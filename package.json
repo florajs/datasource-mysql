@@ -47,26 +47,26 @@
   "dependencies": {
     "flora-errors": "^2.0.0-alpha.2",
     "flora-sql-parser": "^0.9.1",
-    "has": "^1.0.1",
+    "has": "^1.0.3",
     "lodash": "^4.17.11",
-    "mysql": "^2.15.0",
-    "named-placeholders": "^1.1.1",
+    "mysql": "^2.17.1",
+    "named-placeholders": "^1.1.2",
     "sqlstring": "^2.3.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.1.6",
-    "@types/mocha": "^5.2.5",
-    "@types/sinon-chai": "^3.2.0",
-    "bunyan": "^1.5.1",
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.6",
+    "@types/sinon-chai": "^3.2.2",
+    "bunyan": "^1.8.12",
     "chai": "^4.2.0",
-    "eslint": "^5.15.1",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-import": "^2.9.0",
+    "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-prettier": "^3.0.1",
-    "mocha": "^6.0.2",
-    "prettier": "^1.16.4",
-    "sinon": "^7.0.0",
-    "sinon-chai": "^3.2.0"
+    "mocha": "^6.1.4",
+    "prettier": "^1.17.0",
+    "sinon": "^7.3.2",
+    "sinon-chai": "^3.3.0"
   }
 }
