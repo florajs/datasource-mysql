@@ -1,6 +1,6 @@
 {
   "name": "flora-mysql",
-  "version": "2.0.0-alpha.4",
+  "version": "2.0.0-alpha.5",
   "description": "MySQL connection for Flora",
   "main": "index.js",
   "scripts": {
