@@ -6,6 +6,7 @@ module.exports = {
     options: null,
     distinct: null,
     columns: [
+        { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
         { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
         { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null }
     ],

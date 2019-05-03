@@ -25,9 +25,9 @@ describe('mysql data source', () => {
 
     describe('generate AST data source config', () => {
         it('should generate AST from SQL query', () => {
-            const resourceConfig = { query: 'SELECT t.col1, t.col2 FROM t' };
+            const resourceConfig = { query: 'SELECT t.id, t.col1, t.col2 FROM t' };
 
-            ds.prepare(resourceConfig, ['col1', 'col2']);
+            ds.prepare(resourceConfig, ['id', 'col1', 'col2']);
 
             expect(resourceConfig).to.have.property('queryAST');
             expect(resourceConfig.queryAST).to.eql(astTpl);
@@ -118,7 +118,7 @@ describe('mysql data source', () => {
 
         it('should generate AST from data source config if no SQL query is available', () => {
             const resourceConfig = { table: 't' };
-            const attributes = ['col1', 'col2'];
+            const attributes = ['id', 'col1', 'col2'];
 
             ds.prepare(resourceConfig, attributes);
 

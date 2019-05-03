@@ -29,6 +29,11 @@ describe('context', () => {
             const result = await ctx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
+
+        it('should return typecasted result', async () => {
+            const [item] = await ctx.query('SELECT "id" FROM "t" WHERE "id" = 1');
+            expect(item).to.have.property('id', 1);
+        });
     });
 
     describe('#queryRow', () => {
@@ -55,6 +60,11 @@ describe('context', () => {
         it('should accept query params as an object', async () => {
             const result = await ctx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             expect(result).to.eql({ id: 1, col1: 'foo' });
+        });
+
+        it('should return typecasted result', async () => {
+            const row = await ctx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = 1');
+            expect(row).to.have.property('id', 1);
         });
     });
 
@@ -85,6 +95,11 @@ describe('context', () => {
             const result = await ctx.queryOne('SELECT "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             expect(result).to.equal('foo');
         });
+
+        it('should return typecasted result', async () => {
+            const id = await ctx.queryOne('SELECT "id" FROM "t" WHERE "id" = 1');
+            expect(id).to.equal(1);
+        });
     });
 
     describe('#queryCol', () => {
@@ -109,6 +124,11 @@ describe('context', () => {
         it('should accept query params as an object', async () => {
             const result = await ctx.queryCol('SELECT "col1" FROM "t" WHERE "id" = :id', { id: 1 });
             expect(result).to.eql(['foo']);
+        });
+
+        it('should return typecasted result', async () => {
+            const [id] = await ctx.queryCol('SELECT "id" FROM "t" WHERE "id" = 1');
+            expect(id).to.equal(1);
         });
     });
 

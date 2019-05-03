@@ -166,6 +166,14 @@ describe('transaction', () => {
 
             expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
+
+        it('should return typecasted result', async () => {
+            const trx = await ctx.transaction();
+            const [item] = await trx.query('SELECT "id" FROM "t" WHERE "id" = 1');
+            await trx.rollback();
+
+            expect(item).to.have.property('id', 1);
+        });
     });
 
     describe('#queryRow', () => {
@@ -175,6 +183,14 @@ describe('transaction', () => {
             await trx.rollback();
 
             expect(result).to.eql({ id: 1, col1: 'foo' });
+        });
+
+        it('should return typecasted result', async () => {
+            const trx = await ctx.transaction();
+            const row = await trx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = 1');
+            await trx.rollback();
+
+            expect(row).to.have.property('id', 1);
         });
     });
 
@@ -186,6 +202,14 @@ describe('transaction', () => {
 
             expect(result).to.equal('foo');
         });
+
+        it('should return typecasted result', async () => {
+            const trx = await ctx.transaction();
+            const id = await trx.queryOne('SELECT "id" FROM "t" WHERE "id" = 1');
+            await trx.rollback();
+
+            expect(id).to.equal(1);
+        });
     });
 
     describe('#queryCol', () => {
@@ -195,6 +219,14 @@ describe('transaction', () => {
             await trx.rollback();
 
             expect(result).to.eql(['foo']);
+        });
+
+        it('should return typecasted result', async () => {
+            const trx = await ctx.transaction();
+            const [id] = await trx.queryCol('SELECT "id" FROM "t"');
+            await trx.rollback();
+
+            expect(id).to.equal(1);
         });
     });
 

@@ -232,6 +232,7 @@ class DataSource {
     async process(request) {
         const { server = 'default', database, useMaster = false } = request;
         const hasExplain = has(request, '_explain');
+        const typeCast = false;
         let sql;
 
         sql = buildSql(request);
@@ -240,7 +241,7 @@ class DataSource {
         if (hasExplain) request._explain.sql = sql;
         if (request._status) request._status.set({ server, database, sql });
 
-        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql)
+        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast)
             .then(({ results, host }) => {
                 if (hasExplain) request._explain.host = host;
 
@@ -352,10 +353,11 @@ class DataSource {
      * @param {string=}     ctx.server
      * @param {string}      ctx.db
      * @param {string}      sql
+     * @param {boolean=}    typeCast
      * @returns {Promise}
      * @private
      */
-    _query(ctx, sql) {
+    _query(ctx, sql, typeCast = true) {
         return this._getConnection(ctx).then(connection => {
             const { host } = connection.config;
 
@@ -363,7 +365,7 @@ class DataSource {
             this._log.trace({ host, sql }, 'executing query');
 
             return new Promise((resolve, reject) => {
-                connection.query(sql, (err, results, fields) => {
+                connection.query({ sql, typeCast }, (err, results, fields) => {
                     connection.release();
                     if (err) return reject({ err, host });
                     return resolve({ results, fields, host });
