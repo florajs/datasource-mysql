@@ -1,6 +1,7 @@
 language: node_js
 node_js:
     - "10"
+    - "12"
 
 sudo: required
 services:
@@ -13,13 +14,6 @@ cache:
 env:
     matrix:
         - "MYSQL_VERSION=5.7"
-
-matrix:
-    include:
-        - node_js: 10
-          env: "MYSQL_VERSION=5.7"
-        # - node_js: 10
-        #  env: "MYSQL_VERSION=8"
 
 before_install:
     # Update Node.js modules
