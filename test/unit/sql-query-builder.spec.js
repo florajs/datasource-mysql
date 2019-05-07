@@ -502,7 +502,7 @@ describe('SQL query builder', () => {
                         left: { type: 'column_ref', table: 't', column: 'col3' },
                         right: { type: 'string', value: '%foobar%' }
                     },
-                    paren: true
+                    parentheses: true
                 }
             });
         });
