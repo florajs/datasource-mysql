@@ -11,34 +11,40 @@ describe('error handling', () => {
 
     after(() => ds.close());
 
-    it('should return an error if selected attribute has no corresponding column', done => {
+    it('should return an error if selected attribute has no corresponding column', async () => {
         const floraRequest = {
             attributes: ['col1', 'nonexistentAttr'], // nonexistentAttribute is not defined as column
             queryAST: astTpl,
             database
         };
 
-        ds.process(floraRequest)
-            .catch((err) => {
-                expect(err).to.be.instanceof(Error);
-                expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-                done();
-            });
+        try {
+            await ds.process(floraRequest);
+        } catch(e) {
+            expect(e).to.be.instanceof(Error);
+            expect(e.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
+            return;
+        }
+
+        throw new Error('Expected an error');
     });
 
-    it('should return an error if selected attribute has no corresponding alias', done => {
+    it('should return an error if selected attribute has no corresponding alias', async () => {
         const floraRequest = {
             attributes: ['col1', 'nonexistentAttr'],
             queryAST: astTpl,
             database
         };
 
-        ds.process(floraRequest)
-            .catch((err) => {
-                expect(err).to.be.instanceof(Error);
-                expect(err.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-                done();
-            });
+        try {
+            await ds.process(floraRequest);
+        } catch (e) {
+            expect(e).to.be.instanceof(Error);
+            expect(e.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
+            return;
+        }
+
+        throw new Error('Expected an error');
     });
 
     it('should log query in case of an error', async () => {
@@ -49,16 +55,16 @@ describe('error handling', () => {
             database,
             _explain
         };
-        let err;
 
         try {
             await ds.process(floraRequest);
         } catch (e) {
-            err = e;
+            expect(e).to.be.an.instanceOf(Error);
+            expect(_explain).to.have.property('sql', 'SELECT "t"."col1" FROM "nonexistent_table"');
+            expect(_explain).to.have.property('host');
+            return;
         }
 
-        expect(err).to.be.an.instanceOf(Error);
-        expect(_explain).to.have.property('sql', 'SELECT "t"."col1" FROM "nonexistent_table"');
-        expect(_explain).to.have.property('host');
+        throw new Error('Expected an error');
     });
 });
