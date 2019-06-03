@@ -14,13 +14,13 @@ describe('error handling', () => {
     it('should return an error if selected attribute has no corresponding column', async () => {
         const floraRequest = {
             attributes: ['col1', 'nonexistentAttr'], // nonexistentAttribute is not defined as column
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             database
         };
 
         try {
             await ds.process(floraRequest);
-        } catch(e) {
+        } catch (e) {
             expect(e).to.be.instanceof(Error);
             expect(e.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
             return;
@@ -32,7 +32,7 @@ describe('error handling', () => {
     it('should return an error if selected attribute has no corresponding alias', async () => {
         const floraRequest = {
             attributes: ['col1', 'nonexistentAttr'],
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             database
         };
 
@@ -51,7 +51,7 @@ describe('error handling', () => {
         const _explain = {};
         const floraRequest = {
             attributes: ['col1'],
-            queryAST: Object.assign({}, astTpl, { from: [{ db: null, table: 'nonexistent_table', as: null }] }),
+            queryAstRaw: Object.assign({}, astTpl, { from: [{ db: null, table: 'nonexistent_table', as: null }] }),
             database,
             _explain
         };

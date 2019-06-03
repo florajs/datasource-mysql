@@ -21,6 +21,10 @@ describe('mysql data source', () => {
         it('should export a getContext function', () => {
             expect(ds.getContext).to.be.a('function');
         });
+
+        it('should export a foo function', () => {
+            expect(ds.buildSqlAst).to.be.a('function');
+        });
     });
 
     describe('generate AST data source config', () => {
@@ -29,8 +33,9 @@ describe('mysql data source', () => {
 
             ds.prepare(resourceConfig, ['id', 'col1', 'col2']);
 
-            expect(resourceConfig).to.have.property('queryAST');
-            expect(resourceConfig.queryAST).to.eql(astTpl);
+            expect(resourceConfig)
+                .to.have.property('queryAstRaw')
+                .and.to.eql(astTpl);
         });
 
         it('should prepare search attributes', () => {
@@ -123,7 +128,7 @@ describe('mysql data source', () => {
             ds.prepare(resourceConfig, attributes);
 
             expect(resourceConfig)
-                .to.have.property('queryAST')
+                .to.have.property('queryAstRaw')
                 .and.to.eql(astTpl);
         });
     });

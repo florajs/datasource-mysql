@@ -50,28 +50,6 @@ function checkSqlEquivalents(attributes, columns) {
 }
 
 /**
- * @param {Object} request
- * @returns {string}
- */
-function buildSql(request) {
-    request.queryAST = cloneDeep(request.queryAST);
-
-    /** @type {Object} */
-    const ast = generateAST(request);
-
-    checkSqlEquivalents(request.attributes, ast.columns);
-
-    if (request.page) {
-        if (!Array.isArray(ast.options)) ast.options = [];
-        ast.options.push('SQL_CALC_FOUND_ROWS');
-    }
-
-    optimizeAST(ast, request.attributes);
-
-    return astUtil.astToSQL(ast);
-}
-
-/**
  * Initialize pool connection (proper error handling
  * is quiet impossible in during pool connection event)
  *
@@ -213,7 +191,7 @@ class DataSource {
             });
         }
 
-        dsConfig.queryAST = ast;
+        dsConfig.queryAstRaw = ast;
         dsConfig.useMaster = dsConfig.useMaster === 'true';
     }
 
@@ -235,7 +213,8 @@ class DataSource {
         const typeCast = false;
         let sql;
 
-        sql = buildSql(request);
+        if (!has(request, 'queryAST')) this.buildSqlAst(request);
+        sql = astUtil.astToSQL(request.queryAST);
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (hasExplain) request._explain.sql = sql;
@@ -283,6 +262,23 @@ class DataSource {
             delete ctx.useMaster;
         }
         return new Context(this, ctx);
+    }
+
+    /**
+     * @param {Object} request
+     */
+    buildSqlAst(request) {
+        request.queryAST = cloneDeep(request.queryAstRaw);
+        request.queryAST = generateAST(request);
+
+        checkSqlEquivalents(request.attributes, request.queryAST.columns);
+
+        if (request.page) {
+            if (!Array.isArray(request.queryAST.options)) request.queryAST.options = [];
+            request.queryAST.options.push('SQL_CALC_FOUND_ROWS');
+        }
+
+        optimizeAST(request.queryAST, request.attributes);
     }
 
     /**

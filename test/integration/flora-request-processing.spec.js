@@ -18,7 +18,7 @@ describe('flora request processing', () => {
     it('should handle flora requests', async () => {
         const result = await ds.process({
             attributes: ['id', 'col1'],
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             database
         });
 
@@ -35,7 +35,7 @@ describe('flora request processing', () => {
     it('should return result w/o type casting', async () => {
         const { data } = await ds.process({
             attributes: ['id'],
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             database
         });
         const [item] = data;
@@ -50,7 +50,7 @@ describe('flora request processing', () => {
         const result = await ds.process({
             database,
             attributes: ['col1'],
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             limit: 1,
             page: 2
         });
@@ -66,7 +66,7 @@ describe('flora request processing', () => {
             database,
             useMaster: true,
             attributes: ['col1'],
-            queryAST: astTpl,
+            queryAstRaw: astTpl,
             limit: 1,
             page: 2
         };
@@ -74,6 +74,30 @@ describe('flora request processing', () => {
         await ds.process(floraRequest);
 
         expect(querySpy).to.have.been.calledWithMatch({ type: 'MASTER' });
+        querySpy.restore();
+    });
+
+    it('should use modified query AST', async () => {
+        const querySpy = sinon.spy(ds, '_query');
+        const floraRequest = {
+            database,
+            attributes: ['col1'],
+            queryAstRaw: astTpl
+        };
+
+        ds.buildSqlAst(floraRequest);
+
+        // simulate modifying AST manually in pre-execute extension
+        floraRequest.queryAST.where = {
+            type: 'binary_expr',
+            operator: '<',
+            left: { type: 'column_ref', table: 't', column: 'id' },
+            right: { type: 'number', value: 0 }
+        };
+
+        await ds.process(floraRequest);
+
+        expect(querySpy).to.have.been.calledWith(sinon.match.object, sinon.match('WHERE "t"."id" < 0'), sinon.match.any);
         querySpy.restore();
     });
 });
