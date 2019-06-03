@@ -134,7 +134,7 @@ class DataSource {
     }
 
     /**
-     * Add property queryAST to DataSource config.
+     * Add property queryAst to DataSource config.
      *
      * @param {Object} dsConfig DataSource config object
      * @param {Array.<string>=} attributes List of resource config attributes mapped to DataSource.
@@ -213,8 +213,8 @@ class DataSource {
         const typeCast = false;
         let sql;
 
-        if (!has(request, 'queryAST')) this.buildSqlAst(request);
-        sql = astUtil.astToSQL(request.queryAST);
+        if (!has(request, 'queryAst')) this.buildSqlAst(request);
+        sql = astUtil.astToSQL(request.queryAst);
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (hasExplain) request._explain.sql = sql;
@@ -268,17 +268,17 @@ class DataSource {
      * @param {Object} request
      */
     buildSqlAst(request) {
-        request.queryAST = cloneDeep(request.queryAstRaw);
-        request.queryAST = generateAST(request);
+        request.queryAst = cloneDeep(request.queryAstRaw);
+        request.queryAst = generateAST(request);
 
-        checkSqlEquivalents(request.attributes, request.queryAST.columns);
+        checkSqlEquivalents(request.attributes, request.queryAst.columns);
 
         if (request.page) {
-            if (!Array.isArray(request.queryAST.options)) request.queryAST.options = [];
-            request.queryAST.options.push('SQL_CALC_FOUND_ROWS');
+            if (!Array.isArray(request.queryAst.options)) request.queryAst.options = [];
+            request.queryAst.options.push('SQL_CALC_FOUND_ROWS');
         }
 
-        optimizeAST(request.queryAST, request.attributes);
+        optimizeAST(request.queryAst, request.attributes);
     }
 
     /**

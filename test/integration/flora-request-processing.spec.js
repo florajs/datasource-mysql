@@ -88,7 +88,7 @@ describe('flora request processing', () => {
         ds.buildSqlAst(floraRequest);
 
         // simulate modifying AST manually in pre-execute extension
-        floraRequest.queryAST.where = {
+        floraRequest.queryAst.where = {
             type: 'binary_expr',
             operator: '<',
             left: { type: 'column_ref', table: 't', column: 'id' },

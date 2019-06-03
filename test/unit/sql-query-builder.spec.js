@@ -34,7 +34,7 @@ describe('SQL query builder', () => {
         it('should order by one attribute', () => {
             queryBuilder({
                 order: [{ attribute: 'col1', direction: 'asc' }],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.orderby).to.eql([{
                 expr: { type: 'column_ref', table: 't', column: 'col1' },
@@ -45,7 +45,7 @@ describe('SQL query builder', () => {
         it('should resolve alias to column', () => {
             queryBuilder({
                 order: [{ attribute: 'columnAlias', direction: 'desc' }],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.orderby).to.eql([{
                 expr: { type: 'column_ref', table: 't', column: 'col3' },
@@ -59,7 +59,7 @@ describe('SQL query builder', () => {
                     { attribute: 'col1', direction: 'asc' },
                     { attribute: 'col2', direction: 'desc' }
                 ],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.orderby).to.eql([
                 { expr: { type: 'column_ref', table: 't', column: 'col1' }, type: 'ASC' },
@@ -72,7 +72,7 @@ describe('SQL query builder', () => {
         it('should set limit', () => {
             queryBuilder({
                 limit: 17,
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.limit).to.eql([
                 { type: 'number', value: 0 },
@@ -84,7 +84,7 @@ describe('SQL query builder', () => {
             queryBuilder({
                 limit: 10,
                 page: 3,
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.limit).to.eql([
                 { type: 'number', value: 20 },
@@ -99,7 +99,7 @@ describe('SQL query builder', () => {
                 filter: [
                     [{ attribute: 'col1', operator: 'equal', value: 0 }]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -117,7 +117,7 @@ describe('SQL query builder', () => {
                         { attribute: 'col1', operator: 'less', value: 20 }
                     ]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -143,7 +143,7 @@ describe('SQL query builder', () => {
                     [{ attribute: 'col1', operator: 'greater', value: 10 }],
                     [{ attribute: 'col1', operator: 'less', value: 20 }]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
             expect(ast.where).to.be.eql({
                 type: 'binary_expr',
@@ -177,7 +177,7 @@ describe('SQL query builder', () => {
                 filter: [
                     [{ attribute: 'col2', operator: 'greater', value: 100 }]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.be.eql({
@@ -213,7 +213,7 @@ describe('SQL query builder', () => {
                     [{ attribute: 'col2', operator: 'greater', value: 100 }],
                     [{ attribute: 'columnAlias', operator: 'lessOrEqual', value: 100 }]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.be.eql({
@@ -267,7 +267,7 @@ describe('SQL query builder', () => {
                         value: [[133962, 4], [133962, 22]]
                     }]
                 ],
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.eql({
@@ -317,7 +317,7 @@ describe('SQL query builder', () => {
                     filter: [
                         [{ attribute: 'col1', operator: filterOperator, value: null }]
                     ],
-                    queryAST: ast
+                    queryAst: ast
                 });
 
                 expect(ast.where).to.eql({
@@ -345,7 +345,7 @@ describe('SQL query builder', () => {
             it('should be replaced by "1 = 1" for empty request filters', () => {
                 const ast = _.assign({}, astFixture, { _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder });
 
-                queryBuilder({ queryAST: ast });
+                queryBuilder({ queryAst: ast });
 
                 expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
             });
@@ -357,7 +357,7 @@ describe('SQL query builder', () => {
                     filter: [
                         [{ attribute: 'col1', operator: 'equal', value: 1 }]
                     ],
-                    queryAST: ast
+                    queryAst: ast
                 });
 
                 expect(ast.where).to.eql({
@@ -404,7 +404,7 @@ describe('SQL query builder', () => {
                     }
                 };
 
-                queryBuilder({ queryAST: ast });
+                queryBuilder({ queryAst: ast });
 
                 expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
                 expect(ast._next.where).to.eql(EMPTY_FILTER_FALLBACK);
@@ -417,7 +417,7 @@ describe('SQL query builder', () => {
             queryBuilder({
                 searchable: ['col1'],
                 search: 'foobar',
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.eql({
@@ -432,7 +432,7 @@ describe('SQL query builder', () => {
             queryBuilder({
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.eql({
@@ -457,7 +457,7 @@ describe('SQL query builder', () => {
             queryBuilder({
                 searchable: ['col1'],
                 search: 'f%o_o%b_ar',
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.eql({
@@ -475,7 +475,7 @@ describe('SQL query builder', () => {
                 ],
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
-                queryAST: ast
+                queryAst: ast
             });
 
             expect(ast.where).to.eql({
@@ -513,7 +513,7 @@ describe('SQL query builder', () => {
             expect(() => {
                 queryBuilder({
                     limitPer: 'someId',
-                    queryAST: ast
+                    queryAst: ast
                 });
             }).to.throw(ImplementationError, /does not support "limitPer"/);
         });
