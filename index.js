@@ -214,6 +214,7 @@ class DataSource {
         let sql;
 
         if (!has(request, 'queryAst')) this.buildSqlAst(request);
+        optimizeAST(request.queryAst, request.attributes);
         sql = astUtil.astToSQL(request.queryAst);
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
@@ -277,8 +278,6 @@ class DataSource {
             if (!Array.isArray(request.queryAst.options)) request.queryAst.options = [];
             request.queryAst.options.push('SQL_CALC_FOUND_ROWS');
         }
-
-        optimizeAST(request.queryAst, request.attributes);
     }
 
     /**
