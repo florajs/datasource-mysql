@@ -51,7 +51,9 @@ describe('error handling', () => {
         const _explain = {};
         const floraRequest = {
             attributes: ['col1'],
-            queryAstRaw: Object.assign({}, astTpl, { from: [{ db: null, table: 'nonexistent_table', as: null }] }),
+            queryAstRaw: Object.assign({}, astTpl, {
+                from: [{ db: null, table: 'nonexistent_table', as: null }]
+            }),
             database,
             _explain
         };
@@ -62,6 +64,28 @@ describe('error handling', () => {
             expect(e).to.be.an.instanceOf(Error);
             expect(_explain).to.have.property('sql', 'SELECT "t"."col1" FROM "nonexistent_table"');
             expect(_explain).to.have.property('host');
+            return;
+        }
+
+        throw new Error('Expected an error');
+    });
+
+    it('should log connection errors', async () => {
+        const _explain = {};
+        const floraRequest = {
+            attributes: ['col1'],
+            queryAstRaw: Object.assign({}, astTpl, {
+                from: [{ db: null, table: 'nonexistent_table', as: null }]
+            }),
+            database: 'nonexistent_database',
+            _explain
+        };
+
+        try {
+            await ds.process(floraRequest);
+        } catch (e) {
+            expect(e).to.be.an.instanceOf(Error)
+                .and.to.have.property('message').to.include('Unknown database \'nonexistent_database\'');
             return;
         }
 

@@ -208,30 +208,26 @@ class DataSource {
      * @returns {Promise}
      */
     async process(request) {
-        const { server = 'default', database, useMaster = false } = request;
-        const hasExplain = has(request, '_explain');
+        const { server = 'default', database, useMaster = false, _explain = {} } = request;
         const typeCast = false;
         let sql;
 
         if (!has(request, 'queryAst')) this.buildSqlAst(request);
         optimizeAST(request.queryAst, request.attributes);
         sql = astUtil.astToSQL(request.queryAst);
+        _explain.sql = sql;
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
-        if (hasExplain) request._explain.sql = sql;
         if (request._status) request._status.set({ server, database, sql });
 
-        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast)
-            .then(({ results, host }) => {
-                if (hasExplain) request._explain.host = host;
-
+        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast, _explain)
+            .then(({ results }) => {
                 return {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
                 };
             })
-            .catch(({ err, host }) => {
-                if (hasExplain) request._explain.host = host;
+            .catch(err => {
                 this._log.info(err);
                 throw err;
             });
@@ -349,21 +345,23 @@ class DataSource {
      * @param {string}      ctx.db
      * @param {string}      sql
      * @param {boolean=}    typeCast
+     * @param {Object=}     explain
      * @returns {Promise}
      * @private
      */
-    _query(ctx, sql, typeCast = true) {
+    _query(ctx, sql, typeCast = true, explain = {}) {
         return this._getConnection(ctx).then(connection => {
             const { host } = connection.config;
 
+            explain.host = host;
             if (this._status) this._status.increment('dataSourceQueries');
             this._log.trace({ host, sql }, 'executing query');
 
             return new Promise((resolve, reject) => {
                 connection.query({ sql, typeCast }, (err, results, fields) => {
                     connection.release();
-                    if (err) return reject({ err, host });
-                    return resolve({ results, fields, host });
+                    if (err) return reject(err);
+                    return resolve({ results, fields });
                 });
             });
         });
