@@ -1,7 +1,6 @@
 'use strict';
 
 const queryBuilder = require('../../lib/sql-query-builder');
-const _ = require('lodash');
 const { expect } = require('chai');
 const astFixture = {
     type: 'select',
@@ -23,7 +22,7 @@ describe('SQL query builder', () => {
     let ast;
 
     beforeEach(() => {
-        ast = _.cloneDeep(astFixture);
+        ast = JSON.parse(JSON.stringify(astFixture));
     });
 
     afterEach(() => {
@@ -164,14 +163,14 @@ describe('SQL query builder', () => {
         });
 
         it('should not overwrite existing where conditions (single filter)', () => {
-            ast = _.assign({}, ast, {
+            ast = {...ast, ...{
                 where: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't', column: 'col1' },
                     right: { type: 'number', value: 0 }
                 }
-            });
+            }};
 
             queryBuilder({
                 filter: [
@@ -201,14 +200,14 @@ describe('SQL query builder', () => {
         });
 
         it('should not overwrite existing where conditions (multiple filters)', () => {
-            ast = _.assign({}, astFixture, {
+            ast = {...astFixture, ...{
                 where: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't', column: 'col1' },
                     right: { type: 'number', value: 0 }
                 }
-            });
+            }};
 
             queryBuilder({
                 filter: [
@@ -249,14 +248,14 @@ describe('SQL query builder', () => {
         });
 
         it('should use parentheses to group conditions', () => {
-            ast = _.assign({}, ast, {
+            ast = {...ast, ...{
                 where: {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't', column: 'col1' },
                     right: { type: 'number', value: 0 }
                 }
-            });
+            }};
 
             queryBuilder({
                 filter: [
@@ -334,14 +333,12 @@ describe('SQL query builder', () => {
             });
         });
 
-        _({'equal': 'IS', 'notEqual': 'IS NOT'}).forEach((sqlOperator, filterOperator) => {
-            it('should support ' + filterOperator + ' operator and null values', () => {
-                const ast = _.assign({}, astFixture);
+        Object.entries({ equal: 'IS', notEqual: 'IS NOT' }).forEach(([filterOperator, sqlOperator]) => {
+            it(`should support ${filterOperator} operator and null values`, () => {
+                const ast = { ...astFixture };
 
                 queryBuilder({
-                    filter: [
-                        [{ attribute: 'col1', operator: filterOperator, value: null }]
-                    ],
+                    filter: [[{ attribute: 'col1', operator: filterOperator, value: null }]],
                     queryAst: ast
                 });
 
@@ -368,7 +365,7 @@ describe('SQL query builder', () => {
             });
 
             it('should be replaced by "1 = 1" for empty request filters', () => {
-                const ast = _.assign({}, astFixture, { _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder });
+                const ast = {...astFixture, ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }};
 
                 queryBuilder({ queryAst: ast });
 
@@ -376,7 +373,7 @@ describe('SQL query builder', () => {
             });
 
             it('should be replaced by request filter(s)', () => {
-                const ast = _.assign({}, astFixture, { _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder });
+                const ast = {...astFixture, ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }};
 
                 queryBuilder({
                     filter: [
@@ -394,7 +391,7 @@ describe('SQL query builder', () => {
             });
 
             it('should be replaced multiple times', () => {
-                const unionFloraFilterPlaceholder = _.assign({}, floraFilterPlaceholder);
+                const unionFloraFilterPlaceholder = { ...floraFilterPlaceholder };
                 /*
                     SELECT col
                     FROM t
