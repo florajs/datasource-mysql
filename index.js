@@ -31,7 +31,7 @@ function cloneDeep(obj) {
  * @private
  */
 function hasSqlEquivalent(attribute, columns) {
-    return columns.some(column => column.expr.column === attribute || column.as === attribute);
+    return columns.some((column) => column.expr.column === attribute || column.as === attribute);
 }
 
 /**
@@ -42,7 +42,7 @@ function hasSqlEquivalent(attribute, columns) {
  * @private
  */
 function checkSqlEquivalents(attributes, columns) {
-    attributes.forEach(attribute => {
+    attributes.forEach((attribute) => {
         if (!hasSqlEquivalent(attribute, columns)) {
             throw new Error('Attribute "' + attribute + '" is not provided by SQL query');
         }
@@ -60,20 +60,20 @@ function checkSqlEquivalents(attributes, columns) {
 function initConnection(connection, initConfigs) {
     function query(sql) {
         return new Promise((resolve, reject) => {
-            connection.query(sql, err => {
+            connection.query(sql, (err) => {
                 if (err) return reject(err);
                 return resolve();
             });
         });
     }
 
-    const initQueries = initConfigs.map(initCfg => {
+    const initQueries = initConfigs.map((initCfg) => {
         if (typeof initCfg === 'string') {
             return query(initCfg);
         }
 
         if (Array.isArray(initCfg)) {
-            return initCfg.every(item => typeof item === 'string')
+            return initCfg.every((item) => typeof item === 'string')
                 ? Promise.all(initCfg.map(query))
                 : Promise.reject(new Error('All items must be of type string'));
         }
@@ -109,16 +109,16 @@ class DataSource {
         const statProps = {
             open: '_allConnections',
             sleeping: '_freeConnections',
-            waiting: '_acquiringConnections'
+            waiting: '_acquiringConnections',
         };
 
-        Object.keys(this._pools).forEach(server => {
+        Object.keys(this._pools).forEach((server) => {
             if (!stats[server]) stats[server] = {};
-            Object.keys(this._pools[server]).forEach(db => {
+            Object.keys(this._pools[server]).forEach((db) => {
                 const pool = this._getConnectionPool(server, db);
                 const poolStats = {};
 
-                Object.keys(statProps).forEach(prop => {
+                Object.keys(statProps).forEach((prop) => {
                     const statProp = statProps[prop];
                     if (!pool[statProp] || !Array.isArray(pool[statProp])) return;
                     poolStats[prop] = pool[statProp].length;
@@ -166,9 +166,9 @@ class DataSource {
                 options: null,
                 distinct: null,
                 columns: Array.isArray(attributes)
-                    ? attributes.map(attribute => ({
+                    ? attributes.map((attribute) => ({
                           expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
-                          as: null
+                          as: null,
                       }))
                     : '',
                 from: [{ db: null, table: dsConfig.table, as: null }],
@@ -177,7 +177,7 @@ class DataSource {
                 having: null,
                 orderby: null,
                 limit: null,
-                with: null
+                with: null,
             };
         } else {
             throw new ImplementationError('Option "query" or "table" must be specified');
@@ -185,8 +185,8 @@ class DataSource {
 
         if (dsConfig.searchable) {
             dsConfig.searchable = dsConfig.searchable.split(',');
-            dsConfig.searchable.forEach(attr => {
-                if (ast.columns.find(col => col.expr.column === attr || col.as === attr)) return;
+            dsConfig.searchable.forEach((attr) => {
+                if (ast.columns.find((col) => col.expr.column === attr || col.as === attr)) return;
                 throw new ImplementationError(`Attribute "${attr}" is not available in AST`);
             });
         }
@@ -224,10 +224,10 @@ class DataSource {
             .then(({ results }) => {
                 return {
                     data: !request.page ? results : results[0],
-                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
+                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10),
                 };
             })
-            .catch(err => {
+            .catch((err) => {
                 this._log.info(err);
                 throw err;
             });
@@ -240,11 +240,11 @@ class DataSource {
         const connectionPools = [];
 
         function drain(pool) {
-            return new Promise(resolve => pool.end(resolve));
+            return new Promise((resolve) => pool.end(resolve));
         }
 
-        Object.keys(this._pools).forEach(server => {
-            Object.keys(this._pools[server]).forEach(database => {
+        Object.keys(this._pools).forEach((server) => {
+            Object.keys(this._pools[server]).forEach((database) => {
                 this._log.debug('closing MySQL pool "%s" at "%s"', database, server);
                 connectionPools.push(drain(this._pools[server][database]));
             });
@@ -295,13 +295,13 @@ class DataSource {
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             dateStrings: true, // force date types to be returned as strings
-            multipleStatements: true // pagination queries
+            multipleStatements: true, // pagination queries
         };
 
         const clusterCfg = {};
-        ['masters', 'slaves'].forEach(type => {
+        ['masters', 'slaves'].forEach((type) => {
             const pattern = type.slice(0, -1).toUpperCase();
-            serverCfg[type].forEach(hostCfg => {
+            serverCfg[type].forEach((hostCfg) => {
                 clusterCfg[`${pattern}_${hostCfg.host}`] = Object.assign({}, baseCfg, hostCfg);
             });
         });
@@ -327,8 +327,8 @@ class DataSource {
         const clusterCfg = this._prepareServerCfg(serverCfg, database);
 
         Object.keys(clusterCfg)
-            .filter(serverId => has(clusterCfg, serverId))
-            .forEach(serverId => pool.add(serverId, clusterCfg[serverId]));
+            .filter((serverId) => has(clusterCfg, serverId))
+            .forEach((serverId) => pool.add(serverId, clusterCfg[serverId]));
 
         if (typeof this._pools[server] !== 'object') this._pools[server] = {};
         this._pools[server][database] = pool;
@@ -350,7 +350,7 @@ class DataSource {
      * @private
      */
     _query(ctx, sql, typeCast = true, explain = {}) {
-        return this._getConnection(ctx).then(connection => {
+        return this._getConnection(ctx).then((connection) => {
             const { host } = connection.config;
 
             explain.host = host;
@@ -386,7 +386,7 @@ class DataSource {
                 }
                 return resolve(connection);
             });
-        }).then(connection => {
+        }).then((connection) => {
             if (has(connection, '_floraInitialized')) return connection;
 
             const config = this._config;
