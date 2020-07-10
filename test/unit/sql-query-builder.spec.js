@@ -187,13 +187,15 @@ describe('SQL query builder', () => {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: { type: 'number', value: 0 }
+                    right: { type: 'number', value: 0 },
+                    parentheses: true
                 },
                 right: {
                     type: 'binary_expr',
                     operator: '>',
                     left: { type: 'column_ref', table: 't', column: 'col2' },
-                    right: { type: 'number', value: 100 }
+                    right: { type: 'number', value: 100 },
+                    parentheses: true
                 }
             });
         });
@@ -223,7 +225,8 @@ describe('SQL query builder', () => {
                     type: 'binary_expr',
                     operator: '=',
                     left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: { type: 'number', value: 0 }
+                    right: { type: 'number', value: 0 },
+                    parentheses: true
                 },
                 right: {
                     type: 'binary_expr',
@@ -239,9 +242,31 @@ describe('SQL query builder', () => {
                         operator: '<=',
                         left: { type: 'column_ref', table: 't', column: 'col3' },
                         right: { type: 'number', value: 100 }
-                    }
+                    },
+                    parentheses: true
                 }
             });
+        });
+
+        it('should use parentheses to group conditions', () => {
+            ast = _.assign({}, ast, {
+                where: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't', column: 'col1' },
+                    right: { type: 'number', value: 0 }
+                }
+            });
+
+            queryBuilder({
+                filter: [
+                    [{ attribute: 'col2', operator: 'greater', value: 100 }]
+                ],
+                queryAst: ast
+            });
+
+            expect(ast.where.left).to.have.property('parentheses', true);
+            expect(ast.where.right).to.have.property('parentheses', true);
         });
 
         it('should support arrays as attribute filters', () => {
