@@ -109,7 +109,7 @@ class DataSource {
         const statProps = {
             open: '_allConnections',
             sleeping: '_freeConnections',
-            waiting: '_acquiringConnections',
+            waiting: '_acquiringConnections'
         };
 
         Object.keys(this._pools).forEach((server) => {
@@ -151,7 +151,8 @@ class DataSource {
                 ast._meta.hasFilterPlaceholders = dsConfig.query.includes('__floraFilterPlaceholder__');
             } catch (e) {
                 if (e.location) {
-                    e.message += ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
+                    e.message +=
+                        ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
                 }
                 e.query = dsConfig.query;
                 throw e;
@@ -168,7 +169,7 @@ class DataSource {
                 columns: Array.isArray(attributes)
                     ? attributes.map((attribute) => ({
                           expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
-                          as: null,
+                          as: null
                       }))
                     : '',
                 from: [{ db: null, table: dsConfig.table, as: null }],
@@ -177,7 +178,7 @@ class DataSource {
                 having: null,
                 orderby: null,
                 limit: null,
-                with: null,
+                with: null
             };
         } else {
             throw new ImplementationError('Option "query" or "table" must be specified');
@@ -224,7 +225,7 @@ class DataSource {
             .then(({ results }) => {
                 return {
                     data: !request.page ? results : results[0],
-                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10),
+                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
                 };
             })
             .catch((err) => {
@@ -295,7 +296,7 @@ class DataSource {
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             dateStrings: true, // force date types to be returned as strings
-            multipleStatements: true, // pagination queries
+            multipleStatements: true // pagination queries
         };
 
         const clusterCfg = {};
