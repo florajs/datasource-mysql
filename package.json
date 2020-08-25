@@ -53,19 +53,19 @@
     "sqlstring": "^2.3.2"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.11",
-    "@types/mocha": "^7.0.2",
+    "@types/chai": "^4.2.12",
+    "@types/mocha": "^8.0.3",
     "@types/sinon-chai": "^3.2.4",
     "bunyan": "^1.8.14",
     "chai": "^4.2.0",
-    "eslint": "^7.4.0",
+    "eslint": "^7.7.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-prettier": "^3.1.4",
-    "mocha": "^8.0.1",
-    "prettier": "^2.0.5",
-    "sinon": "^9.0.2",
+    "mocha": "^8.1.1",
+    "prettier": "^2.1.0",
+    "sinon": "^9.0.3",
     "sinon-chai": "^3.5.0"
   }
 }
