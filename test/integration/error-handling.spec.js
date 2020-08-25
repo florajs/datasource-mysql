@@ -1,3 +1,5 @@
+/* global after, describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -84,8 +86,10 @@ describe('error handling', () => {
         try {
             await ds.process(floraRequest);
         } catch (e) {
-            expect(e).to.be.an.instanceOf(Error)
-                .and.to.have.property('message').to.include('Unknown database \'nonexistent_database\'');
+            expect(e)
+                .to.be.an.instanceOf(Error)
+                .and.to.have.property('message')
+                .to.include("Unknown database 'nonexistent_database'");
             return;
         }
 

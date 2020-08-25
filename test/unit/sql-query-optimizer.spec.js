@@ -1,3 +1,5 @@
+/* global describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -32,7 +34,8 @@ describe('SQL query optimizer', () => {
         };
 
         optimize(ast, ['col1', 'alias']);
-        expect(ast.columns).to.eql([ // SELECT t.col1, t.col3 AS alias FROM t1
+        expect(ast.columns).to.eql([
+            // SELECT t.col1, t.col3 AS alias FROM t1
             { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' }
         ]);
@@ -48,12 +51,18 @@ describe('SQL query optimizer', () => {
             ],
             from: [
                 { db: null, table: 't1', as: null },
-                { db: null, table: 't2', as: null, join: 'INNER JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 't2', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'INNER JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 'id' }
+                    }
+                }
             ],
             where: null,
             groupby: null,
@@ -77,12 +86,18 @@ describe('SQL query optimizer', () => {
             ],
             from: [
                 { db: null, table: 't', as: null },
-                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 't2', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 'id' }
+                    }
+                }
             ],
             where: null,
             groupby: null,
@@ -111,18 +126,30 @@ describe('SQL query optimizer', () => {
             ],
             from: [
                 { db: null, table: 't', as: null },
-                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: null, column: 'id' }
-                }},
-                { db: null, table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 'alias', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: null, column: 'id' }
+                    }
+                },
+                {
+                    db: null,
+                    table: 't3',
+                    as: 'alias',
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 'alias', column: 'id' }
+                    }
+                }
             ],
             where: null,
             groupby: null,
@@ -130,14 +157,21 @@ describe('SQL query optimizer', () => {
         };
 
         optimize(ast, ['col1', 'col3']);
-        expect(ast.from).to.eql([ // SELECT t1.col1, alias.col3 FROM t LEFT JOIN t3 AS alias ON t1.id = alias.id
+        expect(ast.from).to.eql([
+            // SELECT t1.col1, alias.col3 FROM t LEFT JOIN t3 AS alias ON t1.id = alias.id
             { db: null, table: 't', as: null },
-            { db: null, table: 't3', as: 'alias', join: 'LEFT JOIN', on: {
-                type: 'binary_expr',
-                operator: '=',
-                left: { type: 'column_ref', table: 't1', column: 'id' },
-                right: { type: 'column_ref', table: 'alias', column: 'id' }
-            }}
+            {
+                db: null,
+                table: 't3',
+                as: 'alias',
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't1', column: 'id' },
+                    right: { type: 'column_ref', table: 'alias', column: 'id' }
+                }
+            }
         ]);
     });
 
@@ -148,12 +182,18 @@ describe('SQL query optimizer', () => {
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
                 { db: null, table: 't', as: null },
-                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 't2', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 'id' }
+                    }
+                }
             ],
             where: {
                 type: 'binary_expr',
@@ -186,12 +226,18 @@ describe('SQL query optimizer', () => {
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
                 { db: null, table: 't', as: null },
-                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 't2', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 'id' }
+                    }
+                }
             ],
             where: null,
             groupby: [
@@ -213,12 +259,18 @@ describe('SQL query optimizer', () => {
             columns: [{ expr: { type: 'column_ref', table: 't1', column: 'col1' }, as: null }],
             from: [
                 { db: null, table: 't', as: null },
-                { db: null, table: 't2', as: null, join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't1', column: 'id' },
-                    right: { type: 'column_ref', table: 't2', column: 'id' }
-                }}
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 'id' }
+                    }
+                }
             ],
             where: null,
             groupby: null,
@@ -252,44 +304,62 @@ describe('SQL query optimizer', () => {
             ],
             from: [
                 { db: null, table: 'instrument', as: null },
-                { db: null, table: 'country', as: 'c', join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
-                    right: { type: 'column_ref', table: 'c', column: 'id' }
-                }},
-                { db: null, table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: 'AND',
-                    left: {
+                {
+                    db: null,
+                    table: 'country',
+                    as: 'c',
+                    join: 'LEFT JOIN',
+                    on: {
                         type: 'binary_expr',
                         operator: '=',
-                        left: { type: 'column_ref', table: 'c', column: 'id' },
-                        right: { type: 'column_ref', table: 'ctde', column: 'countryId' }
-                    },
-                    right: {
-                        type: 'binary_expr',
-                        operator: '=',
-                        left: { type: 'column_ref', table: 'ctde', column: 'lang' },
-                        right: { type: 'string', value: 'de' }
+                        left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
+                        right: { type: 'column_ref', table: 'c', column: 'id' }
                     }
-                }},
-                { db: null, table: 'country_translation', as: 'cten', join: 'LEFT JOIN', on: {
-                    type: 'binary_expr',
-                    operator: 'AND',
-                    left: {
+                },
+                {
+                    db: null,
+                    table: 'country_translation',
+                    as: 'ctde',
+                    join: 'LEFT JOIN',
+                    on: {
                         type: 'binary_expr',
-                        operator: '=',
-                        left: { type: 'column_ref', table: 'c', column: 'id' },
-                        right: { type: 'column_ref', table: 'cten', column: 'countryId' }
-                    },
-                    right: {
-                        type: 'binary_expr',
-                        operator: '=',
-                        left: { type: 'column_ref', table: 'cten', column: 'lang' },
-                        right: { type: 'string', value: 'en' }
+                        operator: 'AND',
+                        left: {
+                            type: 'binary_expr',
+                            operator: '=',
+                            left: { type: 'column_ref', table: 'c', column: 'id' },
+                            right: { type: 'column_ref', table: 'ctde', column: 'countryId' }
+                        },
+                        right: {
+                            type: 'binary_expr',
+                            operator: '=',
+                            left: { type: 'column_ref', table: 'ctde', column: 'lang' },
+                            right: { type: 'string', value: 'de' }
+                        }
                     }
-                }}
+                },
+                {
+                    db: null,
+                    table: 'country_translation',
+                    as: 'cten',
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: 'AND',
+                        left: {
+                            type: 'binary_expr',
+                            operator: '=',
+                            left: { type: 'column_ref', table: 'c', column: 'id' },
+                            right: { type: 'column_ref', table: 'cten', column: 'countryId' }
+                        },
+                        right: {
+                            type: 'binary_expr',
+                            operator: '=',
+                            left: { type: 'column_ref', table: 'cten', column: 'lang' },
+                            right: { type: 'string', value: 'en' }
+                        }
+                    }
+                }
             ],
             where: null,
             groupby: null,
@@ -306,32 +376,44 @@ describe('SQL query optimizer', () => {
          */
         expect(ast.from).to.eql([
             { db: null, table: 'instrument', as: null },
-            { db: null, table: 'country', as: 'c', join: 'LEFT JOIN', on: {
-                type: 'binary_expr',
-                operator: '=',
-                left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
-                right: { type: 'column_ref', table: 'c', column: 'id' }
-            }},
-            { db: null, table: 'country_translation', as: 'ctde', join: 'LEFT JOIN', on: {
-                type: 'binary_expr',
-                operator: 'AND',
-                left: {
+            {
+                db: null,
+                table: 'country',
+                as: 'c',
+                join: 'LEFT JOIN',
+                on: {
                     type: 'binary_expr',
                     operator: '=',
-                    left: { type: 'column_ref', table: 'c', column: 'id' },
-                    right: { type: 'column_ref', table: 'ctde', column: 'countryId' }
-                },
-                right: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 'ctde', column: 'lang' },
-                    right: { type: 'string', value: 'de' }
+                    left: { type: 'column_ref', table: 'instrument', column: 'countryId' },
+                    right: { type: 'column_ref', table: 'c', column: 'id' }
                 }
-            }}
+            },
+            {
+                db: null,
+                table: 'country_translation',
+                as: 'ctde',
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: 'AND',
+                    left: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 'c', column: 'id' },
+                        right: { type: 'column_ref', table: 'ctde', column: 'countryId' }
+                    },
+                    right: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 'ctde', column: 'lang' },
+                        right: { type: 'string', value: 'de' }
+                    }
+                }
+            }
         ]);
     });
 
-    it('should not remove alias if it\'s used in GROUP BY clause', () => {
+    it("should not remove alias if it's used in GROUP BY clause", () => {
         // SELECT t.id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
             type: 'select',
@@ -339,19 +421,24 @@ describe('SQL query optimizer', () => {
             distinct: null,
             columns: [
                 { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
-                { expr: { type: 'function', name: 'IFNULL', args: {
-                    type: 'expr_list',
-                    value: [
-                        { type: 'column_ref', table: null, column: 'col1' },
-                        { type: 'string', value: 'foo' }
-                    ]
-                }}, as: 'alias' }
+                {
+                    expr: {
+                        type: 'function',
+                        name: 'IFNULL',
+                        args: {
+                            type: 'expr_list',
+                            value: [
+                                { type: 'column_ref', table: null, column: 'col1' },
+                                { type: 'string', value: 'foo' }
+                            ]
+                        }
+                    },
+                    as: 'alias'
+                }
             ],
             from: [{ db: null, table: 't', as: null }],
             where: null,
-            groupby: [
-                { expr: { type: 'column_ref', table: null, column: 'alias' }, type: 'DESC' }
-            ],
+            groupby: [{ expr: { type: 'column_ref', table: null, column: 'alias' }, type: 'DESC' }],
             orderby: null,
             limit: null
         };
@@ -359,17 +446,24 @@ describe('SQL query optimizer', () => {
         optimize(ast, ['id']);
         expect(ast.columns).to.eql([
             { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
-            { expr: { type: 'function', name: 'IFNULL', args: {
-                type: 'expr_list',
-                value: [
-                    { type: 'column_ref', table: null, column: 'col1' },
-                    { type: 'string', value: 'foo' }
-                ]
-            }}, as: 'alias' }
+            {
+                expr: {
+                    type: 'function',
+                    name: 'IFNULL',
+                    args: {
+                        type: 'expr_list',
+                        value: [
+                            { type: 'column_ref', table: null, column: 'col1' },
+                            { type: 'string', value: 'foo' }
+                        ]
+                    }
+                },
+                as: 'alias'
+            }
         ]);
     });
 
-    it('should not remove alias if it\'s used in ORDER BY clause', () => {
+    it("should not remove alias if it's used in ORDER BY clause", () => {
         // SELECT id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
             type: 'select',
@@ -377,33 +471,45 @@ describe('SQL query optimizer', () => {
             distinct: null,
             columns: [
                 { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
-                { expr: { type: 'function', name: 'IFNULL', args: {
-                    type: 'expr_list',
-                    value: [
-                        { type: 'column_ref', table: null, column: 'col1' },
-                        { type: 'string', value: 'foo' }
-                    ]
-                }}, as: 'alias' }
+                {
+                    expr: {
+                        type: 'function',
+                        name: 'IFNULL',
+                        args: {
+                            type: 'expr_list',
+                            value: [
+                                { type: 'column_ref', table: null, column: 'col1' },
+                                { type: 'string', value: 'foo' }
+                            ]
+                        }
+                    },
+                    as: 'alias'
+                }
             ],
             from: [{ db: null, table: 't', as: null }],
             where: null,
             groupby: null,
-            orderby: [
-                { expr: { type: 'column_ref', table: null, column: 'alias' }, type: 'DESC' }
-            ],
+            orderby: [{ expr: { type: 'column_ref', table: null, column: 'alias' }, type: 'DESC' }],
             limit: null
         };
 
         optimize(ast, ['id']);
         expect(ast.columns).to.eql([
             { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
-            { expr: { type: 'function', name: 'IFNULL', args: {
-                type: 'expr_list',
-                value: [
-                    { type: 'column_ref', table: null, column: 'col1' },
-                    { type: 'string', value: 'foo' }
-                ]
-            }}, as: 'alias' }
+            {
+                expr: {
+                    type: 'function',
+                    name: 'IFNULL',
+                    args: {
+                        type: 'expr_list',
+                        value: [
+                            { type: 'column_ref', table: null, column: 'col1' },
+                            { type: 'string', value: 'foo' }
+                        ]
+                    }
+                },
+                as: 'alias'
+            }
         ]);
     });
 });

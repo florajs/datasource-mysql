@@ -1,3 +1,5 @@
+/* global afterEach, beforeEach, describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -33,7 +35,7 @@ describe('context', () => {
             'transaction'
         ];
 
-        methods.forEach(method => {
+        methods.forEach((method) => {
             it(`should export ${method} function`, () => {
                 expect(ctx[method]).to.be.a('function');
             });
@@ -118,13 +120,28 @@ describe('context', () => {
         afterEach(() => sandbox.restore());
 
         [
-            ['strings', 'val', 'SELECT "id" FROM "t" WHERE "col1" = ?',  `SELECT "id" FROM "t" WHERE "col1" = 'val'`],
+            ['strings', 'val', 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = 'val'`],
             ['numbers', 1337, 'SELECT "id" FROM "t" WHERE "col1" = ?', 'SELECT "id" FROM "t" WHERE "col1" = 1337'],
             ['booleans', true, 'SELECT "id" FROM "t" WHERE "col1" = ?', 'SELECT "id" FROM "t" WHERE "col1" = true'],
-            ['dates', new Date(2019, 0, 1, 0, 0, 0, 0), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = '2019-01-01 00:00:00.000'`],
-            ['arrays', [1, 3, 3, 7], 'SELECT "id" FROM "t" WHERE "col1" IN (?)', `SELECT "id" FROM "t" WHERE "col1" IN (1, 3, 3, 7)`],
-            ['sqlstringifiable objects', ctx.raw('CURDATE()'), 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = CURDATE()`],
-            ['null', null, 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = NULL`],
+            [
+                'dates',
+                new Date(2019, 0, 1, 0, 0, 0, 0),
+                'SELECT "id" FROM "t" WHERE "col1" = ?',
+                `SELECT "id" FROM "t" WHERE "col1" = '2019-01-01 00:00:00.000'`
+            ],
+            [
+                'arrays',
+                [1, 3, 3, 7],
+                'SELECT "id" FROM "t" WHERE "col1" IN (?)',
+                `SELECT "id" FROM "t" WHERE "col1" IN (1, 3, 3, 7)`
+            ],
+            [
+                'sqlstringifiable objects',
+                ctx.raw('CURDATE()'),
+                'SELECT "id" FROM "t" WHERE "col1" = ?',
+                `SELECT "id" FROM "t" WHERE "col1" = CURDATE()`
+            ],
+            ['null', null, 'SELECT "id" FROM "t" WHERE "col1" = ?', `SELECT "id" FROM "t" WHERE "col1" = NULL`]
         ].forEach(([type, value, query, sql]) => {
             it(`should support ${type}`, async () => {
                 await ctx.exec(query, [value]);
@@ -171,22 +188,28 @@ describe('context', () => {
 
         it('should accept data as an object', async () => {
             await ctx.insert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') });
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`);
+            expect(execStub).to.have.been.calledWith(
+                `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`
+            );
         });
 
         it('should accept data as an array of objects', async () => {
             const date = new Date(2018, 10, 16, 15, 24);
             const dateStr = '2018-11-16 15:24:00.000';
-            await ctx.insert('t', [{ col1: 'val1', col2: 1, col3: date }, { col1: 'val2', col2: 2, col3: date }]);
-            expect(execStub).to.have.been.calledWith(`INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, '${dateStr}'), ('val2', 2, '${dateStr}')`);
+            await ctx.insert('t', [
+                { col1: 'val1', col2: 1, col3: date },
+                { col1: 'val2', col2: 2, col3: date }
+            ]);
+            expect(execStub).to.have.been.calledWith(
+                `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, '${dateStr}'), ('val2', 2, '${dateStr}')`
+            );
         });
 
         it('should reject with an error if data is not set', async () => {
             try {
-                await ctx.insert('t')
+                await ctx.insert('t');
             } catch (e) {
-                expect(e).to.be.instanceOf(ImplementationError)
-                    .with.property('message', 'data parameter is required');
+                expect(e).to.be.instanceOf(ImplementationError).with.property('message', 'data parameter is required');
                 expect(execStub).to.not.have.been.called;
                 return;
             }
@@ -196,9 +219,10 @@ describe('context', () => {
 
         it('should reject with an error if data neither an object nor an array', async () => {
             try {
-                await ctx.insert('t', 'foo')
+                await ctx.insert('t', 'foo');
             } catch (e) {
-                expect(e).to.be.instanceOf(ImplementationError)
+                expect(e)
+                    .to.be.instanceOf(ImplementationError)
                     .with.property('message', 'data is neither an object nor an array of objects');
                 expect(execStub).to.not.have.been.called;
                 return;
@@ -217,20 +241,23 @@ describe('context', () => {
 
         it('should accept data as an object', async () => {
             await ctx.update('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, '1 = 1');
-            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1`);
+            expect(execStub).to.have.been.calledWith(
+                `UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1`
+            );
         });
 
         it('should accept where as an object', async () => {
             await ctx.update('t', { col1: 'val1' }, { col2: 1, col3: ctx.raw('CURDATE()') });
-            expect(execStub).to.have.been.calledWith(`UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE()`);
+            expect(execStub).to.have.been.calledWith(
+                `UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE()`
+            );
         });
 
         it('should reject with an error if data is not set', async () => {
             try {
                 await ctx.update('t', {}, '');
             } catch (e) {
-                expect(e).to.be.instanceOf(ImplementationError)
-                    .with.property('message', 'data is not set');
+                expect(e).to.be.instanceOf(ImplementationError).with.property('message', 'data is not set');
                 expect(execStub).to.not.have.been.called;
                 return;
             }
@@ -242,8 +269,7 @@ describe('context', () => {
             try {
                 await ctx.update('t', { col1: 'val1' }, '');
             } catch (e) {
-                expect(e).to.be.instanceOf(ImplementationError)
-                    .with.property('message', 'where expression is not set');
+                expect(e).to.be.instanceOf(ImplementationError).with.property('message', 'where expression is not set');
                 expect(execStub).to.not.have.been.called;
                 return;
             }
@@ -266,15 +292,16 @@ describe('context', () => {
 
         it('should accept where as an object', async () => {
             await ctx.delete('t', { col1: 'val1', col2: 1, col3: ctx.raw('CURDATE()') });
-            expect(execStub).to.have.been.calledWith(`DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE()`);
+            expect(execStub).to.have.been.calledWith(
+                `DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE()`
+            );
         });
 
         it('should reject with an error if where expression is not set', async () => {
             try {
                 await ctx.delete('t', '');
             } catch (e) {
-                expect(e).to.be.instanceOf(ImplementationError)
-                    .with.property('message', 'where expression is not set');
+                expect(e).to.be.instanceOf(ImplementationError).with.property('message', 'where expression is not set');
                 expect(execStub).to.not.have.been.called;
                 return;
             }
@@ -298,7 +325,11 @@ describe('context', () => {
 
         it('should accept assignment list as an object', async () => {
             const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = 'foo', "col2" = col2 + 1`;
-            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, { col1: 'foo', col2: ctx.raw('col2 + 1') });
+            await ctx.upsert(
+                't',
+                { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') },
+                { col1: 'foo', col2: ctx.raw('col2 + 1') }
+            );
             expect(execStub).to.have.been.calledWith(sql);
         });
     });

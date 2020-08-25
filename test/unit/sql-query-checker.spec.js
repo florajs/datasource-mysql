@@ -1,3 +1,5 @@
+/* global  describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -31,7 +33,7 @@ describe('SQL query checker', () => {
     });
 
     it('should resolve nested expressions', () => {
-        const sql = `select case func(t1.col1, t2.col2) when 1 then \'one\' else other_func(attr) end
+        const sql = `select case func(t1.col1, t2.col2) when 1 then 'one' else other_func(attr) end
                     from t1
                     join t2 on t1.id = t2.id`;
 

@@ -4,15 +4,15 @@
 
 const Net = require('net');
 
-const PORT_END    = 60000;
-const PORT_START  = 1000;
+const PORT_END = 60000;
+const PORT_START = 1000;
 const TCP_TIMEOUT = 1000;
 
 process.nextTick(run);
 
 function check(port, callback) {
     const socket = Net.createConnection(port, 'localhost');
-    const timer  = setTimeout(() => {
+    const timer = setTimeout(() => {
         socket.destroy();
         callback(undefined);
     }, TCP_TIMEOUT);
@@ -39,7 +39,7 @@ function run() {
 
         check(port, function (used) {
             if (used === false) {
-                console.log('%d', port);
+                console.log('%d', port); // eslint-disable-line no-console
                 process.exit(0);
             } else {
                 setTimeout(next, 0);

@@ -1,3 +1,5 @@
+/* global afterEach, beforeEach, describe, it */
+
 'use strict';
 
 const chai = require('chai');
@@ -15,7 +17,7 @@ describe('init queries', () => {
     let ds;
     let querySpy;
 
-    beforeEach(() => querySpy = sinon.spy(PoolConnection.prototype, 'query'));
+    beforeEach(() => (querySpy = sinon.spy(PoolConnection.prototype, 'query')));
 
     afterEach(() => {
         querySpy.restore();
@@ -27,7 +29,7 @@ describe('init queries', () => {
         const ctx = ds.getContext(ctxCfg);
 
         await ctx.query('SELECT 1 FROM dual');
-        expect(querySpy).to.have.been.calledWith('SET SESSION sql_mode = \'ANSI\'');
+        expect(querySpy).to.have.been.calledWith("SET SESSION sql_mode = 'ANSI'");
     });
 
     it('should execute single init query', async () => {
@@ -50,19 +52,20 @@ describe('init queries', () => {
         const ctx = ds.getContext(ctxCfg);
         await ctx.query('SELECT 1 FROM dual');
 
-        expect(querySpy)
-            .to.have.been.calledWith(initQuery1)
-            .and.to.have.been.calledWith(initQuery2);
+        expect(querySpy).to.have.been.calledWith(initQuery1).and.to.have.been.calledWith(initQuery2);
     });
 
     it('should execute custom init function', async () => {
         const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const onConnect = sinon.spy((connection) => new Promise((resolve, reject) => {
-            connection.query(initQuery, err => {
-                if (err) return reject(err);
-                resolve();
-            });
-        }));
+        const onConnect = sinon.spy(
+            (connection) =>
+                new Promise((resolve, reject) => {
+                    connection.query(initQuery, (err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
+                })
+        );
         const config = Object.assign({}, defaultCfg, { onConnect });
 
         ds = FloraMysqlFactory.create(config);
@@ -76,18 +79,18 @@ describe('init queries', () => {
     it('should handle server specific init queries', async () => {
         const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
         const serverInitQuery = 'SET SESSION max_execution_time = 1';
-        const config = Object.assign({}, defaultCfg,
+        const config = Object.assign(
+            {},
+            defaultCfg,
             { onConnect: globalInitQuery },
-            { default: { onConnect: serverInitQuery }}
+            { default: { onConnect: serverInitQuery } }
         );
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
         await ctx.query('SELECT 1 FROM dual');
 
-        expect(querySpy)
-            .to.have.been.calledWith(globalInitQuery)
-            .and.to.have.been.calledWith(serverInitQuery);
+        expect(querySpy).to.have.been.calledWith(globalInitQuery).and.to.have.been.calledWith(serverInitQuery);
     });
 
     it('should handle errors', async () => {

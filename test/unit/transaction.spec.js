@@ -1,3 +1,5 @@
+/* global describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -20,7 +22,7 @@ describe('transaction', () => {
             'quote'
         ];
 
-        methods.forEach(method => {
+        methods.forEach((method) => {
             it(`should have ${method} method`, () => {
                 expect(Transaction.prototype[method]).to.be.a('function');
             });

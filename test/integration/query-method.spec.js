@@ -1,3 +1,5 @@
+/* global after, describe, it */
+
 'use strict';
 
 const chai = require('chai');

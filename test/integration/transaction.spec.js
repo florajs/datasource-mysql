@@ -1,3 +1,5 @@
+/* global after, afterEach, beforeEach, describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -116,7 +118,6 @@ describe('transaction', () => {
             expect(changedRows).to.equal(0);
         });
 
-
         it('should accept data as an object', async () => {
             const trx = await ctx.transaction();
             const result = await trx.upsert('t', { id: 1, col1: 'test' }, ['col1']);
@@ -127,7 +128,14 @@ describe('transaction', () => {
 
         it('should accept data as an array of objects', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert('t', [{ id: 1, col1: 'test' }, { id: 1337, col1: 'new' }], ['col1']);
+            const result = await trx.upsert(
+                't',
+                [
+                    { id: 1, col1: 'test' },
+                    { id: 1337, col1: 'new' }
+                ],
+                ['col1']
+            );
             await trx.rollback();
 
             expect(result).to.be.an('object');

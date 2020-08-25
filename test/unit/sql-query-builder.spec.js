@@ -1,3 +1,5 @@
+/* global afterEach, beforeEach, describe, it */
+
 'use strict';
 
 const queryBuilder = require('../../lib/sql-query-builder');
@@ -35,10 +37,12 @@ describe('SQL query builder', () => {
                 order: [{ attribute: 'col1', direction: 'asc' }],
                 queryAst: ast
             });
-            expect(ast.orderby).to.eql([{
-                expr: { type: 'column_ref', table: 't', column: 'col1' },
-                type: 'ASC'
-            }]);
+            expect(ast.orderby).to.eql([
+                {
+                    expr: { type: 'column_ref', table: 't', column: 'col1' },
+                    type: 'ASC'
+                }
+            ]);
         });
 
         it('should resolve alias to column', () => {
@@ -46,10 +50,12 @@ describe('SQL query builder', () => {
                 order: [{ attribute: 'columnAlias', direction: 'desc' }],
                 queryAst: ast
             });
-            expect(ast.orderby).to.eql([{
-                expr: { type: 'column_ref', table: 't', column: 'col3' },
-                type: 'DESC'
-            }]);
+            expect(ast.orderby).to.eql([
+                {
+                    expr: { type: 'column_ref', table: 't', column: 'col3' },
+                    type: 'DESC'
+                }
+            ]);
         });
 
         it('should order by multiple attributes', () => {
@@ -95,9 +101,7 @@ describe('SQL query builder', () => {
     describe('filter', () => {
         it('should add single "AND" condition', () => {
             queryBuilder({
-                filter: [
-                    [{ attribute: 'col1', operator: 'equal', value: 0 }]
-                ],
+                filter: [[{ attribute: 'col1', operator: 'equal', value: 0 }]],
                 queryAst: ast
             });
             expect(ast.where).to.be.eql({
@@ -163,19 +167,20 @@ describe('SQL query builder', () => {
         });
 
         it('should not overwrite existing where conditions (single filter)', () => {
-            ast = {...ast, ...{
-                where: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: { type: 'number', value: 0 }
+            ast = {
+                ...ast,
+                ...{
+                    where: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't', column: 'col1' },
+                        right: { type: 'number', value: 0 }
+                    }
                 }
-            }};
+            };
 
             queryBuilder({
-                filter: [
-                    [{ attribute: 'col2', operator: 'greater', value: 100 }]
-                ],
+                filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]],
                 queryAst: ast
             });
 
@@ -200,14 +205,17 @@ describe('SQL query builder', () => {
         });
 
         it('should not overwrite existing where conditions (multiple filters)', () => {
-            ast = {...astFixture, ...{
-                where: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: { type: 'number', value: 0 }
+            ast = {
+                ...astFixture,
+                ...{
+                    where: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't', column: 'col1' },
+                        right: { type: 'number', value: 0 }
+                    }
                 }
-            }};
+            };
 
             queryBuilder({
                 filter: [
@@ -248,19 +256,20 @@ describe('SQL query builder', () => {
         });
 
         it('should use parentheses to group conditions', () => {
-            ast = {...ast, ...{
-                where: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'col1' },
-                    right: { type: 'number', value: 0 }
+            ast = {
+                ...ast,
+                ...{
+                    where: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't', column: 'col1' },
+                        right: { type: 'number', value: 0 }
+                    }
                 }
-            }};
+            };
 
             queryBuilder({
-                filter: [
-                    [{ attribute: 'col2', operator: 'greater', value: 100 }]
-                ],
+                filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]],
                 queryAst: ast
             });
 
@@ -285,11 +294,16 @@ describe('SQL query builder', () => {
 
             queryBuilder({
                 filter: [
-                    [{
-                        attribute: ['instrumentId', 'exchangeId'],
-                        operator: 'equal',
-                        value: [[133962, 4], [133962, 22]]
-                    }]
+                    [
+                        {
+                            attribute: ['instrumentId', 'exchangeId'],
+                            operator: 'equal',
+                            value: [
+                                [133962, 4],
+                                [133962, 22]
+                            ]
+                        }
+                    ]
                 ],
                 queryAst: ast
             });
@@ -365,7 +379,10 @@ describe('SQL query builder', () => {
             });
 
             it('should be replaced by "1 = 1" for empty request filters', () => {
-                const ast = {...astFixture, ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }};
+                const ast = {
+                    ...astFixture,
+                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
+                };
 
                 queryBuilder({ queryAst: ast });
 
@@ -373,12 +390,13 @@ describe('SQL query builder', () => {
             });
 
             it('should be replaced by request filter(s)', () => {
-                const ast = {...astFixture, ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }};
+                const ast = {
+                    ...astFixture,
+                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
+                };
 
                 queryBuilder({
-                    filter: [
-                        [{ attribute: 'col1', operator: 'equal', value: 1 }]
-                    ],
+                    filter: [[{ attribute: 'col1', operator: 'equal', value: 1 }]],
                     queryAst: ast
                 });
 
@@ -492,9 +510,7 @@ describe('SQL query builder', () => {
 
         it('should support multiple attributes and non-empty where clause', () => {
             queryBuilder({
-                filter: [
-                    [{ attribute: 'col2', operator: 'equal', value: 5 }]
-                ],
+                filter: [[{ attribute: 'col2', operator: 'equal', value: 5 }]],
                 searchable: ['col1', 'columnAlias'],
                 search: 'foobar',
                 queryAst: ast

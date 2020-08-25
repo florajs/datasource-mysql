@@ -1,3 +1,5 @@
+/* global describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -33,9 +35,7 @@ describe('mysql data source', () => {
 
             ds.prepare(resourceConfig, ['id', 'col1', 'col2']);
 
-            expect(resourceConfig)
-                .to.have.property('queryAstRaw')
-                .and.to.eql(astTpl);
+            expect(resourceConfig).to.have.property('queryAstRaw').and.to.eql(astTpl);
         });
 
         it('should prepare search attributes', () => {
@@ -46,9 +46,7 @@ describe('mysql data source', () => {
 
             ds.prepare(resourceConfig, ['col1', 'col2']);
 
-            expect(resourceConfig.searchable)
-                .to.be.instanceof(Array)
-                .and.to.eql(['col1', 'col2']);
+            expect(resourceConfig.searchable).to.be.instanceof(Array).and.to.eql(['col1', 'col2']);
         });
 
         describe('error handling', () => {
@@ -120,16 +118,13 @@ describe('mysql data source', () => {
             });
         });
 
-
         it('should generate AST from data source config if no SQL query is available', () => {
             const resourceConfig = { table: 't' };
             const attributes = ['id', 'col1', 'col2'];
 
             ds.prepare(resourceConfig, attributes);
 
-            expect(resourceConfig)
-                .to.have.property('queryAstRaw')
-                .and.to.eql(astTpl);
+            expect(resourceConfig).to.have.property('queryAstRaw').and.to.eql(astTpl);
         });
     });
 });

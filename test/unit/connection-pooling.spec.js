@@ -1,3 +1,5 @@
+/* global afterEach, beforeEach, describe, it, xit */
+
 'use strict';
 
 const Connection = require('../../node_modules/mysql/lib/Connection');

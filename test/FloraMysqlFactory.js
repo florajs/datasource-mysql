@@ -11,7 +11,7 @@ const api = { log };
 const defaultCfg = {
     servers: {
         default: {
-            host: process.env.MYSQL_HOST || 'localhost' ,
+            host: process.env.MYSQL_HOST || 'localhost',
             port: process.env.MYSQL_PORT || 3306,
             user: 'root',
             password: ''
@@ -21,7 +21,7 @@ const defaultCfg = {
 
 class FloraMysqlFactory {
     static create(cfg) {
-        return new FloraMysql(api, cfg || defaultCfg)
+        return new FloraMysql(api, cfg || defaultCfg);
     }
 }
 

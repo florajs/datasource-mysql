@@ -1,3 +1,5 @@
+/* global after, describe, it */
+
 'use strict';
 
 const chai = require('chai');
@@ -22,14 +24,9 @@ describe('flora request processing', () => {
             database
         });
 
-        expect(result)
-            .to.have.property('totalCount')
-            .and.to.be.null;
+        expect(result).to.have.property('totalCount').and.to.be.null;
 
-        expect(result)
-            .to.have.property('data')
-            .and.to.be.an('array')
-            .and.not.to.be.empty;
+        expect(result).to.have.property('data').and.to.be.an('array').and.not.to.be.empty;
     });
 
     it('should return result w/o type casting', async () => {
@@ -40,10 +37,7 @@ describe('flora request processing', () => {
         });
         const [item] = data;
 
-        expect(item)
-            .to.be.an('object')
-            .and.to.have.property('id')
-            .and.to.eql(Buffer.from('1'));
+        expect(item).to.be.an('object').and.to.have.property('id').and.to.eql(Buffer.from('1'));
     });
 
     it('should query available results if "page" attribute is set in request', async () => {
@@ -55,9 +49,7 @@ describe('flora request processing', () => {
             page: 2
         });
 
-        expect(result)
-            .to.have.property('totalCount')
-            .and.to.be.at.least(1);
+        expect(result).to.have.property('totalCount').and.to.be.at.least(1);
     });
 
     it('should respect useMaster flag', async () => {
@@ -97,7 +89,11 @@ describe('flora request processing', () => {
 
         await ds.process(floraRequest);
 
-        expect(querySpy).to.have.been.calledWith(sinon.match.object, sinon.match('WHERE "t"."id" < 0'), sinon.match.any);
+        expect(querySpy).to.have.been.calledWith(
+            sinon.match.object,
+            sinon.match('WHERE "t"."id" < 0'),
+            sinon.match.any
+        );
         querySpy.restore();
     });
 });

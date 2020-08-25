@@ -1,3 +1,5 @@
+/* global after, afterEach, beforeEach, describe, it */
+
 'use strict';
 
 const { expect } = require('chai');
@@ -110,9 +112,7 @@ describe('context', () => {
         ].forEach(([description, sql]) => {
             it(description, async () => {
                 const result = await ctx.queryCol(sql);
-                expect(result).to.include('foo')
-                    .and.to.include('bar')
-                    .and.to.include('foobar');
+                expect(result).to.include('foo').and.to.include('bar').and.to.include('foobar');
             });
         });
 
