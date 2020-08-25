@@ -58,9 +58,31 @@ describe('SQL query builder', () => {
             ]);
         });
 
+        it('should throw on invalid direction', () => {
+            expect(() => {
+                queryBuilder({
+                    order: [{ attribute: 'col1', direction: 'invalid' }],
+                    queryAst: ast
+                });
+            }).to.throw(Error, /Invalid order direction/);
+        });
+
         it('should order by one attribute (random)', () => {
             queryBuilder({
                 order: [{ attribute: 'col1', direction: 'random' }],
+                queryAst: ast
+            });
+            expect(ast.orderby).to.eql([
+                {
+                    expr: { type: 'function', name: 'RAND', args: { type: 'expr_list', value: [] } },
+                    type: ''
+                }
+            ]);
+        });
+
+        it('should order by one attribute (rAnDoM, case insensitive)', () => {
+            queryBuilder({
+                order: [{ attribute: 'col1', direction: 'rAnDoM' }],
                 queryAst: ast
             });
             expect(ast.orderby).to.eql([
