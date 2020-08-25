@@ -45,6 +45,32 @@ describe('SQL query builder', () => {
             ]);
         });
 
+        it('should order by one attribute (case insensitive direction)', () => {
+            queryBuilder({
+                order: [{ attribute: 'col1', direction: 'ASC' }],
+                queryAst: ast
+            });
+            expect(ast.orderby).to.eql([
+                {
+                    expr: { type: 'column_ref', table: 't', column: 'col1' },
+                    type: 'ASC'
+                }
+            ]);
+        });
+
+        it('should order by one attribute (random)', () => {
+            queryBuilder({
+                order: [{ attribute: 'col1', direction: 'random' }],
+                queryAst: ast
+            });
+            expect(ast.orderby).to.eql([
+                {
+                    expr: { type: 'function', name: 'RAND', args: { type: 'expr_list', value: [] } },
+                    type: ''
+                }
+            ]);
+        });
+
         it('should resolve alias to column', () => {
             queryBuilder({
                 order: [{ attribute: 'columnAlias', direction: 'desc' }],
