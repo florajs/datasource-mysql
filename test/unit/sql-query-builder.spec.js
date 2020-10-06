@@ -471,6 +471,7 @@ describe('SQL query builder', () => {
                  */
                 const ast = {
                     _meta: { hasFilterPlaceholders: true },
+                    with: null,
                     type: 'select',
                     distinct: null,
                     columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
@@ -480,6 +481,7 @@ describe('SQL query builder', () => {
                     orderby: null,
                     limit: null,
                     _next: {
+                        with: null,
                         type: 'select',
                         distinct: null,
                         columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],

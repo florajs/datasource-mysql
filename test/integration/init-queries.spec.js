@@ -34,7 +34,7 @@ describe('init queries', () => {
 
     it('should execute single init query', async () => {
         const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const config = Object.assign({}, defaultCfg, { onConnect: initQuery });
+        const config = { ...defaultCfg, ...{ onConnect: initQuery } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -46,7 +46,7 @@ describe('init queries', () => {
     it('should execute multiple init queries', async () => {
         const initQuery1 = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
         const initQuery2 = `SET SESSION max_execution_time = 1`;
-        const config = Object.assign({}, defaultCfg, { onConnect: [initQuery1, initQuery2] });
+        const config = { ...defaultCfg, ...{ onConnect: [initQuery1, initQuery2] } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -66,7 +66,7 @@ describe('init queries', () => {
                     });
                 })
         );
-        const config = Object.assign({}, defaultCfg, { onConnect });
+        const config = { ...defaultCfg, ...{ onConnect } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -79,12 +79,11 @@ describe('init queries', () => {
     it('should handle server specific init queries', async () => {
         const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
         const serverInitQuery = 'SET SESSION max_execution_time = 1';
-        const config = Object.assign(
-            {},
-            defaultCfg,
-            { onConnect: globalInitQuery },
-            { default: { onConnect: serverInitQuery } }
-        );
+        const config = {
+            ...defaultCfg,
+            ...{ onConnect: globalInitQuery },
+            ...{ default: { onConnect: serverInitQuery } }
+        };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -94,7 +93,7 @@ describe('init queries', () => {
     });
 
     it('should handle errors', async () => {
-        const config = Object.assign({}, defaultCfg, { onConnect: 'SELECT nonExistentAttr FROM t' });
+        const config = { ...defaultCfg, ...{ onConnect: 'SELECT nonExistentAttr FROM t' } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);

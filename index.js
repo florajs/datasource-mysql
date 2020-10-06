@@ -303,7 +303,7 @@ class DataSource {
         ['masters', 'slaves'].forEach((type) => {
             const pattern = type.slice(0, -1).toUpperCase();
             serverCfg[type].forEach((hostCfg) => {
-                clusterCfg[`${pattern}_${hostCfg.host}`] = Object.assign({}, baseCfg, hostCfg);
+                clusterCfg[`${pattern}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
             });
         });
 

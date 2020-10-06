@@ -53,9 +53,7 @@ describe('error handling', () => {
         const _explain = {};
         const floraRequest = {
             attributes: ['col1'],
-            queryAstRaw: Object.assign({}, astTpl, {
-                from: [{ db: null, table: 'nonexistent_table', as: null }]
-            }),
+            queryAstRaw: { ...astTpl, ...{ from: [{ db: null, table: 'nonexistent_table', as: null }] } },
             database,
             _explain
         };
@@ -76,9 +74,7 @@ describe('error handling', () => {
         const _explain = {};
         const floraRequest = {
             attributes: ['col1'],
-            queryAstRaw: Object.assign({}, astTpl, {
-                from: [{ db: null, table: 'nonexistent_table', as: null }]
-            }),
+            queryAstRaw: { ...astTpl, ...{ from: [{ db: null, table: 'nonexistent_table', as: null }] } },
             database: 'nonexistent_database',
             _explain
         };

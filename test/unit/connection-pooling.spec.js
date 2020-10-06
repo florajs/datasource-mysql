@@ -192,13 +192,13 @@ describe('connection pooling', () => {
 
             await Promise.all([ctx.exec(sql), ctx.query(sql)]);
 
-            const masterCfg = Object.assign({}, baseCfg, { host: 'mysql-master', port: 3306 });
+            const masterCfg = { ...baseCfg, ...{ host: 'mysql-master', port: 3306 } };
             expect(poolSpy).to.have.been.calledWith('MASTER_mysql-master', sinon.match(masterCfg));
 
-            const slaveCfg1 = Object.assign({}, baseCfg, { host: 'mysql-slave1', port: 1337 });
+            const slaveCfg1 = { ...baseCfg, ...{ host: 'mysql-slave1', port: 1337 } };
             expect(poolSpy).to.have.been.calledWith('SLAVE_mysql-slave1', sinon.match(slaveCfg1));
 
-            const slaveCfg2 = Object.assign({}, baseCfg, { host: 'mysql-slave2', port: 4711 });
+            const slaveCfg2 = { ...baseCfg, ...{ host: 'mysql-slave2', port: 4711 } };
             expect(poolSpy).to.have.been.calledWith('SLAVE_mysql-slave2', sinon.match(slaveCfg2));
         });
     });
