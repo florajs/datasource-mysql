@@ -10,7 +10,7 @@
     "test:stop": "docker stop flora-mysql-testdb",
     "test:ci": "mocha test/integration/*.spec.js",
     "test-ci": "npm run test:cleanup; npm run test:start-testdb && npm run test:mysql; npm run test:stop",
-    "test-unit": "mocha test/unit/*.spec.js",
+    "test-unit": "mocha test/unit/*.spec.js test/unit/**/*.spec.js",
     "test": "npm run test-unit && npm run test-ci",
     "lint": "eslint ."
   },
