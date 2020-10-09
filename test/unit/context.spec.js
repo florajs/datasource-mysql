@@ -1,5 +1,3 @@
-/* global afterEach, beforeEach, describe, it */
-
 'use strict';
 
 const { expect } = require('chai');

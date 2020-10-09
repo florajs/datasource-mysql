@@ -1,5 +1,3 @@
-/* global afterEach, beforeEach, describe, it */
-
 'use strict';
 
 const queryBuilder = require('../../lib/sql-query-builder');
