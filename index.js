@@ -9,6 +9,7 @@ const { ImplementationError } = require('flora-errors');
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
+const { filterTree } = require('./lib/util');
 
 const Context = require('./lib/context');
 
@@ -88,6 +89,19 @@ function initConnection(connection, initConfigs) {
     return Promise.all(initQueries);
 }
 
+function placeholderFlag(ast) {
+    const placeholders = filterTree((node) => {
+        return node.type === 'column_ref' && node.column === '__floraFilterPlaceholder__';
+    })(ast.where || {});
+    const hasFilterPlaceholders = Array.isArray(placeholders) && placeholders.length > 0;
+
+    ast._meta = { ...(ast._meta || {}), ...{ hasFilterPlaceholders } };
+
+    if (ast._next) ast._next = placeholderFlag(ast._next);
+
+    return ast;
+}
+
 class DataSource {
     /**
      * @constructor
@@ -146,9 +160,7 @@ class DataSource {
             try {
                 // add query to exception
                 ast = this._parser.parse(dsConfig.query);
-
-                ast._meta = ast._meta || {};
-                ast._meta.hasFilterPlaceholders = dsConfig.query.includes('__floraFilterPlaceholder__');
+                ast = placeholderFlag(ast);
             } catch (e) {
                 if (e.location) {
                     e.message +=
