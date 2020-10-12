@@ -6,20 +6,20 @@ const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
 describe('query-builder (order)', () => {
-    let ast;
+    let queryAst;
 
     beforeEach(() => {
-        ast = JSON.parse(JSON.stringify(astFixture));
+        queryAst = JSON.parse(JSON.stringify(astFixture));
     });
 
     afterEach(() => {
-        ast = null;
+        queryAst = null;
     });
 
     it('should order by one attribute', () => {
-        queryBuilder({
-            order: [{ attribute: 'col1', direction: 'asc' }],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            order: [{ attribute: 'col1', direction: 'asc' }]
         });
 
         expect(ast.orderby).to.eql([
@@ -31,9 +31,9 @@ describe('query-builder (order)', () => {
     });
 
     it('should order by one attribute (case insensitive direction)', () => {
-        queryBuilder({
-            order: [{ attribute: 'col1', direction: 'ASC' }],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            order: [{ attribute: 'col1', direction: 'ASC' }]
         });
 
         expect(ast.orderby).to.eql([
@@ -47,16 +47,16 @@ describe('query-builder (order)', () => {
     it('should throw on invalid direction', () => {
         expect(() => {
             queryBuilder({
-                order: [{ attribute: 'col1', direction: 'invalid' }],
-                queryAst: ast
+                queryAst,
+                order: [{ attribute: 'col1', direction: 'invalid' }]
             });
         }).to.throw(Error, /Invalid order direction/);
     });
 
     it('should order by one attribute (random)', () => {
-        queryBuilder({
-            order: [{ attribute: 'col1', direction: 'random' }],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            order: [{ attribute: 'col1', direction: 'random' }]
         });
 
         expect(ast.orderby).to.eql([
@@ -68,9 +68,9 @@ describe('query-builder (order)', () => {
     });
 
     it('should order by one attribute (rAnDoM, case insensitive)', () => {
-        queryBuilder({
-            order: [{ attribute: 'col1', direction: 'rAnDoM' }],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            order: [{ attribute: 'col1', direction: 'rAnDoM' }]
         });
 
         expect(ast.orderby).to.eql([
@@ -82,9 +82,9 @@ describe('query-builder (order)', () => {
     });
 
     it('should resolve alias to column', () => {
-        queryBuilder({
-            order: [{ attribute: 'columnAlias', direction: 'desc' }],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            order: [{ attribute: 'columnAlias', direction: 'desc' }]
         });
 
         expect(ast.orderby).to.eql([
@@ -96,12 +96,12 @@ describe('query-builder (order)', () => {
     });
 
     it('should order by multiple attributes', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             order: [
                 { attribute: 'col1', direction: 'asc' },
                 { attribute: 'col2', direction: 'desc' }
-            ],
-            queryAst: ast
+            ]
         });
 
         expect(ast.orderby).to.eql([

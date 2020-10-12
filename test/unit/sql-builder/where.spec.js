@@ -6,20 +6,20 @@ const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
 describe('query-builder (where)', () => {
-    let ast;
+    let queryAst;
 
     beforeEach(() => {
-        ast = JSON.parse(JSON.stringify(astFixture));
+        queryAst = JSON.parse(JSON.stringify(astFixture));
     });
 
     afterEach(() => {
-        ast = null;
+        queryAst = null;
     });
 
     it('should add single "AND" condition', () => {
-        queryBuilder({
-            filter: [[{ attribute: 'col1', operator: 'equal', value: 0 }]],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            filter: [[{ attribute: 'col1', operator: 'equal', value: 0 }]]
         });
 
         expect(ast.where).to.be.eql({
@@ -31,14 +31,14 @@ describe('query-builder (where)', () => {
     });
 
     it('should add multiple "AND" conditions', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             filter: [
                 [
                     { attribute: 'col1', operator: 'greater', value: 10 },
                     { attribute: 'col1', operator: 'less', value: 20 }
                 ]
-            ],
-            queryAst: ast
+            ]
         });
 
         expect(ast.where).to.be.eql({
@@ -60,12 +60,12 @@ describe('query-builder (where)', () => {
     });
 
     it('should add mulitple "OR" conditions', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             filter: [
                 [{ attribute: 'col1', operator: 'greater', value: 10 }],
                 [{ attribute: 'col1', operator: 'less', value: 20 }]
-            ],
-            queryAst: ast
+            ]
         });
 
         expect(ast.where).to.be.eql({
@@ -87,8 +87,8 @@ describe('query-builder (where)', () => {
     });
 
     it('should not overwrite existing where conditions (single filter)', () => {
-        ast = {
-            ...ast,
+        queryAst = {
+            ...queryAst,
             ...{
                 where: {
                     type: 'binary_expr',
@@ -99,9 +99,9 @@ describe('query-builder (where)', () => {
             }
         };
 
-        queryBuilder({
-            filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]]
         });
 
         expect(ast.where).to.be.eql({
@@ -125,7 +125,7 @@ describe('query-builder (where)', () => {
     });
 
     it('should not overwrite existing where conditions (multiple filters)', () => {
-        ast = {
+        queryAst = {
             ...astFixture,
             ...{
                 where: {
@@ -137,12 +137,12 @@ describe('query-builder (where)', () => {
             }
         };
 
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             filter: [
                 [{ attribute: 'col2', operator: 'greater', value: 100 }],
                 [{ attribute: 'columnAlias', operator: 'lessOrEqual', value: 100 }]
-            ],
-            queryAst: ast
+            ]
         });
 
         expect(ast.where).to.be.eql({
@@ -176,8 +176,8 @@ describe('query-builder (where)', () => {
     });
 
     it('should use parentheses to group conditions', () => {
-        ast = {
-            ...ast,
+        queryAst = {
+            ...queryAst,
             ...{
                 where: {
                     type: 'binary_expr',
@@ -188,9 +188,9 @@ describe('query-builder (where)', () => {
             }
         };
 
-        queryBuilder({
-            filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]],
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]]
         });
 
         expect(ast.where.left).to.have.property('parentheses', true);
@@ -198,7 +198,7 @@ describe('query-builder (where)', () => {
     });
 
     it('should support arrays as attribute filters', () => {
-        const ast = {
+        queryAst = {
             _meta: { hasFilterPlaceholders: false },
             with: null,
             type: 'select',
@@ -214,7 +214,8 @@ describe('query-builder (where)', () => {
             limit: null
         };
 
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             filter: [
                 [
                     {
@@ -226,8 +227,7 @@ describe('query-builder (where)', () => {
                         ]
                     }
                 ]
-            ],
-            queryAst: ast
+            ]
         });
 
         expect(ast.where).to.eql({
@@ -271,11 +271,9 @@ describe('query-builder (where)', () => {
 
     Object.entries({ equal: 'IS', notEqual: 'IS NOT' }).forEach(([filterOperator, sqlOperator]) => {
         it(`should support ${filterOperator} operator and null values`, () => {
-            const ast = { ...astFixture };
-
-            queryBuilder({
-                filter: [[{ attribute: 'col1', operator: filterOperator, value: null }]],
-                queryAst: ast
+            const ast = queryBuilder({
+                queryAst: { ...astFixture },
+                filter: [[{ attribute: 'col1', operator: filterOperator, value: null }]]
             });
 
             expect(ast.where).to.eql({
@@ -301,25 +299,23 @@ describe('query-builder (where)', () => {
         });
 
         it('should be replaced by "1 = 1" for empty request filters', () => {
-            const ast = {
-                ...astFixture,
-                ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
-            };
-
-            queryBuilder({ queryAst: ast });
+            const ast = queryBuilder({
+                queryAst: {
+                    ...astFixture,
+                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
+                }
+            });
 
             expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
         });
 
         it('should be replaced by request filter(s)', () => {
-            const ast = {
-                ...astFixture,
-                ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
-            };
-
-            queryBuilder({
-                filter: [[{ attribute: 'col1', operator: 'equal', value: 1 }]],
-                queryAst: ast
+            const ast = queryBuilder({
+                queryAst: {
+                    ...astFixture,
+                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
+                },
+                filter: [[{ attribute: 'col1', operator: 'equal', value: 1 }]]
             });
 
             expect(ast.where).to.eql({
@@ -343,33 +339,33 @@ describe('query-builder (where)', () => {
                 FROM t2
                 WHERE __floraFilterPlaceholder__
              */
-            const ast = {
-                _meta: { hasFilterPlaceholders: true },
-                with: null,
-                type: 'select',
-                distinct: null,
-                columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
-                from: [{ db: null, table: 't', as: null }],
-                where: floraFilterPlaceholder,
-                groupby: null,
-                orderby: null,
-                limit: null,
-                _next: {
+            const ast = queryBuilder({
+                queryAst: {
                     _meta: { hasFilterPlaceholders: true },
                     with: null,
                     type: 'select',
                     distinct: null,
                     columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
-                    from: [{ db: null, table: 't2', as: null }],
-                    where: unionFloraFilterPlaceholder,
+                    from: [{ db: null, table: 't', as: null }],
+                    where: floraFilterPlaceholder,
                     groupby: null,
-                    having: null,
                     orderby: null,
-                    limit: null
+                    limit: null,
+                    _next: {
+                        _meta: { hasFilterPlaceholders: true },
+                        with: null,
+                        type: 'select',
+                        distinct: null,
+                        columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
+                        from: [{ db: null, table: 't2', as: null }],
+                        where: unionFloraFilterPlaceholder,
+                        groupby: null,
+                        having: null,
+                        orderby: null,
+                        limit: null
+                    }
                 }
-            };
-
-            queryBuilder({ queryAst: ast });
+            });
 
             expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
             expect(ast._next.where).to.eql(EMPTY_FILTER_FALLBACK);

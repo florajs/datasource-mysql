@@ -6,20 +6,20 @@ const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
 describe('query-builder (limit)', () => {
-    let ast;
+    let queryAst;
 
     beforeEach(() => {
-        ast = JSON.parse(JSON.stringify(astFixture));
+        queryAst = JSON.parse(JSON.stringify(astFixture));
     });
 
     afterEach(() => {
-        ast = null;
+        queryAst = null;
     });
 
     it('should set limit', () => {
-        queryBuilder({
-            limit: 17,
-            queryAst: ast
+        const ast = queryBuilder({
+            queryAst,
+            limit: 17
         });
 
         expect(ast.limit).to.eql([
@@ -29,10 +29,10 @@ describe('query-builder (limit)', () => {
     });
 
     it('should set limit with offset', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             limit: 10,
-            page: 3,
-            queryAst: ast
+            page: 3
         });
 
         expect(ast.limit).to.eql([

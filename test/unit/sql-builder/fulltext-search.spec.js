@@ -6,21 +6,21 @@ const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
 describe('query-builder (fulltext search)', () => {
-    let ast;
+    let queryAst;
 
     beforeEach(() => {
-        ast = JSON.parse(JSON.stringify(astFixture));
+        queryAst = JSON.parse(JSON.stringify(astFixture));
     });
 
     afterEach(() => {
-        ast = null;
+        queryAst = null;
     });
 
     it('should support single attribute', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             searchable: ['col1'],
-            search: 'foobar',
-            queryAst: ast
+            search: 'foobar'
         });
 
         expect(ast.where).to.eql({
@@ -32,10 +32,10 @@ describe('query-builder (fulltext search)', () => {
     });
 
     it('should support multiple attributes', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             searchable: ['col1', 'columnAlias'],
-            search: 'foobar',
-            queryAst: ast
+            search: 'foobar'
         });
 
         expect(ast.where).to.eql({
@@ -57,10 +57,10 @@ describe('query-builder (fulltext search)', () => {
     });
 
     it('should escape special pattern characters "%" and "_"', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             searchable: ['col1'],
-            search: 'f%o_o%b_ar',
-            queryAst: ast
+            search: 'f%o_o%b_ar'
         });
 
         expect(ast.where).to.eql({
@@ -72,11 +72,11 @@ describe('query-builder (fulltext search)', () => {
     });
 
     it('should support multiple attributes and non-empty where clause', () => {
-        queryBuilder({
+        const ast = queryBuilder({
+            queryAst,
             filter: [[{ attribute: 'col2', operator: 'equal', value: 5 }]],
             searchable: ['col1', 'columnAlias'],
-            search: 'foobar',
-            queryAst: ast
+            search: 'foobar'
         });
 
         expect(ast.where).to.eql({
