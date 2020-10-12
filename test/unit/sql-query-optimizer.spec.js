@@ -2,14 +2,17 @@
 
 const { expect } = require('chai');
 const optimize = require('../../lib/sql-query-optimizer');
-const _ = require('lodash');
+
+function cloneDeep(ast) {
+    return JSON.parse(JSON.stringify(ast));
+}
 
 describe('SQL query optimizer', () => {
     let ast;
 
     it('should only modify SELECT statements', function () {
         ast = { type: 'UPDATE' };
-        const initialAST = _.clone(ast);
+        const initialAST = cloneDeep(ast);
         optimize(ast, ['col1']);
 
         expect(initialAST).to.eql(ast);
@@ -67,7 +70,7 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        const initialAST = _.cloneDeep(ast);
+        const initialAST = cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
@@ -245,7 +248,7 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        const initialAST = _.cloneDeep(ast);
+        const initialAST = cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
@@ -277,7 +280,7 @@ describe('SQL query optimizer', () => {
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
             ]
         };
-        const initialAST = _.cloneDeep(ast);
+        const initialAST = cloneDeep(ast);
 
         optimize(ast, ['col1']);
         expect(ast.from).to.eql(initialAST.from);
