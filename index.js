@@ -394,6 +394,11 @@ class DataSource {
             const init = [has(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
             if (has(config, server) && has(config[server], 'onConnect')) init.push(config[server].onConnect);
 
+            const socket = connection._socket;
+            if (typeof socket === 'object' && typeof socket.setKeepAlive === 'function') {
+                socket.setKeepAlive(true);
+            }
+
             this._log.trace('initialize connection');
             return initConnection(connection, init)
                 .then(() => Object.defineProperty(connection, '_floraInitialized', { value: true }))
