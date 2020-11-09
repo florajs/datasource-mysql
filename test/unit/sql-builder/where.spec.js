@@ -199,7 +199,6 @@ describe('query-builder (where)', () => {
 
     it('should support arrays as attribute filters', () => {
         queryAst = {
-            _meta: { hasFilterPlaceholders: false },
             with: null,
             type: 'select',
             distinct: null,
@@ -282,93 +281,6 @@ describe('query-builder (where)', () => {
                 left: { type: 'column_ref', table: 't', column: 'col1' },
                 right: { type: 'null', value: null }
             });
-        });
-    });
-
-    describe('placeholder', () => {
-        let floraFilterPlaceholder;
-        const EMPTY_FILTER_FALLBACK = {
-            type: 'binary_expr',
-            operator: '=',
-            left: { type: 'number', value: 1 },
-            right: { type: 'number', value: 1 }
-        };
-
-        beforeEach(() => {
-            floraFilterPlaceholder = { type: 'column_ref', table: null, column: '__floraFilterPlaceholder__' };
-        });
-
-        it('should be replaced by "1 = 1" for empty request filters', () => {
-            const ast = queryBuilder({
-                queryAst: {
-                    ...astFixture,
-                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
-                }
-            });
-
-            expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
-        });
-
-        it('should be replaced by request filter(s)', () => {
-            const ast = queryBuilder({
-                queryAst: {
-                    ...astFixture,
-                    ...{ _meta: { hasFilterPlaceholders: true }, where: floraFilterPlaceholder }
-                },
-                filter: [[{ attribute: 'col1', operator: 'equal', value: 1 }]]
-            });
-
-            expect(ast.where).to.eql({
-                type: 'binary_expr',
-                operator: '=',
-                left: { type: 'column_ref', table: 't', column: 'col1' },
-                right: { type: 'number', value: 1 }
-            });
-        });
-
-        it('should be replaced multiple times', () => {
-            const unionFloraFilterPlaceholder = { ...floraFilterPlaceholder };
-            /*
-                SELECT col
-                FROM t
-                WHERE __floraFilterPlaceholder__
-
-                UNION
-
-                SELECT col
-                FROM t2
-                WHERE __floraFilterPlaceholder__
-             */
-            const ast = queryBuilder({
-                queryAst: {
-                    _meta: { hasFilterPlaceholders: true },
-                    with: null,
-                    type: 'select',
-                    distinct: null,
-                    columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
-                    from: [{ db: null, table: 't', as: null }],
-                    where: floraFilterPlaceholder,
-                    groupby: null,
-                    orderby: null,
-                    limit: null,
-                    _next: {
-                        _meta: { hasFilterPlaceholders: true },
-                        with: null,
-                        type: 'select',
-                        distinct: null,
-                        columns: [{ expr: { type: 'column_ref', table: null, column: 'col' }, as: null }],
-                        from: [{ db: null, table: 't2', as: null }],
-                        where: unionFloraFilterPlaceholder,
-                        groupby: null,
-                        having: null,
-                        orderby: null,
-                        limit: null
-                    }
-                }
-            });
-
-            expect(ast.where).to.eql(EMPTY_FILTER_FALLBACK);
-            expect(ast._next.where).to.eql(EMPTY_FILTER_FALLBACK);
         });
     });
 });

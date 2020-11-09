@@ -1,5 +1,4 @@
 module.exports = {
-    _meta: { hasFilterPlaceholders: false },
     with: null,
     type: 'select',
     distinct: null,

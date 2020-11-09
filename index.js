@@ -89,19 +89,6 @@ function initConnection(connection, initConfigs) {
     return Promise.all(initQueries);
 }
 
-function placeholderFlag(ast) {
-    const placeholders = filterTree((node) => {
-        return node.type === 'column_ref' && node.column === '__floraFilterPlaceholder__';
-    })(ast.where || {});
-    const hasFilterPlaceholders = Array.isArray(placeholders) && placeholders.length > 0;
-
-    ast._meta = { ...(ast._meta || {}), ...{ hasFilterPlaceholders } };
-
-    if (ast._next) ast._next = placeholderFlag(ast._next);
-
-    return ast;
-}
-
 class DataSource {
     /**
      * @constructor
@@ -160,7 +147,6 @@ class DataSource {
             try {
                 // add query to exception
                 ast = this._parser.parse(dsConfig.query);
-                ast = placeholderFlag(ast);
             } catch (e) {
                 if (e.location) {
                     e.message +=
@@ -174,7 +160,6 @@ class DataSource {
             checkSqlEquivalents(attributes, ast.columns);
         } else if (dsConfig.table && dsConfig.table.trim().length > 0) {
             ast = {
-                _meta: { hasFilterPlaceholders: false },
                 type: 'select',
                 options: null,
                 distinct: null,

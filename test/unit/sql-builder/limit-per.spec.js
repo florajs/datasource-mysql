@@ -77,7 +77,7 @@ describe('query-builder (limit-per)', () => {
         ]);
     });
 
-    describe('filters', () => {
+    xdescribe('filters', () => {
         it('should generate WHERE clause for correlated subquery', () => {
             const ast = queryBuilder({
                 attributes: ['col2'],

@@ -124,42 +124,5 @@ describe('mysql data source', () => {
 
             expect(resourceConfig).to.have.property('queryAstRaw').and.to.eql(astTpl);
         });
-
-        describe('placeholder flag', () => {
-            it('should be set to false if no placeholder is present', () => {
-                const resourceConfig = { query: 'SELECT t.id FROM t' };
-
-                ds.prepare(resourceConfig, ['id']);
-
-                expect(resourceConfig.queryAstRaw)
-                    .to.have.property('_meta')
-                    .and.to.have.property('hasFilterPlaceholders', false);
-            });
-
-            it('should be set for simple SELECTs', () => {
-                const resourceConfig = { query: 'SELECT t.id FROM t WHERE __floraFilterPlaceholder__' };
-
-                ds.prepare(resourceConfig, ['id']);
-
-                expect(resourceConfig.queryAstRaw)
-                    .to.have.property('_meta')
-                    .and.to.have.property('hasFilterPlaceholders', true);
-            });
-
-            it('should be set UNION SELECTs', () => {
-                const resourceConfig = {
-                    query: `SELECT t1.id FROM t1 WHERE __floraFilterPlaceholder__
-                        UNION
-                        SELECT t2.id FROM t2 WHERE __floraFilterPlaceholder__`
-                };
-
-                ds.prepare(resourceConfig, ['id']);
-
-                expect(resourceConfig.queryAstRaw)
-                    .to.have.property('_next')
-                    .and.to.have.property('_meta')
-                    .and.to.have.property('hasFilterPlaceholders', true);
-            });
-        });
     });
 });

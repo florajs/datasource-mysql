@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = {
-    _meta: { hasFilterPlaceholders: false },
     type: 'select',
     options: null,
     distinct: null,
