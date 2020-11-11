@@ -211,7 +211,7 @@ class DataSource {
         let sql;
 
         if (!has(request, 'queryAst')) this.buildSqlAst(request);
-        optimizeAST(request.queryAst, request.attributes);
+        request.queryAst = optimizeAST(request.queryAst, request.attributes);
         sql = astUtil.astToSQL(request.queryAst);
         _explain.sql = sql;
 

@@ -34,8 +34,8 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        optimize(ast, ['col1', 'alias']);
-        expect(ast.columns).to.eql([
+        const optimizedAst = optimize(ast, ['col1', 'alias']);
+        expect(optimizedAst.columns).to.eql([
             // SELECT t.col1, t.col3 AS alias FROM t1
             { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' }
@@ -72,8 +72,8 @@ describe('SQL query optimizer', () => {
 
         const initialAST = cloneDeep(ast);
 
-        optimize(ast, ['col1']);
-        expect(ast.from).to.eql(initialAST.from);
+        const optimizedAst = optimize(ast, ['col1']);
+        expect(optimizedAst.from).to.eql(initialAST.from);
     });
 
     it('should remove unreferenced LEFT JOINs from AST', () => {
@@ -105,8 +105,8 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        optimize(ast, ['col1']);
-        expect(ast.from).to.eql([{ db: null, table: 't', as: null }]); // SELECT t1.col1 FROM t
+        const optimizedAst = optimize(ast, ['col1']);
+        expect(optimizedAst.from).to.eql([{ db: null, table: 't', as: null }]); // SELECT t1.col1 FROM t
     });
 
     it('should pay attention to table aliases', () => {
@@ -157,8 +157,8 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        optimize(ast, ['col1', 'col3']);
-        expect(ast.from).to.eql([
+        const optimizedAst = optimize(ast, ['col1', 'col3']);
+        expect(optimizedAst.from).to.eql([
             // SELECT t1.col1, alias.col3 FROM t LEFT JOIN t3 AS alias ON t1.id = alias.id
             { db: null, table: 't', as: null },
             {
@@ -216,8 +216,8 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        optimize(ast, ['col1']);
-        expect(ast.from).to.eql(ast.from);
+        const optimizedAst = optimize(ast, ['col1']);
+        expect(optimizedAst.from).to.eql(ast.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', () => {
@@ -250,8 +250,8 @@ describe('SQL query optimizer', () => {
 
         const initialAST = cloneDeep(ast);
 
-        optimize(ast, ['col1']);
-        expect(ast.from).to.eql(initialAST.from);
+        const optimizedAst = optimize(ast, ['col1']);
+        expect(optimizedAst.from).to.eql(initialAST.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', () => {
@@ -282,8 +282,8 @@ describe('SQL query optimizer', () => {
         };
         const initialAST = cloneDeep(ast);
 
-        optimize(ast, ['col1']);
-        expect(ast.from).to.eql(initialAST.from);
+        const optimizedAst = optimize(ast, ['col1']);
+        expect(optimizedAst.from).to.eql(initialAST.from);
     });
 
     it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', () => {
@@ -368,14 +368,14 @@ describe('SQL query optimizer', () => {
             limit: null
         };
 
-        optimize(ast, ['id', 'nameDE']);
+        const optimizedAst = optimize(ast, ['id', 'nameDE']);
         /*
          SELECT instrument.id, ctde.name AS nameDE
          FROM instrument
            LEFT JOIN country AS c ON instrument.countryId = c.id
            LEFT JOIN country_translation AS ctde ON c.id = ctde.countryId AND ctde.lang = 'de'
          */
-        expect(ast.from).to.eql([
+        expect(optimizedAst.from).to.eql([
             { db: null, table: 'instrument', as: null },
             {
                 db: null,
@@ -444,8 +444,8 @@ describe('SQL query optimizer', () => {
             limit: null
         };
 
-        optimize(ast, ['id']);
-        expect(ast.columns).to.eql([
+        const optimizedAst = optimize(ast, ['id']);
+        expect(optimizedAst.columns).to.eql([
             { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
             {
                 expr: {
@@ -494,8 +494,8 @@ describe('SQL query optimizer', () => {
             limit: null
         };
 
-        optimize(ast, ['id']);
-        expect(ast.columns).to.eql([
+        const optimizedAst = optimize(ast, ['id']);
+        expect(optimizedAst.columns).to.eql([
             { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
             {
                 expr: {
