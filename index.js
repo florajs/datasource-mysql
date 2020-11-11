@@ -201,6 +201,8 @@ class DataSource {
      * @param {string}      request.database
      * @param {number}      request.page
      * @param {boolean=}    request.useMaster
+     * @param {Object=}     request.queryAst
+     * @param {Array}       request.attributes
      * @param {Object=}     request._explain
      * @param {Object=}     request._status
      * @returns {Promise}
