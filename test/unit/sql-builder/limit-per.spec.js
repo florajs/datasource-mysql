@@ -305,6 +305,4 @@ describe('query-builder (limit-per)', () => {
             .to.have.property('orderby')
             .and.to.eql([{ expr: { type: 'column_ref', table: 't', column: 'col2' }, type: 'DESC' }]);
     });
-
-    xit('should optimize sub-query'); // remove unused columns and joins
 });

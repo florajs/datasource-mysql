@@ -513,4 +513,98 @@ describe('SQL query optimizer', () => {
             }
         ]);
     });
+
+    describe('limit-per', () => {
+        beforeEach(() => {
+            /**
+             * SELECT ...
+             * FROM (VALUES ROW(1), ROW(3)) limitper_ids (id)
+             * JOIN LATERAL (
+             *      SELECT t.col1, t.col2
+             *      FROM t
+             *      WHERE limitper_ids.id = t.id
+             * ) limitper ON TRUE
+             */
+            ast = {
+                type: 'select',
+                options: null,
+                distinct: null,
+                columns: [{ expr: { type: 'column_ref', table: 'limitper', column: 'col1' }, as: null }],
+                from: [
+                    {
+                        expr: {
+                            type: 'values',
+                            value: [
+                                { type: 'row_value', keyword: true, value: [{ type: 'number', value: 1 }] },
+                                { type: 'row_value', keyword: true, value: [{ type: 'number', value: 3 }] }
+                            ]
+                        },
+                        as: 'limitper_ids',
+                        columns: ['id']
+                    },
+                    {
+                        expr: {
+                            with: null,
+                            type: 'select',
+                            options: null,
+                            distinct: null,
+                            columns: [
+                                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
+                                { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null }
+                            ],
+                            from: [{ db: null, table: 't', as: null }],
+                            where: {
+                                type: 'binary_expr',
+                                operator: '=',
+                                left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
+                                right: { type: 'column_ref', table: 't', column: 'id' }
+                            },
+                            groupby: null,
+                            having: null,
+                            orderby: null,
+                            limit: null,
+                            parentheses: true
+                        },
+                        as: 'limitper',
+                        lateral: true,
+                        columns: null,
+                        join: 'INNER JOIN',
+                        on: { type: 'bool', value: true }
+                    }
+                ],
+                where: null,
+                groupby: null,
+                orderby: null,
+                limit: null
+            };
+        });
+
+        it('should optimize column clause of lateral join', () => {
+            const optimizedAst = optimize(ast, ['col1'], true);
+            const [, { expr: subSelect }] = optimizedAst.from;
+
+            expect(subSelect.columns).to.eql([{ expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null }]);
+        });
+
+        it('should optimize from clause', () => {
+            // add LEFT join to sub-query
+            ast.from[1].expr.from.push({
+                db: null,
+                table: 't_l10n',
+                as: null,
+                join: `LEFT JOIN`,
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't', column: 'id' },
+                    right: { type: 'column_ref', table: 't_l10n', column: 'id' }
+                }
+            });
+
+            const optimizedAst = optimize(ast, ['col1'], true);
+            const [, { expr: subSelect }] = optimizedAst.from;
+
+            expect(subSelect.from).to.eql([{ db: null, table: 't', as: null }]);
+        });
+    });
 });

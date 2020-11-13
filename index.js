@@ -213,7 +213,9 @@ class DataSource {
         let sql;
 
         if (!has(request, 'queryAst')) this.buildSqlAst(request);
-        request.queryAst = optimizeAST(request.queryAst, request.attributes);
+
+        const isLimitPer = has(request, 'limitPer') && request.limitPer !== null;
+        request.queryAst = optimizeAST(request.queryAst, request.attributes, isLimitPer);
         sql = astUtil.astToSQL(request.queryAst);
         _explain.sql = sql;
 
