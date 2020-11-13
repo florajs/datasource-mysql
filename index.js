@@ -9,7 +9,6 @@ const { ImplementationError } = require('flora-errors');
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
-const { filterTree } = require('./lib/util');
 
 const Context = require('./lib/context');
 
