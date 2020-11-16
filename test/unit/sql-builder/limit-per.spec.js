@@ -5,7 +5,7 @@ const { expect } = require('chai');
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
-describe('query-builder (limit-per)', () => {
+xdescribe('query-builder (limit-per)', () => {
     let queryAst;
 
     beforeEach(() => {
