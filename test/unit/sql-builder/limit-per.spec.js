@@ -5,7 +5,6 @@ const { expect } = require('chai');
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
-// TODO check parentheses
 describe('query-builder (limit-per)', () => {
     let queryAst;
 
