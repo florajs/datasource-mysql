@@ -9,6 +9,7 @@ const { ImplementationError } = require('flora-errors');
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
+const status = require('./lib/connection-status');
 
 const Context = require('./lib/context');
 
@@ -101,36 +102,7 @@ class DataSource {
         this._pools = {};
         this._status = config._status;
 
-        if (this._status) this._status.onStatus(() => this._status.set('pools', this._collectPoolStatus()));
-    }
-
-    _collectPoolStatus() {
-        const stats = {};
-        const statProps = {
-            open: '_allConnections',
-            sleeping: '_freeConnections',
-            waiting: '_acquiringConnections'
-        };
-
-        Object.keys(this._pools).forEach((server) => {
-            if (!stats[server]) stats[server] = {};
-            Object.keys(this._pools[server]).forEach((db) => {
-                const pool = this._getConnectionPool(server, db);
-                const poolStats = {};
-
-                Object.keys(statProps).forEach((prop) => {
-                    const statProp = statProps[prop];
-                    if (!pool[statProp] || !Array.isArray(pool[statProp])) return;
-                    poolStats[prop] = pool[statProp].length;
-                });
-
-                poolStats.open -= poolStats.sleeping;
-
-                stats[server][db] = poolStats;
-            });
-        });
-
-        return stats;
+        if (this._status) this._status.onStatus(() => this._status.set('pools', status(this._pools)));
     }
 
     /**
@@ -220,7 +192,7 @@ class DataSource {
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._status) request._status.set({ server, database, sql });
-
+        status(this._pools);
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast, _explain)
             .then(({ results }) => {
                 return {
