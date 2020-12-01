@@ -89,6 +89,51 @@ function initConnection(connection, initConfigs) {
     return Promise.all(initQueries);
 }
 
+function astify(dsConfig, attributes) {
+    if (dsConfig.query && dsConfig.query.trim().length > 0) {
+        let ast;
+
+        try {
+            // add query to exception
+            ast = new Parser().parse(dsConfig.query);
+        } catch (e) {
+            if (e.location) {
+                e.message += ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
+            }
+            e.query = dsConfig.query;
+            throw e;
+        }
+
+        checkAST(ast); // check if columns are unique and fully qualified
+        checkSqlEquivalents(attributes, ast.columns);
+
+        return ast;
+    }
+
+    if (dsConfig.table && dsConfig.table.trim().length > 0) {
+        return {
+            type: 'select',
+            options: null,
+            distinct: null,
+            columns: Array.isArray(attributes)
+                ? attributes.map((attribute) => ({
+                      expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
+                      as: null
+                  }))
+                : '',
+            from: [{ db: null, table: dsConfig.table, as: null }],
+            where: null,
+            groupby: null,
+            having: null,
+            orderby: null,
+            limit: null,
+            with: null
+        };
+    }
+
+    throw new ImplementationError('Option "query" or "table" must be specified');
+}
+
 class DataSource {
     /**
      * @constructor
@@ -97,7 +142,6 @@ class DataSource {
      */
     constructor(api, config) {
         this._log = api.log.child({ component: 'flora-mysql' });
-        this._parser = new Parser();
         this._config = config;
         this._pools = {};
         this._status = config._status;
@@ -112,45 +156,7 @@ class DataSource {
      * @param {Array.<string>=} attributes List of resource config attributes mapped to DataSource.
      */
     prepare(dsConfig, attributes) {
-        let ast;
-
-        if (dsConfig.query && dsConfig.query.trim().length > 0) {
-            try {
-                // add query to exception
-                ast = this._parser.parse(dsConfig.query);
-            } catch (e) {
-                if (e.location) {
-                    e.message +=
-                        ' Error at SQL-line ' + e.location.start.line + ' (col ' + e.location.start.column + ')';
-                }
-                e.query = dsConfig.query;
-                throw e;
-            }
-
-            checkAST(ast); // check if columns are unique and fully qualified
-            checkSqlEquivalents(attributes, ast.columns);
-        } else if (dsConfig.table && dsConfig.table.trim().length > 0) {
-            ast = {
-                type: 'select',
-                options: null,
-                distinct: null,
-                columns: Array.isArray(attributes)
-                    ? attributes.map((attribute) => ({
-                          expr: { type: 'column_ref', table: dsConfig.table, column: attribute },
-                          as: null
-                      }))
-                    : '',
-                from: [{ db: null, table: dsConfig.table, as: null }],
-                where: null,
-                groupby: null,
-                having: null,
-                orderby: null,
-                limit: null,
-                with: null
-            };
-        } else {
-            throw new ImplementationError('Option "query" or "table" must be specified');
-        }
+        const ast = astify(dsConfig, attributes);
 
         if (dsConfig.searchable) {
             dsConfig.searchable = dsConfig.searchable.split(',');
