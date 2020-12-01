@@ -262,9 +262,6 @@ class DataSource {
      * @private
      */
     _prepareServerCfg(serverCfg, database) {
-        serverCfg.masters = serverCfg.masters || [{}];
-        serverCfg.slaves = serverCfg.slaves || [];
-
         const baseCfg = {
             host: serverCfg.host,
             port: serverCfg.port || 3306,
@@ -277,15 +274,20 @@ class DataSource {
             multipleStatements: true // pagination queries
         };
 
-        const clusterCfg = {};
-        ['masters', 'slaves'].forEach((type) => {
-            const pattern = type.slice(0, -1).toUpperCase();
-            serverCfg[type].forEach((hostCfg) => {
-                clusterCfg[`${pattern}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
-            });
-        });
+        serverCfg.masters = serverCfg.masters || [{}];
+        serverCfg.slaves = serverCfg.slaves || [];
 
-        return clusterCfg;
+        return (
+            ['masters', 'slaves']
+                .map((type) => ({ type, serverType: type.slice(0, -1) }))
+                // flatMap is not available in Node.js 10 - use map + reduce instead
+                .map(({ type, serverType }) => serverCfg[type].map((hostCfg) => ({ serverType, hostCfg })))
+                .reduce((flatten, array) => [...flatten, ...array], [])
+                .reduce((cfg, { serverType, hostCfg }) => {
+                    cfg[`${serverType.toUpperCase()}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
+                    return cfg;
+                }, {})
+        );
     }
 
     /**
