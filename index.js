@@ -277,11 +277,11 @@ class DataSource {
         return (
             ['masters', 'slaves']
                 .filter((type) => has(serverCfg, type) && Array.isArray(serverCfg[type]))
-                .map((type) => ({ type, serverType: type.slice(0, -1) }))
                 // flatMap is not available in Node.js 10 - use map + reduce instead
-                .map(({ type, serverType }) => serverCfg[type].map((hostCfg) => ({ serverType, hostCfg })))
+                .map((type) => serverCfg[type].map((hostCfg) => ({ type, hostCfg })))
                 .reduce((flatten, array) => [...flatten, ...array], [])
-                .reduce((cfg, { serverType, hostCfg }) => {
+                .reduce((cfg, { type, hostCfg }) => {
+                    const serverType = type.slice(0, -1).toUpperCase();
                     cfg[`${serverType.toUpperCase()}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
                     return cfg;
                 }, {})
