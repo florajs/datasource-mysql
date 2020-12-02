@@ -198,7 +198,7 @@ class DataSource {
 
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._status) request._status.set({ server, database, sql });
-        status(this._pools);
+
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast, _explain)
             .then(({ results }) => {
                 return {
