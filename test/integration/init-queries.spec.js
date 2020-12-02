@@ -1,101 +1,104 @@
 'use strict';
 
-const chai = require('chai');
-const { expect } = chai;
-const sinon = require('sinon');
+const { expect } = require('chai');
 
-const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');
-
-chai.use(require('sinon-chai'));
 
 describe('init queries', () => {
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctxCfg = { db, useMaster: true };
     let ds;
-    let querySpy;
 
-    beforeEach(() => (querySpy = sinon.spy(PoolConnection.prototype, 'query')));
-
-    afterEach(() => {
-        querySpy.restore();
-        return ds.close();
-    });
+    afterEach(() => ds.close());
 
     it('should set sql_mode to ANSI if no init queries are defined', async () => {
         ds = FloraMysqlFactory.create(ciCfg);
         const ctx = ds.getContext(ctxCfg);
 
         await ctx.query('SELECT 1 FROM dual');
-        expect(querySpy).to.have.been.calledWith("SET SESSION sql_mode = 'ANSI'");
+        const sqlMode = await ctx.queryOne('SELECT @@sql_mode');
+
+        expect(sqlMode).to.match(/\bANSI\b/);
     });
 
     it('should execute single init query', async () => {
-        const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const config = { ...ciCfg, ...{ onConnect: initQuery } };
+        const config = { ...ciCfg, onConnect: 'SET SESSION max_execution_time = 1337' };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
 
         await ctx.query('SELECT 1 FROM dual');
-        expect(querySpy).to.have.been.calledWith(initQuery);
+        const maxExecutionTime = await ctx.queryOne('SELECT @@max_execution_time');
+
+        expect(maxExecutionTime).to.equal(1337);
     });
 
     it('should execute multiple init queries', async () => {
-        const initQuery1 = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const initQuery2 = `SET SESSION max_execution_time = 1`;
-        const config = { ...ciCfg, ...{ onConnect: [initQuery1, initQuery2] } };
-
-        ds = FloraMysqlFactory.create(config);
-        const ctx = ds.getContext(ctxCfg);
-        await ctx.query('SELECT 1 FROM dual');
-
-        expect(querySpy).to.have.been.calledWith(initQuery1).and.to.have.been.calledWith(initQuery2);
-    });
-
-    it('should execute custom init function', async () => {
-        const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const onConnect = sinon.spy(
-            (connection) =>
-                new Promise((resolve, reject) => {
-                    connection.query(initQuery, (err) => {
-                        if (err) return reject(err);
-                        resolve();
-                    });
-                })
-        );
-        const config = { ...ciCfg, ...{ onConnect } };
-
-        ds = FloraMysqlFactory.create(config);
-        const ctx = ds.getContext(ctxCfg);
-        await ctx.query('SELECT 1 FROM dual');
-
-        expect(querySpy).to.have.been.calledWith(initQuery);
-        expect(onConnect).to.have.been.calledWith(sinon.match.instanceOf(PoolConnection));
-    });
-
-    it('should handle server specific init queries', async () => {
-        const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const serverInitQuery = 'SET SESSION max_execution_time = 1';
         const config = {
             ...ciCfg,
-            ...{ onConnect: globalInitQuery },
-            ...{ default: { onConnect: serverInitQuery } }
+            onConnect: [`SET SESSION sql_mode = 'ANSI_QUOTES'`, `SET SESSION max_execution_time = 1337`]
         };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
         await ctx.query('SELECT 1 FROM dual');
 
-        expect(querySpy).to.have.been.calledWith(globalInitQuery).and.to.have.been.calledWith(serverInitQuery);
+        const [sqlMode, maxExecutionTime] = await Promise.all([
+            ctx.queryOne('SELECT @@sql_mode'),
+            ctx.queryOne('SELECT @@max_execution_time')
+        ]);
+
+        expect(sqlMode).to.contain('ANSI_QUOTES');
+        expect(maxExecutionTime).to.equal(1337);
     });
 
-    it('should handle errors', async () => {
-        const config = { ...ciCfg, ...{ onConnect: 'SELECT nonExistentAttr FROM t' } };
+    it('should execute custom init function', async () => {
+        const config = {
+            ...ciCfg,
+            onConnect: (connection) =>
+                new Promise((resolve, reject) => {
+                    connection.query('SET SESSION max_execution_time = 1337', (err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
+                })
+        };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
+        await ctx.query('SELECT 1 FROM dual');
+        const maxExecutionTime = await ctx.queryOne('SELECT @@max_execution_time');
+
+        expect(maxExecutionTime).to.equal(1337);
+    });
+
+    it('should handle server specific init queries', async () => {
+        const config = {
+            ...ciCfg,
+            onConnect: `SET SESSION sql_mode = 'ANSI_QUOTES'`,
+            default: { onConnect: 'SET SESSION max_execution_time = 1337' }
+        };
+
+        ds = FloraMysqlFactory.create(config);
+        const ctx = ds.getContext(ctxCfg);
+        await ctx.query('SELECT 1 FROM dual');
+
+        const [sqlMode, maxExecutionTime] = await Promise.all([
+            ctx.queryOne('SELECT @@sql_mode'),
+            ctx.queryOne('SELECT @@max_execution_time')
+        ]);
+
+        expect(sqlMode).to.contain('ANSI_QUOTES');
+        expect(maxExecutionTime).to.equal(1337);
+    });
+
+    it('should handle errors', async () => {
+        const config = { ...ciCfg, onConnect: 'SELECT nonExistentAttr FROM t' };
+
+        ds = FloraMysqlFactory.create(config);
+        const ctx = ds.getContext(ctxCfg);
+
         try {
             await ctx.query('SELECT 1 FROM dual');
         } catch (err) {
