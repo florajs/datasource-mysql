@@ -6,11 +6,12 @@ const sinon = require('sinon');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 chai.use(require('sinon-chai'));
 
 describe('flora request processing', () => {
-    const ds = FloraMysqlFactory.create();
+    const ds = FloraMysqlFactory.create(ciCfg);
     const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
 
     after(() => ds.close());

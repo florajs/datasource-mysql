@@ -7,9 +7,10 @@ const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
 const Transaction = require('../../lib/transaction');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 describe('transaction', () => {
-    const ds = FloraMysqlFactory.create();
+    const ds = FloraMysqlFactory.create(ciCfg);
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db });
 

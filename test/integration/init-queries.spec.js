@@ -5,7 +5,8 @@ const { expect } = chai;
 const sinon = require('sinon');
 
 const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
-const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
+const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 chai.use(require('sinon-chai'));
 
@@ -23,7 +24,7 @@ describe('init queries', () => {
     });
 
     it('should set sql_mode to ANSI if no init queries are defined', async () => {
-        ds = FloraMysqlFactory.create();
+        ds = FloraMysqlFactory.create(ciCfg);
         const ctx = ds.getContext(ctxCfg);
 
         await ctx.query('SELECT 1 FROM dual');
@@ -32,7 +33,7 @@ describe('init queries', () => {
 
     it('should execute single init query', async () => {
         const initQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
-        const config = { ...defaultCfg, ...{ onConnect: initQuery } };
+        const config = { ...ciCfg, ...{ onConnect: initQuery } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -44,7 +45,7 @@ describe('init queries', () => {
     it('should execute multiple init queries', async () => {
         const initQuery1 = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
         const initQuery2 = `SET SESSION max_execution_time = 1`;
-        const config = { ...defaultCfg, ...{ onConnect: [initQuery1, initQuery2] } };
+        const config = { ...ciCfg, ...{ onConnect: [initQuery1, initQuery2] } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -64,7 +65,7 @@ describe('init queries', () => {
                     });
                 })
         );
-        const config = { ...defaultCfg, ...{ onConnect } };
+        const config = { ...ciCfg, ...{ onConnect } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
@@ -78,7 +79,7 @@ describe('init queries', () => {
         const globalInitQuery = `SET SESSION sql_mode = 'ANSI_QUOTES'`;
         const serverInitQuery = 'SET SESSION max_execution_time = 1';
         const config = {
-            ...defaultCfg,
+            ...ciCfg,
             ...{ onConnect: globalInitQuery },
             ...{ default: { onConnect: serverInitQuery } }
         };
@@ -91,7 +92,7 @@ describe('init queries', () => {
     });
 
     it('should handle errors', async () => {
-        const config = { ...defaultCfg, ...{ onConnect: 'SELECT nonExistentAttr FROM t' } };
+        const config = { ...ciCfg, ...{ onConnect: 'SELECT nonExistentAttr FROM t' } };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);

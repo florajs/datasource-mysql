@@ -6,9 +6,10 @@ const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
 const sinon = require('sinon');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 describe('flora-mysql data source', () => {
-    const ds = FloraMysqlFactory.create();
+    const ds = FloraMysqlFactory.create(ciCfg);
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db, useMaster: true });
 

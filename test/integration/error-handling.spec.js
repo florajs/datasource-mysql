@@ -4,9 +4,10 @@ const { expect } = require('chai');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 describe('error handling', () => {
-    const ds = FloraMysqlFactory.create();
+    const ds = FloraMysqlFactory.create(ciCfg);
     const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
 
     after(() => ds.close());

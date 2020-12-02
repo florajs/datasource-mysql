@@ -8,6 +8,10 @@ const { expect } = chai;
 const sinon = require('sinon');
 
 const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
+const testCfg = {
+    ...defaultCfg,
+    servers: { default: { user: 'foo', password: 'bar', masters: [{ host: 'mysql.example.com' }] } }
+};
 
 const sandbox = sinon.createSandbox();
 
@@ -34,22 +38,16 @@ describe('connection pooling', () => {
     describe('single server', () => {
         describe('credentials', () => {
             it('server specifc', async () => {
-                const cfg = clone(defaultCfg);
-                cfg.servers.default.user = 'foo';
-                cfg.servers.default.password = 'bar';
-
-                const ds = FloraMysqlFactory.create(cfg);
+                const ds = FloraMysqlFactory.create(testCfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { user: 'foo', password: 'bar' });
+                expect(poolSpy).to.have.been.calledWithMatch('mysql.example.com', { user: 'foo', password: 'bar' });
             });
 
             it('global', async () => {
-                const cfg = clone(defaultCfg);
-                cfg.user = 'root';
-                cfg.password = 'secret';
+                const cfg = { ...clone(testCfg), user: 'root', password: 'secret' };
                 delete cfg.servers.default.user;
                 delete cfg.servers.default.password;
 
@@ -58,104 +56,100 @@ describe('connection pooling', () => {
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { user: 'root', password: 'secret' });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', {
+                    user: 'root',
+                    password: 'secret'
+                });
             });
         });
 
         describe('port', () => {
             it('default', async () => {
-                const ds = FloraMysqlFactory.create();
+                const ds = FloraMysqlFactory.create(testCfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: PORT });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { port: PORT });
             });
 
             it('custom', async () => {
-                const cfg = clone(defaultCfg);
+                const cfg = { ...clone(testCfg) };
                 cfg.servers.default.port = 1337;
-
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { port: 1337 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { port: 1337 });
             });
         });
 
         describe('connect timeout', () => {
             it('default', async () => {
-                const ds = FloraMysqlFactory.create();
+                const ds = FloraMysqlFactory.create(testCfg);
                 const ctx = ds.getContext(ctxCfg);
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 3000 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectTimeout: 3000 });
             });
 
             it('server specific', async () => {
-                const cfg = clone(defaultCfg);
+                const cfg = clone(testCfg);
                 cfg.servers.default.connectTimeout = 1000;
-
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 1000 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectTimeout: 1000 });
             });
 
             it('global', async () => {
-                const cfg = clone(defaultCfg);
-                cfg.connectTimeout = 1500;
-
+                const cfg = { ...clone(testCfg), connectTimeout: 1500 };
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectTimeout: 1500 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectTimeout: 1500 });
             });
         });
 
         describe('pool size', () => {
             it('default', async () => {
-                const ds = FloraMysqlFactory.create();
+                const ds = FloraMysqlFactory.create(testCfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 10 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectionLimit: 10 });
             });
 
             it('server specific', async () => {
-                const cfg = clone(defaultCfg);
+                const cfg = clone(testCfg);
                 cfg.servers.default.poolSize = 100;
-
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 100 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectionLimit: 100 });
             });
 
             it('global', async () => {
-                const cfg = clone(defaultCfg);
-                cfg.poolSize = 50;
-
+                const cfg = { ...clone(testCfg), poolSize: 50 };
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
 
-                expect(poolSpy).to.have.been.calledWithMatch('MASTER', { connectionLimit: 50 });
+                expect(poolSpy).to.have.been.calledWithMatch('MASTER_mysql.example.com', { connectionLimit: 50 });
             });
         });
 
         it('should always use "master" server', async () => {
-            const ds = FloraMysqlFactory.create();
+            const ds = FloraMysqlFactory.create(testCfg);
             const ctx = ds.getContext(ctxCfg);
             const connectionSpy = sandbox.spy(PoolCluster.prototype, 'getConnection');
 

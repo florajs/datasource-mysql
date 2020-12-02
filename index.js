@@ -274,11 +274,9 @@ class DataSource {
             multipleStatements: true // pagination queries
         };
 
-        serverCfg.masters = serverCfg.masters || [{}];
-        serverCfg.slaves = serverCfg.slaves || [];
-
         return (
             ['masters', 'slaves']
+                .filter((type) => has(serverCfg, type) && Array.isArray(serverCfg[type]))
                 .map((type) => ({ type, serverType: type.slice(0, -1) }))
                 // flatMap is not available in Node.js 10 - use map + reduce instead
                 .map(({ type, serverType }) => serverCfg[type].map((hostCfg) => ({ serverType, hostCfg })))

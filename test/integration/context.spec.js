@@ -3,9 +3,10 @@
 const { expect } = require('chai');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const ciCfg = require('./ci-config');
 
 describe('context', () => {
-    const ds = FloraMysqlFactory.create();
+    const ds = FloraMysqlFactory.create(ciCfg);
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db });
 

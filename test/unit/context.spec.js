@@ -1,17 +1,26 @@
 'use strict';
 
-const { expect } = require('chai');
+const chai = require('chai');
+const { expect } = chai;
 const sinon = require('sinon');
 const sandbox = sinon.createSandbox();
 
 const Connection = require('../../node_modules/mysql/lib/Connection');
 const Transaction = require('../../lib/transaction');
 
-const { FloraMysqlFactory } = require('../FloraMysqlFactory');
+const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
 const { ImplementationError } = require('flora-errors');
 
+chai.use(require('sinon-chai'));
+
 describe('context', () => {
-    const ds = FloraMysqlFactory.create();
+    const testCfg = {
+        ...defaultCfg,
+        servers: {
+            default: { masters: [{ host: 'mysql-master.example.com' }], slaves: [{ host: 'mysql-slave.example.com' }] }
+        }
+    };
+    const ds = FloraMysqlFactory.create(testCfg);
     const db = 'db';
     const ctx = ds.getContext({ db });
 
