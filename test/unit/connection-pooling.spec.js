@@ -65,7 +65,9 @@ describe('connection pooling', () => {
 
         describe('port', () => {
             it('default', async () => {
-                const ds = FloraMysqlFactory.create(testCfg);
+                const cfg = clone(testCfg);
+                cfg.servers.default.port = PORT;
+                const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
                 await ctx.exec('SELECT 1 FROM dual');
