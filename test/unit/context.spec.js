@@ -49,6 +49,26 @@ describe('context', () => {
         });
     });
 
+    describe('#constructor', () => {
+        it('should throw an error when database setting is missing', () => {
+            expect(() => ds.getContext({})).to.throw(ImplementationError, 'Context requires a db (database) property');
+        });
+
+        it('should throw an error when database setting is not a string', () => {
+            expect(() => ds.getContext({ db: undefined })).to.throw(
+                ImplementationError,
+                'Invalid value for db (database) property'
+            );
+        });
+
+        it('should throw an error when database setting is an empty string', () => {
+            expect(() => ds.getContext({ db: ' ' })).to.throw(
+                ImplementationError,
+                'Invalid value for db (database) property'
+            );
+        });
+    });
+
     describe('#query', () => {
         let queryStub;
 
