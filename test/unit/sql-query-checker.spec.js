@@ -38,4 +38,17 @@ describe('SQL query checker', () => {
         ast = parser.parse(sql);
         expect(() => check(ast)).to.throw(Error, 'Column "attr" must be fully qualified');
     });
+
+    it('should check where clause', () => {
+        const sql = `
+            SELECT
+                t1.id,
+                l10n.value
+            FROM t1
+            LEFT JOIN t1_l10n l10n ON t1.interest = l10n.id
+            WHERE locale = 'de'`;
+
+        ast = parser.parse(sql);
+        expect(() => check(ast)).to.throw(Error, 'Column "locale" must be fully qualified');
+    });
 });
