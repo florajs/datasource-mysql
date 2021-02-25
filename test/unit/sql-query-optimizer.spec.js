@@ -414,6 +414,112 @@ describe('SQL query optimizer', () => {
         ]);
     });
 
+    it('should not remove tables used in LEFT JOIN conditions', () => {
+        /*
+            SELECT
+              t1.id,
+              t2.col1,
+              t4.name
+            FROM t1
+              LEFT JOIN t2 ON t1.id = t2.t1id
+              LEFT JOIN t3 ON t1.id = t3.t1id
+              LEFT JOIN t4 ON t3.id = t4.t3id
+         */
+        ast = {
+            with: null,
+            type: 'select',
+            options: null,
+            distinct: null,
+            columns: [
+                {
+                    expr: { type: 'column_ref', table: 't1', column: 'id' },
+                    as: null
+                },
+                {
+                    expr: { type: 'column_ref', table: 't1', column: 'col1' },
+                    as: null
+                },
+                {
+                    expr: { type: 'column_ref', table: 't4', column: 'name' },
+                    as: null
+                }
+            ],
+            from: [
+                { db: null, table: 't1', as: null },
+                {
+                    db: null,
+                    table: 't2',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't2', column: 't1id' }
+                    }
+                },
+                {
+                    db: null,
+                    table: 't3',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't1', column: 'id' },
+                        right: { type: 'column_ref', table: 't3', column: 't1id' }
+                    }
+                },
+                {
+                    db: null,
+                    table: 't4',
+                    as: null,
+                    join: 'LEFT JOIN',
+                    on: {
+                        type: 'binary_expr',
+                        operator: '=',
+                        left: { type: 'column_ref', table: 't3', column: 'id' },
+                        right: { type: 'column_ref', table: 't4', column: 't3id' }
+                    }
+                }
+            ],
+            where: null,
+            groupby: null,
+            having: null,
+            orderby: null,
+            limit: null
+        };
+        const optimizedAst = optimize(ast, ['id', 'name']);
+
+        expect(optimizedAst.from).to.eql([
+            { db: null, table: 't1', as: null },
+            {
+                db: null,
+                table: 't3',
+                as: null,
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't1', column: 'id' },
+                    right: { type: 'column_ref', table: 't3', column: 't1id' }
+                }
+            },
+            {
+                db: null,
+                table: 't4',
+                as: null,
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't3', column: 'id' },
+                    right: { type: 'column_ref', table: 't4', column: 't3id' }
+                }
+            }
+        ]);
+    });
+
     it("should not remove alias if it's used in GROUP BY clause", () => {
         // SELECT t.id, IFNULL(col1, "foo") AS alias FROM t ORDER BY alias DESC
         ast = {
