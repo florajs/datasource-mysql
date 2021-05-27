@@ -42,7 +42,7 @@
     }
   ],
   "engines": {
-    "node": ">=10"
+    "node": ">=12"
   },
   "dependencies": {
     "flora-errors": "^2.0.0",
