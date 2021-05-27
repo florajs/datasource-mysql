@@ -274,18 +274,14 @@ class DataSource {
             multipleStatements: true // pagination queries
         };
 
-        return (
-            ['masters', 'slaves']
-                .filter((type) => has(serverCfg, type) && Array.isArray(serverCfg[type]))
-                // flatMap is not available in Node.js 10 - use map + reduce instead
-                .map((type) => serverCfg[type].map((hostCfg) => ({ type, hostCfg })))
-                .reduce((flatten, array) => [...flatten, ...array], [])
-                .reduce((cfg, { type, hostCfg }) => {
-                    const serverType = type.slice(0, -1).toUpperCase();
-                    cfg[`${serverType.toUpperCase()}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
-                    return cfg;
-                }, {})
-        );
+        return ['masters', 'slaves']
+            .filter((type) => has(serverCfg, type) && Array.isArray(serverCfg[type]))
+            .flatMap((type) => serverCfg[type].map((hostCfg) => ({ type, hostCfg })))
+            .reduce((cfg, { type, hostCfg }) => {
+                const serverType = type.slice(0, -1).toUpperCase();
+                cfg[`${serverType.toUpperCase()}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
+                return cfg;
+            }, {});
     }
 
     /**
