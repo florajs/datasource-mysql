@@ -29,7 +29,7 @@ describe('mysql data source', () => {
 
     describe('generate AST data source config', () => {
         it('should generate AST from SQL query', () => {
-            const resourceConfig = { query: 'SELECT t.id, t.col1, t.col2 FROM t' };
+            const resourceConfig = { database: 'test', query: 'SELECT t.id, t.col1, t.col2 FROM t' };
 
             ds.prepare(resourceConfig, ['id', 'col1', 'col2']);
 
@@ -38,6 +38,7 @@ describe('mysql data source', () => {
 
         it('should prepare search attributes', () => {
             const resourceConfig = {
+                database: 'test',
                 searchable: 'col1,col2',
                 query: 'SELECT t.col1, t.col2 FROM t'
             };
@@ -50,7 +51,7 @@ describe('mysql data source', () => {
         describe('error handling', () => {
             it('should append query on a parse error', () => {
                 const sql = 'SELECT col1 FRO t';
-                const resourceConfig = { query: sql };
+                const resourceConfig = { database: 'test', query: sql };
                 let exceptionThrown = false;
 
                 try {
@@ -64,8 +65,24 @@ describe('mysql data source', () => {
                 expect(exceptionThrown).to.be.equal(true, 'Exception was not thrown');
             });
 
+            it('should throw an error if database is not set', () => {
+                const resourceConfig = { query: 'SELECT t.col1 FROM t' };
+
+                expect(() => {
+                    ds.prepare(resourceConfig, ['col1']);
+                }).to.throw(ImplementationError, 'Database must be specified');
+            });
+
+            it('should throw an error if database is empty', () => {
+                const resourceConfig = { database: '', query: 'SELECT t.col1 FROM t' };
+
+                expect(() => {
+                    ds.prepare(resourceConfig, ['col1']);
+                }).to.throw(ImplementationError, 'Database must not be empty');
+            });
+
             it('should throw an error if neither query nor table is set', () => {
-                const resourceConfig = {};
+                const resourceConfig = { database: 'test' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1']);
@@ -73,7 +90,7 @@ describe('mysql data source', () => {
             });
 
             it('should throw an error if an attribute is not available in SQL query', () => {
-                const resourceConfig = { query: 'SELECT t.col1 FROM t' };
+                const resourceConfig = { database: 'test', query: 'SELECT t.col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -81,7 +98,7 @@ describe('mysql data source', () => {
             });
 
             it('should throw an error if an attribute is not available as column alias', () => {
-                const resourceConfig = { query: 'SELECT t.someWeirdColumnName AS col1 FROM t' };
+                const resourceConfig = { database: 'test', query: 'SELECT t.someWeirdColumnName AS col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -89,7 +106,10 @@ describe('mysql data source', () => {
             });
 
             it('should throw an error if columns are not fully qualified', () => {
-                const resourceConfig = { query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id' };
+                const resourceConfig = {
+                    database: 'test',
+                    query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id'
+                };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -97,7 +117,7 @@ describe('mysql data source', () => {
             });
 
             it('should throw an error if columns are not unique', () => {
-                const resourceConfig = { query: 'SELECT t.col1, someAttr AS col1 FROM t' };
+                const resourceConfig = { database: 'test', query: 'SELECT t.col1, someAttr AS col1 FROM t' };
 
                 expect(() => {
                     ds.prepare(resourceConfig, ['col1', 'col2']);
@@ -106,6 +126,7 @@ describe('mysql data source', () => {
 
             it('should throw an error if search attribute is not available in AST', () => {
                 const resourceConfig = {
+                    database: 'test',
                     searchable: 'col1,nonExistentAttr',
                     query: 'SELECT t.col1 FROM t'
                 };
@@ -117,7 +138,7 @@ describe('mysql data source', () => {
         });
 
         it('should generate AST from data source config if no SQL query is available', () => {
-            const resourceConfig = { table: 't' };
+            const resourceConfig = { database: 'test', table: 't' };
             const attributes = ['id', 'col1', 'col2'];
 
             ds.prepare(resourceConfig, attributes);

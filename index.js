@@ -90,6 +90,14 @@ function initConnection(connection, initConfigs) {
 }
 
 function astify(dsConfig, attributes) {
+    if (typeof dsConfig.database !== 'string') {
+        throw new ImplementationError('Database must be specified');
+    }
+
+    if (!dsConfig.database.trim().length) {
+        throw new ImplementationError('Database must not be empty');
+    }
+
     if (dsConfig.query && dsConfig.query.trim().length > 0) {
         let ast;
 
