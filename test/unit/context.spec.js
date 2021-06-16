@@ -344,6 +344,12 @@ describe('context', () => {
             execStub = sandbox.stub(ctx, 'exec').resolves({});
         });
 
+        it('should throw an Implementation error if update parameter is missing', () => {
+            expect(() => {
+                ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') });
+            }).to.throw(ImplementationError, 'Update parameter must be either an object or an array of strings');
+        });
+
         it('should accept assignment list as an array of column names', async () => {
             const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = VALUES("col1"), "col2" = VALUES("col2")`;
             await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, ['col1', 'col2']);
