@@ -64,7 +64,32 @@ describe('flora request processing', () => {
                 page: 2
             });
 
-        expect(result).to.have.property('totalCount').and.to.equal(2);
+            expect(result).to.have.property('totalCount').and.to.equal(2);
+        });
+
+        it('should remove ORDER BY clause from count sub-query', async () => {
+            const querySpy = sinon.spy(ds, '_query');
+
+            await ds.process({
+                database,
+                attributes: ['col1'],
+                queryAstRaw: astTpl,
+                order: [{ attribute: 'col1', direction: 'DESC' }],
+                limit: 1,
+                page: 2
+            });
+
+            expect(querySpy).to.been.calledOnce;
+            expect(
+                querySpy.calledWithMatch(
+                    sinon.match.object,
+                    sinon.match((query) => (query.match(/\border\s+by\b/gi) || []).length === 1)
+                ),
+                'ORDER BY clause seems to be present in sub-query'
+            ).to.be.true;
+
+            querySpy.restore();
+        });
     });
 
     it('should respect useMaster flag', async () => {

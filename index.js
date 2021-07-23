@@ -213,7 +213,7 @@ class DataSource {
                     ],
                     from: [
                         {
-                            expr: { ...request.queryAst, limit: null, parentheses: true },
+                            expr: { ...request.queryAst, limit: null, orderby: null, parentheses: true },
                             as: 't',
                             lateral: false,
                             columns: null
