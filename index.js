@@ -193,7 +193,39 @@ class DataSource {
         sql = astUtil.astToSQL(request.queryAst);
         _explain.sql = sql;
 
-        if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
+        if (request.page) {
+            sql +=
+                '; ' +
+                astUtil.astToSQL({
+                    with: null,
+                    type: 'select',
+                    options: null,
+                    distinct: null,
+                    columns: [
+                        {
+                            expr: {
+                                type: 'aggr_func',
+                                name: 'COUNT',
+                                args: { expr: { type: 'star', value: '*' } }
+                            },
+                            as: 'totalCount'
+                        }
+                    ],
+                    from: [
+                        {
+                            expr: { ...request.queryAst, limit: null, parentheses: true },
+                            as: 't',
+                            lateral: false,
+                            columns: null
+                        }
+                    ],
+                    where: null,
+                    groupby: null,
+                    having: null,
+                    orderby: null,
+                    limit: null
+                });
+        }
         if (request._status) request._status.set({ server, database, sql });
 
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast, _explain)
@@ -245,11 +277,6 @@ class DataSource {
         request.queryAst = generateAST(request);
 
         checkSqlEquivalents(request.attributes, request.queryAst.columns);
-
-        if (request.page) {
-            if (!Array.isArray(request.queryAst.options)) request.queryAst.options = [];
-            request.queryAst.options.push('SQL_CALC_FOUND_ROWS');
-        }
     }
 
     /**

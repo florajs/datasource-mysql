@@ -54,14 +54,15 @@ describe('flora request processing', () => {
         expect(item).to.be.an('object').and.to.have.property('id').and.to.eql(Buffer.from('1'));
     });
 
-    it('should query available results if "page" attribute is set in request', async () => {
-        const result = await ds.process({
-            database,
-            attributes: ['col1'],
-            queryAstRaw: astTpl,
-            limit: 1,
-            page: 2
-        });
+    describe('pagination', () => {
+        it('should query available results if "page" attribute is set in request', async () => {
+            const result = await ds.process({
+                database,
+                attributes: ['col1'],
+                queryAstRaw: astTpl,
+                limit: 1,
+                page: 2
+            });
 
         expect(result).to.have.property('totalCount').and.to.equal(2);
     });
