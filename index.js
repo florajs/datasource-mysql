@@ -194,37 +194,37 @@ class DataSource {
         _explain.sql = sql;
 
         if (request.page) {
-            sql +=
-                '; ' +
-                astUtil.astToSQL({
-                    with: null,
-                    type: 'select',
-                    options: null,
-                    distinct: null,
-                    columns: [
-                        {
-                            expr: {
-                                type: 'aggr_func',
-                                name: 'COUNT',
-                                args: { expr: { type: 'star', value: '*' } }
-                            },
-                            as: 'totalCount'
-                        }
-                    ],
-                    from: [
-                        {
-                            expr: { ...request.queryAst, limit: null, orderby: null, parentheses: true },
-                            as: 't',
-                            lateral: false,
-                            columns: null
-                        }
-                    ],
-                    where: null,
-                    groupby: null,
-                    having: null,
-                    orderby: null,
-                    limit: null
-                });
+            const totalCountSql = astUtil.astToSQL({
+                with: null,
+                type: 'select',
+                options: null,
+                distinct: null,
+                columns: [
+                    {
+                        expr: {
+                            type: 'aggr_func',
+                            name: 'COUNT',
+                            args: { expr: { type: 'star', value: '*' } }
+                        },
+                        as: 'totalCount'
+                    }
+                ],
+                from: [
+                    {
+                        expr: { ...request.queryAst, limit: null, orderby: null, parentheses: true },
+                        as: 't',
+                        lateral: false,
+                        columns: null
+                    }
+                ],
+                where: null,
+                groupby: null,
+                having: null,
+                orderby: null,
+                limit: null
+            });
+            sql += '; ' + totalCountSql;
+            _explain.totalCountSql = totalCountSql;
         }
         if (request._status) request._status.set({ server, database, sql });
 
