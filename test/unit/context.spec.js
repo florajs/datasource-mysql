@@ -27,7 +27,7 @@ describe('context', () => {
     afterEach(() => sandbox.restore());
 
     describe('interface', () => {
-        const methods = [
+        [
             'delete',
             'exec',
             'insert',
@@ -36,14 +36,13 @@ describe('context', () => {
             'queryOne',
             'queryRow',
             'quote',
+            'quoteIdentifier',
             'raw',
             'update',
             'upsert',
             'transaction'
-        ];
-
-        methods.forEach((method) => {
-            it(`should export ${method} function`, () => {
+        ].forEach((method) => {
+            it(`should export "${method}" method`, () => {
                 expect(ctx[method]).to.be.a('function');
             });
         });
@@ -134,6 +133,12 @@ describe('context', () => {
     describe('#quote', () => {
         it('should quote values', () => {
             expect(ctx.quote(`foo\\b'ar`)).to.equal(`'foo\\\\b\\'ar'`);
+        });
+    });
+
+    describe('#quoteIdentifier', () => {
+        it('should quote identifiers', () => {
+            expect(ctx.quoteIdentifier('table')).to.equal('`table`');
         });
     });
 

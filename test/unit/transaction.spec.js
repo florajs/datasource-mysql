@@ -5,7 +5,7 @@ const Transaction = require('../../lib/transaction');
 
 describe('transaction', () => {
     describe('interface', () => {
-        const methods = [
+        [
             'begin',
             'commit',
             'insert',
@@ -17,10 +17,9 @@ describe('transaction', () => {
             'update',
             'upsert',
             'raw',
-            'quote'
-        ];
-
-        methods.forEach((method) => {
+            'quote',
+            'quoteIdentifier'
+        ].forEach((method) => {
             it(`should have ${method} method`, () => {
                 expect(Transaction.prototype[method]).to.be.a('function');
             });
@@ -42,6 +41,13 @@ describe('transaction', () => {
         it('should quote values', () => {
             const trx = new Transaction({});
             expect(trx.quote(`foo\\b'ar`)).to.equal(`'foo\\\\b\\'ar'`);
+        });
+
+        describe('#quoteIdentifier', () => {
+            it('should quote identifiers', () => {
+                const trx = new Transaction({});
+                expect(trx.quoteIdentifier('table')).to.equal('`table`');
+            });
         });
     });
 });
