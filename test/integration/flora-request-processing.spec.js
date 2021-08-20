@@ -54,7 +54,7 @@ describe('flora request processing', () => {
         expect(item).to.be.an('object').and.to.have.property('id').and.to.eql(Buffer.from('1'));
     });
 
-    describe('pagination', () => {
+    describe.only('pagination', () => {
         it('should query available results if "page" attribute is set in request', async () => {
             const result = await ds.process({
                 database,
@@ -66,6 +66,8 @@ describe('flora request processing', () => {
 
             expect(result).to.have.property('totalCount').and.to.equal(2);
         });
+
+        xit('should handle queries with GROUP BY clause');
 
         it('should remove ORDER BY clause from count sub-query', async () => {
             const querySpy = sinon.spy(ds, '_query');
@@ -90,6 +92,8 @@ describe('flora request processing', () => {
 
             querySpy.restore();
         });
+
+        it('should optimize sub-query');
     });
 
     it('should respect useMaster flag', async () => {
