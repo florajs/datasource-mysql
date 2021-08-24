@@ -221,7 +221,7 @@ describe('context', () => {
         it('should accept data as an object', async () => {
             await ctx.insert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') });
             expect(execStub).to.have.been.calledWith(
-                `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW())`
+                "INSERT INTO `t` (`col1`, `col2`, `col3`) VALUES ('val1', 1, NOW())"
             );
         });
 
@@ -233,7 +233,7 @@ describe('context', () => {
                 { col1: 'val2', col2: 2, col3: date }
             ]);
             expect(execStub).to.have.been.calledWith(
-                `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, '${dateStr}'), ('val2', 2, '${dateStr}')`
+                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, '${dateStr}'), ('val2', 2, '${dateStr}')`
             );
         });
 
@@ -274,14 +274,14 @@ describe('context', () => {
         it('should accept data as an object', async () => {
             await ctx.update('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, '1 = 1');
             expect(execStub).to.have.been.calledWith(
-                `UPDATE "t" SET "col1" = 'val1', "col2" = 1, "col3" = NOW() WHERE 1 = 1`
+                `UPDATE \`t\` SET \`col1\` = 'val1', \`col2\` = 1, \`col3\` = NOW() WHERE 1 = 1`
             );
         });
 
         it('should accept where as an object', async () => {
             await ctx.update('t', { col1: 'val1' }, { col2: 1, col3: ctx.raw('CURDATE()') });
             expect(execStub).to.have.been.calledWith(
-                `UPDATE "t" SET "col1" = 'val1' WHERE "col2" = 1 AND "col3" = CURDATE()`
+                `UPDATE \`t\` SET \`col1\` = 'val1' WHERE \`col2\` = 1 AND \`col3\` = CURDATE()`
             );
         });
 
@@ -319,13 +319,13 @@ describe('context', () => {
 
         it('should accept where as a string', async () => {
             await ctx.delete('t', '1 = 1');
-            expect(execStub).to.have.been.calledWith('DELETE FROM "t" WHERE 1 = 1');
+            expect(execStub).to.have.been.calledWith(`DELETE FROM \`t\` WHERE 1 = 1`);
         });
 
         it('should accept where as an object', async () => {
             await ctx.delete('t', { col1: 'val1', col2: 1, col3: ctx.raw('CURDATE()') });
             expect(execStub).to.have.been.calledWith(
-                `DELETE FROM "t" WHERE "col1" = 'val1' AND "col2" = 1 AND "col3" = CURDATE()`
+                `DELETE FROM \`t\` WHERE \`col1\` = 'val1' AND \`col2\` = 1 AND \`col3\` = CURDATE()`
             );
         });
 
@@ -356,17 +356,17 @@ describe('context', () => {
         });
 
         it('should accept assignment list as an array of column names', async () => {
-            const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = VALUES("col1"), "col2" = VALUES("col2")`;
+            const sql = `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE \`col1\` = VALUES(\`col1\`), \`col2\` = VALUES(\`col2\`)`;
             await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, ['col1', 'col2']);
             expect(execStub).to.have.been.calledWith(sql);
         });
 
         it('should accept assignment list as an object', async () => {
-            const sql = `INSERT INTO "t" ("col1", "col2", "col3") VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE "col1" = 'foo', "col2" = col2 + 1`;
+            const sql = `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE \`col1\` = 'foo', \`col2\` = \`col2\` + 1`;
             await ctx.upsert(
                 't',
                 { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') },
-                { col1: 'foo', col2: ctx.raw('col2 + 1') }
+                { col1: 'foo', col2: ctx.raw(ctx.quoteIdentifier('col2') + ' + 1') }
             );
             expect(execStub).to.have.been.calledWith(sql);
         });
