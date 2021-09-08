@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test:cleanup": "docker rm --force flora-mysql-testdb",
-    "test:start-testdb": "docker run -d --name flora-mysql-testdb -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=${MYSQL_DATABASE:-flora_mysql_testdb} -p ${MYSQL_PORT:-3306}:3306 -v \"$PWD/test/integration/fixtures\":/docker-entrypoint-initdb.d --tmpfs \"/var/lib/mysql\" mysql:${MYSQL_VERSION:-5.7}",
+    "test:start-testdb": "docker run -d --name flora-mysql-testdb -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=${MYSQL_DATABASE:-flora_mysql_testdb} -p ${MYSQL_PORT:-3306}:3306 --mount type=bind,src=\"$PWD/test/integration/fixtures\",target=/docker-entrypoint-initdb.d,readonly --tmpfs \"/var/lib/mysql\" mysql:${MYSQL_VERSION:-5.7}",
     "test:mysql": "./test/integration/tool/wait-for-mysql.sh ${MYSQL_HOST:-localhost} ${MYSQL_PORT:-3306} ${MYSQL_DATABASE:-flora_mysql_testdb} && npm run test:ci",
     "test:stop": "docker stop flora-mysql-testdb",
     "test:ci": "mocha test/integration/*.spec.js",
