@@ -10,9 +10,6 @@ describe('context', () => {
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db });
 
-    beforeEach(async () => await ctx.exec('START TRANSACTION'));
-    afterEach(async () => await ctx.exec('ROLLBACK'));
-
     after(() => ds.close());
 
     describe('#query', () => {
@@ -131,52 +128,100 @@ describe('context', () => {
         });
     });
 
-    describe('#insert', () => {
-        it('should return last inserted id', async () => {
-            const { insertId } = await ctx.insert('t', { col1: 'test' });
-            expect(insertId).to.be.at.least(1);
-        });
+    describe('DML statements', () => {
+        beforeEach(async () => await ctx.exec('START TRANSACTION'));
+        afterEach(async () => await ctx.exec('ROLLBACK'));
 
-        it('should return number of affected rows', async () => {
-            const { affectedRows } = await ctx.insert('t', [{ col1: 'test' }, { col1: 'test1' }]);
-            expect(affectedRows).to.equal(2);
-        });
-    });
-
-    describe('#update', () => {
-        it('should return number of changed rows', async () => {
-            const { changedRows } = await ctx.update('t', { col1: 'test' }, { id: 1 });
-            expect(changedRows).to.equal(1);
-        });
-
-        it('should return number of affected rows', async () => {
-            const { affectedRows } = await ctx.update('t', { col1: 'test' }, `1 = 1`);
-            expect(affectedRows).to.be.at.least(1);
-        });
-    });
-
-    describe('#delete', () => {
-        it('should return number of affected rows', async () => {
-            const { affectedRows } = await ctx.delete('t', { id: 1 });
-            expect(affectedRows).to.equal(1);
-        });
-    });
-
-    describe('#exec', () => {
-        it(`should resolve/return with insertId property`, async () => {
-            const { insertId } = await ctx.exec(`INSERT INTO t (col1) VALUES ('insertId')`);
-            expect(insertId).to.be.greaterThan(3);
-        });
-
-        Object.entries({
-            affectedRows: 1,
-            changedRows: 1,
-            insertId: 0
-        }).forEach(([property, value]) => {
-            it(`should resolve/return with ${property} property`, async () => {
-                const result = await ctx.exec(`UPDATE t SET col1 = 'changedRows' WHERE id = 1`);
-                expect(result).to.have.property(property, value);
+        describe('#insert', () => {
+            it('should return last inserted id', async () => {
+                const { insertId } = await ctx.insert('t', { col1: 'test' });
+                expect(insertId).to.be.at.least(1);
             });
+
+            it('should return number of affected rows', async () => {
+                const { affectedRows } = await ctx.insert('t', [{ col1: 'test' }, { col1: 'test1' }]);
+                expect(affectedRows).to.equal(2);
+            });
+        });
+
+        describe('#update', () => {
+            it('should return number of changed rows', async () => {
+                const { changedRows } = await ctx.update('t', { col1: 'test' }, { id: 1 });
+                expect(changedRows).to.equal(1);
+            });
+
+            it('should return number of affected rows', async () => {
+                const { affectedRows } = await ctx.update('t', { col1: 'test' }, `1 = 1`);
+                expect(affectedRows).to.be.at.least(1);
+            });
+        });
+
+        describe('#delete', () => {
+            it('should return number of affected rows', async () => {
+                const { affectedRows } = await ctx.delete('t', { id: 1 });
+                expect(affectedRows).to.equal(1);
+            });
+        });
+
+        describe('#exec', () => {
+            it(`should resolve/return with insertId property`, async () => {
+                const { insertId } = await ctx.exec(`INSERT INTO t (col1) VALUES ('insertId')`);
+                expect(insertId).to.be.greaterThan(3);
+            });
+
+            Object.entries({
+                affectedRows: 1,
+                changedRows: 1,
+                insertId: 0
+            }).forEach(([property, value]) => {
+                it(`should resolve/return with ${property} property`, async () => {
+                    const result = await ctx.exec(`UPDATE t SET col1 = 'changedRows' WHERE id = 1`);
+                    expect(result).to.have.property(property, value);
+                });
+            });
+        });
+    });
+
+    describe('#transaction', () => {
+        it('should support callback parameter', async () => {
+            await ctx.transaction(async (trx) => {
+                await trx.insert('t', { col1: 'foo_bar' });
+            });
+
+            const values = await ctx.queryCol('SELECT col1 FROM t');
+            expect(values).to.include('foo_bar');
+        });
+
+        it('should automatically rollback on errors', async () => {
+            try {
+                await ctx.transaction(async (trx) => {
+                    const { insertId: id } = await trx.insert('t', { col1: 'foo/bar' });
+                    await trx.insert('t', { id, col1: 'foo#bar' });
+                });
+            } catch (e) {
+                const values = await ctx.queryCol('SELECT col1 FROM t');
+                expect(e).to.have.property('code', 'ER_DUP_ENTRY');
+                expect(values).not.to.include('foo/bar').and.not.to.include('foo#bar');
+                return;
+            }
+
+            throw new Error('Expected an error to be thrown');
+        });
+
+        it('should rethrow errors', async () => {
+            try {
+                await ctx.transaction(async (trx) => {
+                    await trx.insert('nonexistent_table', { col1: 'blablub' });
+                });
+            } catch (e) {
+                expect(e)
+                    .to.be.an.instanceof(Error)
+                    .and.to.have.property('message')
+                    .and.to.contain(`Table 'flora_mysql_testdb.nonexistent_table' doesn't exist`);
+                return;
+            }
+
+            throw new Error('Expected an error to be thrown');
         });
     });
 });
