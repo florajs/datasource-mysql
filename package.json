@@ -23,9 +23,7 @@
   "repository": "godmodelabs/flora-mysql",
   "files": [
     "index.js",
-    "lib/",
-    "LICENSE",
-    "README.md"
+    "lib/"
   ],
   "contributors": [
     {
