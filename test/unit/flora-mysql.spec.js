@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { ImplementationError } = require('flora-errors');
+const { ImplementationError } = require('@florajs/errors');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const astTpl = require('../ast-tpl');

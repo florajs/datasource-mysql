@@ -1,22 +1,21 @@
-# flora-mysql
+# @florajs/datasource-mysql
 
 ![](https://github.com/florajs/datasource-mysql/workflows/ci/badge.svg)
-[![NPM version](https://img.shields.io/npm/v/flora-mysql.svg?style=flat)](https://www.npmjs.com/package/flora-mysql)
-[![NPM downloads](https://img.shields.io/npm/dm/flora-mysql.svg?style=flat)](https://www.npmjs.com/package/flora-mysql)
-
+[![NPM version](https://img.shields.io/npm/v/@florajs/datasource-mysql.svg?style=flat)](https://www.npmjs.com/package/@florajs/datasource-mysql)
+[![NPM downloads](https://img.shields.io/npm/dm/@florajs/datasource-mysql.svg?style=flat)](https://www.npmjs.com/package/@florajs/datasource-mysql)
 
 MySQL data source for [Flora](https://github.com/florajs/flora), based on the [mysql](https://www.npmjs.com/package/mysql) module.
 
 ## Usage
 
-### Add flora-mysql to Flora config
+### Add @florajs/datasource-mysql to Flora config
 
 ```js
 module.exports = {
     …
     dataSources: {
         mysql: {
-            constructor: require('flora-mysql'),
+            constructor: require('@florajs/datasource-mysql'),
             options: {
                 onConnect: ['SET SESSION max_execution_time = 30000'],
                 servers: {

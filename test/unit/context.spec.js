@@ -9,7 +9,7 @@ const Connection = require('../../node_modules/mysql/lib/Connection');
 const Transaction = require('../../lib/transaction');
 
 const { FloraMysqlFactory, defaultCfg } = require('../FloraMysqlFactory');
-const { ImplementationError } = require('flora-errors');
+const { ImplementationError } = require('@florajs/errors');
 
 chai.use(require('sinon-chai'));
 

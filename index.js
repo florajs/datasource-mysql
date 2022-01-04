@@ -2,9 +2,9 @@
 
 const has = require('has');
 const mysql = require('mysql');
-const { Parser } = require('flora-sql-parser');
-const astUtil = require('flora-sql-parser').util;
-const { ImplementationError } = require('flora-errors');
+const { Parser } = require('@florajs/sql-parser');
+const astUtil = require('@florajs/sql-parser').util;
+const { ImplementationError } = require('@florajs/errors');
 
 const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
@@ -149,7 +149,7 @@ class DataSource {
      * @param {Object} config
      */
     constructor(api, config) {
-        this._log = api.log.child({ component: 'flora-mysql' });
+        this._log = api.log.child({ component: 'datasource-mysql' });
         this._config = config;
         this._pools = {};
         this._status = config._status;

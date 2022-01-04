@@ -1,7 +1,7 @@
 'use strict';
 
 const { expect } = require('chai');
-const { Parser } = require('flora-sql-parser');
+const { Parser } = require('@florajs/sql-parser');
 const check = require('../../lib/sql-query-checker');
 
 describe('SQL query checker', () => {
