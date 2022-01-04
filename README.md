@@ -1,11 +1,11 @@
 # flora-mysql
 
-![](https://github.com/godmodelabs/flora-mysql/workflows/ci/badge.svg)
+![](https://github.com/florajs/datasource-mysql/workflows/ci/badge.svg)
 [![NPM version](https://img.shields.io/npm/v/flora-mysql.svg?style=flat)](https://www.npmjs.com/package/flora-mysql)
 [![NPM downloads](https://img.shields.io/npm/dm/flora-mysql.svg?style=flat)](https://www.npmjs.com/package/flora-mysql)
 
 
-MySQL data source for [Flora](https://github.com/godmodelabs/flora), based on the [mysql](https://www.npmjs.com/package/mysql) module.
+MySQL data source for [Flora](https://github.com/florajs/flora), based on the [mysql](https://www.npmjs.com/package/mysql) module.
 
 ## Usage
 

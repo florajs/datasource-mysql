@@ -18,9 +18,9 @@
     "name": "BörseGo AG",
     "email": "it@boerse-go.de"
   },
-  "homepage": "https://github.com/godmodelabs/flora-mysql",
+  "homepage": "https://github.com/florajs/datasource-mysql",
   "license": "MIT",
-  "repository": "godmodelabs/flora-mysql",
+  "repository": "florajs/datasource-mysql",
   "files": [
     "index.js",
     "lib/"
