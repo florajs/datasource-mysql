@@ -12,14 +12,11 @@ const testCfg = {
     ...defaultCfg,
     servers: { default: { user: 'foo', password: 'bar', masters: [{ host: 'mysql.example.com' }] } }
 };
+const { cloneDeep } = require('../../lib/util');
 
 const sandbox = sinon.createSandbox();
 
 chai.use(require('sinon-chai'));
-
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
 
 const PORT = process.env.MYSQL_PORT || 3306;
 
@@ -47,7 +44,7 @@ describe('connection pooling', () => {
             });
 
             it('global', async () => {
-                const cfg = { ...clone(testCfg), user: 'root', password: 'secret' };
+                const cfg = { ...cloneDeep(testCfg), user: 'root', password: 'secret' };
                 delete cfg.servers.default.user;
                 delete cfg.servers.default.password;
 
@@ -65,7 +62,7 @@ describe('connection pooling', () => {
 
         describe('port', () => {
             it('default', async () => {
-                const cfg = clone(testCfg);
+                const cfg = cloneDeep(testCfg);
                 cfg.servers.default.port = PORT;
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
@@ -76,7 +73,7 @@ describe('connection pooling', () => {
             });
 
             it('custom', async () => {
-                const cfg = { ...clone(testCfg) };
+                const cfg = { ...cloneDeep(testCfg) };
                 cfg.servers.default.port = 1337;
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
@@ -97,7 +94,7 @@ describe('connection pooling', () => {
             });
 
             it('server specific', async () => {
-                const cfg = clone(testCfg);
+                const cfg = cloneDeep(testCfg);
                 cfg.servers.default.connectTimeout = 1000;
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
@@ -108,7 +105,7 @@ describe('connection pooling', () => {
             });
 
             it('global', async () => {
-                const cfg = { ...clone(testCfg), connectTimeout: 1500 };
+                const cfg = { ...cloneDeep(testCfg), connectTimeout: 1500 };
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 
@@ -129,7 +126,7 @@ describe('connection pooling', () => {
             });
 
             it('server specific', async () => {
-                const cfg = clone(testCfg);
+                const cfg = cloneDeep(testCfg);
                 cfg.servers.default.poolSize = 100;
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
@@ -140,7 +137,7 @@ describe('connection pooling', () => {
             });
 
             it('global', async () => {
-                const cfg = { ...clone(testCfg), poolSize: 50 };
+                const cfg = { ...cloneDeep(testCfg), poolSize: 50 };
                 const ds = FloraMysqlFactory.create(cfg);
                 const ctx = ds.getContext(ctxCfg);
 

@@ -2,10 +2,7 @@
 
 const { expect } = require('chai');
 const optimize = require('../../lib/sql-query-optimizer');
-
-function cloneDeep(ast) {
-    return JSON.parse(JSON.stringify(ast));
-}
+const { cloneDeep } = require('../../lib/util');
 
 describe('SQL query optimizer', () => {
     let ast;

@@ -10,18 +10,9 @@ const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
 const status = require('./lib/connection-status');
+const { cloneDeep } = require('./lib/util');
 
 const Context = require('./lib/context');
-
-/**
- * Deep-clone an object and try to be efficient
- *
- * @param {object} obj
- * @returns {object}
- */
-function cloneDeep(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
 
 /**
  * Check if flora request attribute has column or alias equivalent in SQL query.
