@@ -710,4 +710,56 @@ describe('SQL query optimizer', () => {
             expect(subSelect.from).to.eql([{ db: null, table: 't', as: null }]);
         });
     });
+
+    it('should not touch union queries', () => {
+        // SELECT "t1"."id", "t1"."col" FROM "t1" UNION SELECT "t2"."id", "t2"."col" FROM "t2"
+        ast = {
+            with: null,
+            type: 'select',
+            options: null,
+            distinct: null,
+            columns: [
+                {
+                    expr: { type: 'column_ref', table: 't1', column: 'id' },
+                    as: null
+                },
+                {
+                    expr: { type: 'column_ref', table: 't1', column: 'col' },
+                    as: null
+                }
+            ],
+            from: [{ db: null, table: 't1', as: null }],
+            where: null,
+            groupby: null,
+            having: null,
+            orderby: null,
+            limit: null,
+            _next: {
+                with: null,
+                type: 'select',
+                options: null,
+                distinct: null,
+                columns: [
+                    {
+                        expr: { type: 'column_ref', table: 't2', column: 'id' },
+                        as: null
+                    },
+                    {
+                        expr: { type: 'column_ref', table: 't2', column: 'col' },
+                        as: null
+                    }
+                ],
+                from: [{ db: null, table: 't2', as: null }],
+                where: null,
+                groupby: null,
+                having: null,
+                orderby: null,
+                limit: null
+            }
+        };
+        const originalAst = cloneDeep(ast);
+
+        const optimizedAst = optimize(ast, ['id']);
+        expect(optimizedAst).to.eql(originalAst);
+    });
 });
