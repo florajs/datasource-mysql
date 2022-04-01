@@ -76,6 +76,8 @@ describe('flora request processing', () => {
 
         it('should remove ORDER BY clause from count sub-query', async () => {
             const querySpy = sinon.spy(ds, '_query');
+            const orderByRegex = /\border\s+by\b/gi;
+            const _explain = {};
 
             await ds.process({
                 database,
@@ -83,17 +85,17 @@ describe('flora request processing', () => {
                 queryAstRaw: astTpl,
                 order: [{ attribute: 'col1', direction: 'DESC' }],
                 limit: 1,
-                page: 2
+                page: 2,
+                _explain
             });
 
-            expect(querySpy).to.been.calledOnce;
-            expect(
-                querySpy.calledWithMatch(
-                    sinon.match.object,
-                    sinon.match((query) => (query.match(/\border\s+by\b/gi) || []).length === 1)
-                ),
-                'ORDER BY clause seems to be present in sub-query'
-            ).to.be.true;
+            expect(_explain)
+                .to.have.property('totalCountSql')
+                .and.not.match(orderByRegex, 'count query should not contain ORDER BY clause');
+            expect(querySpy).to.been.calledOnce.and.calledWithMatch(
+                sinon.match.object,
+                sinon.match((query) => (query.match(orderByRegex) || []).length === 1)
+            );
 
             querySpy.restore();
         });
