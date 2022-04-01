@@ -13,8 +13,18 @@ chai.use(require('sinon-chai'));
 describe('flora request processing', () => {
     const ds = FloraMysqlFactory.create(ciCfg);
     const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
+    const ctx = ds.getContext({ db: database });
 
-    after(() => ds.close());
+    before(async () => {
+        await ctx.insert('t', [
+            { id: 1, col1: 'foo' },
+            { id: 2, col1: 'bar' }
+        ]);
+    });
+    after(async () => {
+        await ctx.exec('TRUNCATE TABLE t');
+        await ds.close();
+    });
 
     it('should handle flora requests', async () => {
         const result = await ds.process({
@@ -24,8 +34,13 @@ describe('flora request processing', () => {
         });
 
         expect(result).to.have.property('totalCount').and.to.be.null;
+        expect(result).to.have.property('data').and.to.be.an('array');
 
-        expect(result).to.have.property('data').and.to.be.an('array').and.not.to.be.empty;
+        const data = result.data.map(({ id, col1 }) => ({ id: parseInt(id, 10), col1 }));
+        expect(data).to.eql([
+            { id: 1, col1: 'foo' },
+            { id: 2, col1: 'bar' }
+        ]);
     });
 
     it('should return result w/o type casting', async () => {
@@ -48,7 +63,7 @@ describe('flora request processing', () => {
             page: 2
         });
 
-        expect(result).to.have.property('totalCount').and.to.be.at.least(1);
+        expect(result).to.have.property('totalCount').and.to.equal(2);
     });
 
     it('should respect useMaster flag', async () => {
