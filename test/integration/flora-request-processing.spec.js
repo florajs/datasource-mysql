@@ -54,7 +54,7 @@ describe('flora request processing', () => {
         expect(item).to.be.an('object').and.to.have.property('id').and.to.eql(Buffer.from('1'));
     });
 
-    describe.only('pagination', () => {
+    describe('pagination', () => {
         it('should query available results if "page" attribute is set in request', async () => {
             const result = await ds.process({
                 database,
