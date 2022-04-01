@@ -58,13 +58,18 @@ describe('flora request processing', () => {
         it('should query available results if "page" attribute is set in request', async () => {
             const result = await ds.process({
                 database,
-                attributes: ['col1'],
+                attributes: ['id', 'col1'],
                 queryAstRaw: astTpl,
+                order: [{ attribute: 'col1', direction: 'DESC' }],
                 limit: 1,
                 page: 2
             });
 
             expect(result).to.have.property('totalCount').and.to.equal(2);
+            expect(result).to.have.property('data');
+
+            const data = (result.data || []).map(({ id, col1 }) => ({ id: parseInt(id, 10), col1 }));
+            expect(data).to.eql([{ id: 2, col1: 'bar' }]);
         });
 
         xit('should handle queries with GROUP BY clause');
