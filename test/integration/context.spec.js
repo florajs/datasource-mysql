@@ -264,6 +264,78 @@ describe('context', () => {
             });
         });
 
+        describe('#upsert', () => {
+            it('should return number of affected rows', async () => {
+                const { affectedRows } = await tableWithAutoIncrement(ctx, 't1', async () =>
+                    ctx.upsert('t1', { id: 1, col1: 'foobar' }, ['col1'])
+                );
+
+                expect(affectedRows).to.equal(1);
+            });
+
+            it('should return number of changed rows', async () => {
+                const { changedRows } = await tableWithAutoIncrement(ctx, 't1', async () =>
+                    ctx.upsert('t1', { id: 1, col1: 'foobar' }, ['col1'])
+                );
+
+                expect(changedRows).to.equal(0);
+            });
+
+            it('should accept data as an object', async () => {
+                await ctx.insert('t', { id: 1, col1: 'foo' });
+                await ctx.upsert('t', { id: 1, col1: 'bar' }, ['col1']);
+
+                const result = await ctx.query('SELECT id, col1 FROM t');
+                expect(result).to.be.eql([{ id: 1, col1: 'bar' }]);
+            });
+
+            it('should accept data as an array of objects', async () => {
+                await ctx.insert('t', [
+                    { id: 1, col1: 'foo' },
+                    { id: 2, col1: 'bar' }
+                ]);
+                await ctx.upsert('t', [{ id: 1, col1: 'foobar' }], ['col1']);
+
+                const result = await ctx.query('SELECT id, col1 FROM t');
+                expect(result).to.be.eql([
+                    { id: 1, col1: 'foobar' },
+                    { id: 2, col1: 'bar' }
+                ]);
+            });
+
+            it('should handle assignment list as an array of column names', async () => {
+                await ctx.insert('t', [
+                    { id: 1, col1: 'foo' },
+                    { id: 2, col1: 'bar' }
+                ]);
+                await ctx.upsert('t', { id: 1, col1: 'foobar' }, ['col1']);
+
+                const result = await ctx.query('SELECT id, col1 FROM t');
+                expect(result).to.eql([
+                    { id: 1, col1: 'foobar' },
+                    { id: 2, col1: 'bar' }
+                ]);
+            });
+
+            it('should handle assignment list as an object', async () => {
+                await ctx.insert('t', [
+                    { id: 1, col1: 'foo' },
+                    { id: 2, col1: 'bar' }
+                ]);
+                await ctx.upsert(
+                    't',
+                    { id: 1, col1: 'foobar' },
+                    { col1: ctx.raw(`CONCAT(${ctx.quoteIdentifier('col1')}, '|', 'bar')`) }
+                );
+
+                const result = await ctx.query('SELECT id, col1 FROM t');
+                expect(result).to.eql([
+                    { id: 1, col1: 'foo|bar' },
+                    { id: 2, col1: 'bar' }
+                ]);
+            });
+        });
+
         describe('#exec', () => {
             it(`should resolve/return with insertId property`, async () => {
                 const { insertId } = await tableWithAutoIncrement(

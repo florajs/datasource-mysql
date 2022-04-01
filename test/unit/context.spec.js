@@ -356,7 +356,7 @@ describe('context', () => {
         });
 
         it('should accept assignment list as an array of column names', async () => {
-            const sql = `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE \`col1\` = VALUES(\`col1\`), \`col2\` = VALUES(\`col2\`)`;
+            const sql = `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS _new ON DUPLICATE KEY UPDATE \`col1\` = _new.\`col1\`, \`col2\` = _new.\`col2\``;
             await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, ['col1', 'col2']);
             expect(execStub).to.have.been.calledWith(sql);
         });
