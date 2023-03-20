@@ -74,7 +74,10 @@ describe('query-builder (fulltext search)', () => {
     it('should support multiple attributes and non-empty where clause', () => {
         const ast = queryBuilder({
             queryAst,
-            filter: [[{ attribute: 'col2', operator: 'equal', value: 5 }]],
+            filter: [
+                [{ attribute: 'col2', operator: 'equal', value: 5 }],
+                [{ attribute: 'col1', operator: 'equal', value: 1 }]
+            ],
             searchable: ['col1', 'columnAlias'],
             search: 'foobar'
         });
@@ -84,9 +87,20 @@ describe('query-builder (fulltext search)', () => {
             operator: 'AND',
             left: {
                 type: 'binary_expr',
-                operator: '=',
-                left: { type: 'column_ref', table: 't', column: 'col2' },
-                right: { type: 'number', value: 5 }
+                operator: 'OR',
+                left: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't', column: 'col2' },
+                    right: { type: 'number', value: 5 }
+                },
+                right: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't', column: 'col1' },
+                    right: { type: 'number', value: 1 }
+                },
+                parentheses: true
             },
             right: {
                 type: 'binary_expr',
