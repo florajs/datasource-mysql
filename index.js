@@ -87,7 +87,7 @@ function astify(dsConfig, attributes) {
         throw new ImplementationError('Database must not be empty');
     }
 
-    if (dsConfig.query && dsConfig.query.trim().length > 0) {
+    if (dsConfig.query?.trim().length > 0) {
         let ast;
 
         try {
@@ -107,7 +107,7 @@ function astify(dsConfig, attributes) {
         return ast;
     }
 
-    if (dsConfig.table && dsConfig.table.trim().length > 0) {
+    if (dsConfig.table?.trim().length > 0) {
         return {
             type: 'select',
             options: null,
@@ -288,7 +288,7 @@ class DataSource {
      * @private
      */
     _getConnectionPool(server, database) {
-        if (this._pools[server] && this._pools[server][database]) {
+        if (this._pools[server]?.[database]) {
             return this._pools[server][database];
         }
 
