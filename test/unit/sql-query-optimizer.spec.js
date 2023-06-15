@@ -2,14 +2,13 @@
 
 const { expect } = require('chai');
 const optimize = require('../../lib/sql-query-optimizer');
-const { cloneDeep } = require('../../lib/util');
 
 describe('SQL query optimizer', () => {
     let ast;
 
     it('should only modify SELECT statements', function () {
         ast = { type: 'UPDATE' };
-        const initialAST = cloneDeep(ast);
+        const initialAST = structuredClone(ast);
         optimize(ast, ['col1']);
 
         expect(initialAST).to.eql(ast);
@@ -67,7 +66,7 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        const initialAST = cloneDeep(ast);
+        const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
         expect(optimizedAst.from).to.eql(initialAST.from);
@@ -245,7 +244,7 @@ describe('SQL query optimizer', () => {
             orderby: null
         };
 
-        const initialAST = cloneDeep(ast);
+        const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
         expect(optimizedAst.from).to.eql(initialAST.from);
@@ -277,7 +276,7 @@ describe('SQL query optimizer', () => {
                 { expr: { type: 'column_ref', table: 't2', column: 'col2' }, type: 'DESC' }
             ]
         };
-        const initialAST = cloneDeep(ast);
+        const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
         expect(optimizedAst.from).to.eql(initialAST.from);
@@ -757,7 +756,7 @@ describe('SQL query optimizer', () => {
                 limit: null
             }
         };
-        const originalAst = cloneDeep(ast);
+        const originalAst = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['id']);
         expect(optimizedAst).to.eql(originalAst);

@@ -9,7 +9,6 @@ const generateAST = require('./lib/sql-query-builder');
 const checkAST = require('./lib/sql-query-checker');
 const optimizeAST = require('./lib/sql-query-optimizer');
 const status = require('./lib/connection-status');
-const { cloneDeep } = require('./lib/util');
 
 const Context = require('./lib/context');
 
@@ -242,7 +241,7 @@ class DataSource {
      * @param {Object} request
      */
     buildSqlAst(request) {
-        request.queryAst = cloneDeep(request.queryAstRaw);
+        request.queryAst = structuredClone(request.queryAstRaw);
         request.queryAst = generateAST(request);
 
         checkSqlEquivalents(request.attributes, request.queryAst.columns);
