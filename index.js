@@ -1,6 +1,5 @@
 'use strict';
 
-const has = require('has');
 const mysql = require('mysql');
 const { Parser } = require('@florajs/sql-parser');
 const astUtil = require('@florajs/sql-parser').util;
@@ -188,9 +187,9 @@ class DataSource {
         const typeCast = false;
         let sql;
 
-        if (!has(request, 'queryAst')) this.buildSqlAst(request);
+        if (!Object.hasOwn(request, 'queryAst')) this.buildSqlAst(request);
 
-        const isLimitPer = has(request, 'limitPer') && request.limitPer !== null;
+        const isLimitPer = Object.hasOwn(request, 'limitPer') && request.limitPer !== null;
         request.queryAst = optimizeAST(request.queryAst, request.attributes, isLimitPer);
         sql = astUtil.astToSQL(request.queryAst);
         _explain.sql = sql;
@@ -232,7 +231,7 @@ class DataSource {
     }
 
     getContext(ctx) {
-        if (has(ctx, 'useMaster') && !!ctx.useMaster) {
+        if (Object.hasOwn(ctx, 'useMaster') && !!ctx.useMaster) {
             ctx.type = 'MASTER';
             delete ctx.useMaster;
         }
@@ -274,7 +273,7 @@ class DataSource {
         };
 
         return ['masters', 'slaves']
-            .filter((type) => has(serverCfg, type) && Array.isArray(serverCfg[type]))
+            .filter((type) => Object.hasOwn(serverCfg, type) && Array.isArray(serverCfg[type]))
             .flatMap((type) => serverCfg[type].map((hostCfg) => ({ type, hostCfg })))
             .reduce((cfg, { type, hostCfg }) => {
                 const serverType = type.slice(0, -1).toUpperCase();
@@ -301,7 +300,7 @@ class DataSource {
         const clusterCfg = this._prepareServerCfg(serverCfg, database);
 
         Object.keys(clusterCfg)
-            .filter((serverId) => has(clusterCfg, serverId))
+            .filter((serverId) => Object.hasOwn(clusterCfg, serverId))
             .forEach((serverId) => pool.add(serverId, clusterCfg[serverId]));
 
         if (typeof this._pools[server] !== 'object') this._pools[server] = {};
@@ -361,11 +360,12 @@ class DataSource {
                 return resolve(connection);
             });
         }).then((connection) => {
-            if (has(connection, '_floraInitialized')) return connection;
+            if (Object.hasOwn(connection, '_floraInitialized')) return connection;
 
             const config = this._config;
-            const init = [has(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
-            if (has(config, server) && has(config[server], 'onConnect')) init.push(config[server].onConnect);
+            const init = [Object.hasOwn(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
+            if (Object.hasOwn(config, server) && Object.hasOwn(config[server], 'onConnect'))
+                init.push(config[server].onConnect);
 
             const socket = connection._socket;
             if (typeof socket === 'object' && typeof socket.setKeepAlive === 'function') {
