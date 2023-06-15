@@ -59,6 +59,12 @@ describe('query-builder (where)', () => {
         });
     });
 
+    it('should remove empty "AND"/"OR" conditions', () => {
+        const ast = queryBuilder({ queryAst, filter: [[]] });
+
+        expect(ast.where).to.be.null;
+    });
+
     it('should add mulitple "OR" conditions', () => {
         const ast = queryBuilder({
             queryAst,
