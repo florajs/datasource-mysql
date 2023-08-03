@@ -15,8 +15,8 @@
     "lint": "eslint ."
   },
   "author": {
-    "name": "BörseGo AG",
-    "email": "it@boerse-go.de"
+    "name": "stock3 AG",
+    "email": "it@stock3.com"
   },
   "keywords": [
     "florajs"
@@ -31,22 +31,22 @@
   "contributors": [
     {
       "name": "Marco Baumgartl",
-      "email": "marco.baumgartl@boerse-go.de"
+      "email": "marco.baumgartl@stock3.com"
     },
     {
       "name": "Nico Kaiser",
-      "email": "nico.kaiser@boerse-go.de"
+      "email": "nico.kaiser@stock3.com"
     },
     {
       "name": "Mark Plomer",
-      "email": "mark.plomer@boerse-go.de"
+      "email": "mark.plomer@stock3.com"
     }
   ],
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@florajs/errors": "^3.0.0",
+    "@florajs/errors": "^4.0.0",
     "@florajs/sql-parser": "^2.0.0",
     "mysql": "^2.18.1",
     "named-placeholders": "^1.1.3",
@@ -55,12 +55,12 @@
   "devDependencies": {
     "bunyan": "^1.8.15",
     "chai": "^4.3.7",
-    "eslint": "^8.42.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^4.2.1",
+    "eslint": "^8.46.0",
+    "eslint-config-prettier": "^8.10.0",
+    "eslint-plugin-prettier": "^5.0.0",
     "mocha": "^10.2.0",
-    "prettier": "^2.8.8",
-    "sinon": "^15.1.2",
+    "prettier": "^3.0.1",
+    "sinon": "^15.2.0",
     "sinon-chai": "^3.7.0"
   }
 }
