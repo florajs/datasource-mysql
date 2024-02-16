@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { after, describe, it } = require('node:test');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -19,15 +20,10 @@ describe('error handling', () => {
             database
         };
 
-        try {
-            await ds.process(floraRequest);
-        } catch (e) {
-            expect(e).to.be.instanceof(Error);
-            expect(e.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-            return;
-        }
-
-        throw new Error('Expected an error');
+        await assert.rejects(async () => await ds.process(floraRequest), {
+            name: 'ImplementationError',
+            message: 'Attribute "nonexistentAttr" is not provided by SQL query'
+        });
     });
 
     it('should return an error if selected attribute has no corresponding alias', async () => {
@@ -37,15 +33,10 @@ describe('error handling', () => {
             database
         };
 
-        try {
-            await ds.process(floraRequest);
-        } catch (e) {
-            expect(e).to.be.instanceof(Error);
-            expect(e.message).to.equal('Attribute "nonexistentAttr" is not provided by SQL query');
-            return;
-        }
-
-        throw new Error('Expected an error');
+        await assert.rejects(async () => await ds.process(floraRequest), {
+            name: 'ImplementationError',
+            message: 'Attribute "nonexistentAttr" is not provided by SQL query'
+        });
     });
 
     it('should log query in case of an error', async () => {
@@ -57,16 +48,19 @@ describe('error handling', () => {
             _explain
         };
 
-        try {
-            await ds.process(floraRequest);
-        } catch (e) {
-            expect(e).to.be.an.instanceOf(Error);
-            expect(_explain).to.have.property('sql', 'SELECT "t"."col1" FROM "nonexistent_table"');
-            expect(_explain).to.have.property('host');
-            return;
-        }
+        await assert.rejects(
+            async () => await ds.process(floraRequest),
+            (err) => {
+                assert.ok(err instanceof Error);
 
-        throw new Error('Expected an error');
+                assert.ok(Object.hasOwn(_explain, 'sql'));
+                assert.equal(_explain.sql, 'SELECT "flora_request_processing"."col1" FROM "nonexistent_table"');
+
+                assert.ok(Object.hasOwn(_explain, 'host'));
+
+                return true;
+            }
+        );
     });
 
     it('should log connection errors', async () => {
@@ -78,16 +72,9 @@ describe('error handling', () => {
             _explain
         };
 
-        try {
-            await ds.process(floraRequest);
-        } catch (e) {
-            expect(e)
-                .to.be.an.instanceOf(Error)
-                .and.to.have.property('message')
-                .to.include("Unknown database 'nonexistent_database'");
-            return;
-        }
-
-        throw new Error('Expected an error');
+        await assert.rejects(async () => await ds.process(floraRequest), {
+            name: 'Error',
+            message: /Unknown database 'nonexistent_database'/
+        });
     });
 });

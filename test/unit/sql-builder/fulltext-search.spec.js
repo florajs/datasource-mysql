@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { beforeEach, describe, it } = require('node:test');
 
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
@@ -8,13 +9,7 @@ const astFixture = require('./fixture');
 describe('query-builder (fulltext search)', () => {
     let queryAst;
 
-    beforeEach(() => {
-        queryAst = JSON.parse(JSON.stringify(astFixture));
-    });
-
-    afterEach(() => {
-        queryAst = null;
-    });
+    beforeEach(() => (queryAst = structuredClone(astFixture)));
 
     it('should support single attribute', () => {
         const ast = queryBuilder({
@@ -23,7 +18,7 @@ describe('query-builder (fulltext search)', () => {
             search: 'foobar'
         });
 
-        expect(ast.where).to.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'LIKE',
             left: { type: 'column_ref', table: 't', column: 'col1' },
@@ -38,7 +33,7 @@ describe('query-builder (fulltext search)', () => {
             search: 'foobar'
         });
 
-        expect(ast.where).to.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'OR',
             left: {
@@ -63,7 +58,7 @@ describe('query-builder (fulltext search)', () => {
             search: 'f%o_o%b_ar'
         });
 
-        expect(ast.where).to.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'LIKE',
             left: { type: 'column_ref', table: 't', column: 'col1' },
@@ -82,7 +77,7 @@ describe('query-builder (fulltext search)', () => {
             search: 'foobar'
         });
 
-        expect(ast.where).to.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'AND',
             left: {

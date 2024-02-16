@@ -1,9 +1,8 @@
 'use strict';
 
-const chai = require('chai');
-const { expect } = chai;
+const assert = require('node:assert/strict');
+const { after, describe, it, mock } = require('node:test');
 const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
-const sinon = require('sinon');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');
@@ -17,11 +16,13 @@ describe('datasource-mysql', () => {
 
     describe('query method', () => {
         it('should release pool connections manually', async () => {
-            const releaseSpy = sinon.spy(PoolConnection.prototype, 'release');
+            mock.method(PoolConnection.prototype, 'release');
 
             await ctx.query('SELECT 1 FROM dual');
-            expect(releaseSpy).to.have.been.calledOnce;
-            releaseSpy.restore();
+
+            assert.equal(PoolConnection.prototype.release.mock.callCount(), 1);
+
+            PoolConnection.prototype.release.mock.restore();
         });
     });
 });

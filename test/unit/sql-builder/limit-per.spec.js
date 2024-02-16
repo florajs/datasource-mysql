@@ -1,20 +1,15 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { beforeEach, describe, it } = require('node:test');
 
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
 
-xdescribe('query-builder (limit-per)', () => {
+describe.skip('query-builder (limit-per)', () => {
     let queryAst;
 
-    beforeEach(() => {
-        queryAst = JSON.parse(JSON.stringify(astFixture));
-    });
-
-    afterEach(() => {
-        queryAst = null;
-    });
+    beforeEach(() => (queryAst = structuredClone(astFixture)));
 
     it('should use filtered ids in VALUES expression', () => {
         const ast = queryBuilder({
@@ -26,7 +21,7 @@ xdescribe('query-builder (limit-per)', () => {
         });
 
         const [valuesExpr] = ast.from;
-        expect(valuesExpr).to.be.eql({
+        assert.deepEqual(valuesExpr, {
             expr: {
                 type: 'values',
                 value: [
@@ -50,13 +45,14 @@ xdescribe('query-builder (limit-per)', () => {
 
         const [, lateralJoin] = ast.from;
         const { expr: originalQuery } = lateralJoin;
-        expect(originalQuery).to.have.property('type', 'select');
-        expect(originalQuery).to.have.property('from').and.to.eql(queryAst.from);
-        expect(originalQuery).to.have.property('parentheses', true);
-        expect(lateralJoin).to.have.property('join', 'JOIN');
-        expect(lateralJoin).to.have.property('lateral', true);
-        expect(lateralJoin).to.have.property('on').and.to.eql({ type: 'boolean', value: true });
-        expect(lateralJoin).to.have.property('as', 'limitper');
+
+        assert.equal(originalQuery.type, 'select');
+        assert.equal(originalQuery.from, queryAst.from);
+        assert.equal(originalQuery.parentheses, true);
+        assert.equal(lateralJoin.join, 'JOIN');
+        assert.equal(lateralJoin.lateral, true);
+        assert.deepEqual(lateralJoin.on, { type: 'boolean', value: true });
+        assert.equal(lateralJoin.as, 'limitper');
     });
 
     it('should select attributes from derived table alias', () => {
@@ -68,7 +64,7 @@ xdescribe('query-builder (limit-per)', () => {
             filter: [[{ attribute: 'col1', operator: 'equal', valueFromParentKey: true, value: [1, 3] }]]
         });
 
-        expect(ast.columns).to.eql([
+        assert.deepEqual(ast.columns, [
             {
                 expr: { type: 'column_ref', table: 'limitper', column: 'col2' },
                 as: null
@@ -87,14 +83,12 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('where')
-                .and.to.eql({
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
-                    right: { type: 'column_ref', table: 't', column: 'col1' }
-                });
+            assert.deepEqual(subSelect.where, {
+                type: 'binary_expr',
+                operator: '=',
+                left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
+                right: { type: 'column_ref', table: 't', column: 'col1' }
+            });
         });
 
         it('should generate WHERE clause for correlated subquery for existing conditions', () => {
@@ -115,26 +109,24 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('where')
-                .and.to.eql({
+            assert.deepEqual(subSelect.where, {
+                type: 'binary_expr',
+                operator: 'AND',
+                left: {
                     type: 'binary_expr',
-                    operator: 'AND',
-                    left: {
-                        type: 'binary_expr',
-                        operator: 'IS',
-                        left: { type: 'column_ref', table: 't', column: 'deleted_at' },
-                        right: { type: 'null', value: null },
-                        parentheses: true
-                    },
-                    right: {
-                        type: 'binary_expr',
-                        operator: '=',
-                        left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
-                        right: { type: 'column_ref', table: 't', column: 'col1' },
-                        parentheses: true
-                    }
-                });
+                    operator: 'IS',
+                    left: { type: 'column_ref', table: 't', column: 'deleted_at' },
+                    right: { type: 'null', value: null },
+                    parentheses: true
+                },
+                right: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
+                    right: { type: 'column_ref', table: 't', column: 'col1' },
+                    parentheses: true
+                }
+            });
         });
 
         it('should generate WHERE clause for correlated subquery for OR filters', () => {
@@ -164,56 +156,54 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('where')
-                .and.to.eql({
+            assert.deepEqual(subSelect.where, {
+                type: 'binary_expr',
+                operator: 'AND',
+                left: {
                     type: 'binary_expr',
-                    operator: 'AND',
+                    operator: 'IS',
+                    left: { type: 'column_ref', table: 't', column: 'deleted_at' },
+                    right: { type: 'null', value: null },
+                    parentheses: true
+                },
+                right: {
+                    type: 'binary_expr',
+                    operator: 'OR',
                     left: {
                         type: 'binary_expr',
-                        operator: 'IS',
-                        left: { type: 'column_ref', table: 't', column: 'deleted_at' },
-                        right: { type: 'null', value: null },
-                        parentheses: true
-                    },
-                    right: {
-                        type: 'binary_expr',
-                        operator: 'OR',
+                        operator: 'AND',
                         left: {
                             type: 'binary_expr',
-                            operator: 'AND',
-                            left: {
-                                type: 'binary_expr',
-                                operator: '<=',
-                                left: { column: 'col2', table: 't', type: 'column_ref' },
-                                right: { type: 'number', value: 10 }
-                            },
-                            right: {
-                                type: 'binary_expr',
-                                operator: '=',
-                                left: { column: 'id', table: 'limitper_ids', type: 'column_ref' },
-                                right: { column: 'col1', table: 't', type: 'column_ref' }
-                            }
+                            operator: '<=',
+                            left: { column: 'col2', table: 't', type: 'column_ref' },
+                            right: { type: 'number', value: 10 }
                         },
                         right: {
                             type: 'binary_expr',
-                            operator: 'AND',
-                            left: {
-                                type: 'binary_expr',
-                                operator: '>=',
-                                left: { column: 'col2', table: 't', type: 'column_ref' },
-                                right: { type: 'number', value: 5 }
-                            },
-                            right: {
-                                type: 'binary_expr',
-                                operator: '=',
-                                left: { column: 'id', table: 'limitper_ids', type: 'column_ref' },
-                                right: { column: 'col1', table: 't', type: 'column_ref' }
-                            }
+                            operator: '=',
+                            left: { column: 'id', table: 'limitper_ids', type: 'column_ref' },
+                            right: { column: 'col1', table: 't', type: 'column_ref' }
+                        }
+                    },
+                    right: {
+                        type: 'binary_expr',
+                        operator: 'AND',
+                        left: {
+                            type: 'binary_expr',
+                            operator: '>=',
+                            left: { column: 'col2', table: 't', type: 'column_ref' },
+                            right: { type: 'number', value: 5 }
                         },
-                        parentheses: true
-                    }
-                });
+                        right: {
+                            type: 'binary_expr',
+                            operator: '=',
+                            left: { column: 'id', table: 'limitper_ids', type: 'column_ref' },
+                            right: { column: 'col1', table: 't', type: 'column_ref' }
+                        }
+                    },
+                    parentheses: true
+                }
+            });
         });
 
         it('should support fulltext searches', () => {
@@ -228,25 +218,24 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('where')
-                .and.to.eql({
+            assert.deepEqual(subSelect.where, {
+                type: 'binary_expr',
+                operator: 'AND',
+                left: {
                     type: 'binary_expr',
-                    operator: 'AND',
-                    left: {
-                        type: 'binary_expr',
-                        operator: '=',
-                        left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
-                        right: { type: 'column_ref', table: 't', column: 'col1' }
-                    },
-                    right: {
-                        type: 'binary_expr',
-                        operator: 'LIKE',
-                        left: { type: 'column_ref', table: 't', column: 'col2' },
-                        right: { type: 'string', value: '%te\\%st%' },
-                        parentheses: true
-                    }
-                });
+                    operator: '=',
+                    parentheses: true,
+                    left: { type: 'column_ref', table: 'limitper_ids', column: 'id' },
+                    right: { type: 'column_ref', table: 't', column: 'col1' }
+                },
+                right: {
+                    type: 'binary_expr',
+                    operator: 'LIKE',
+                    left: { type: 'column_ref', table: 't', column: 'col2' },
+                    right: { type: 'string', value: '%te\\%st%' },
+                    parentheses: true
+                }
+            });
         });
     });
 
@@ -261,12 +250,10 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('limit')
-                .and.to.eql([
-                    { type: 'number', value: 0 },
-                    { type: 'number', value: 5 }
-                ]);
+            assert.deepEqual(subSelect.limit, [
+                { type: 'number', value: 0 },
+                { type: 'number', value: 5 }
+            ]);
         });
 
         it('should apply page to lateral join', () => {
@@ -281,12 +268,10 @@ xdescribe('query-builder (limit-per)', () => {
             });
 
             const [, { expr: subSelect }] = ast.from;
-            expect(subSelect)
-                .to.have.property('limit')
-                .and.to.eql([
-                    { type: 'number', value: 40 },
-                    { type: 'number', value: 10 }
-                ]);
+            assert.deepEqual(subSelect.limit, [
+                { type: 'number', value: 40 },
+                { type: 'number', value: 10 }
+            ]);
         });
     });
 
@@ -300,8 +285,8 @@ xdescribe('query-builder (limit-per)', () => {
         });
 
         const [, { expr: subSelect }] = ast.from;
-        expect(subSelect)
-            .to.have.property('orderby')
-            .and.to.eql([{ expr: { type: 'column_ref', table: 't', column: 'col2' }, type: 'DESC' }]);
+        assert.deepEqual(subSelect.orderby, [
+            { expr: { type: 'column_ref', table: 't', column: 'col2' }, type: 'DESC' }
+        ]);
     });
 });

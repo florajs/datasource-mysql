@@ -5,11 +5,11 @@ module.exports = {
     options: null,
     distinct: null,
     columns: [
-        { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
-        { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
-        { expr: { type: 'column_ref', table: 't', column: 'col2' }, as: null }
+        { expr: { type: 'column_ref', table: 'flora_request_processing', column: 'id' }, as: null },
+        { expr: { type: 'column_ref', table: 'flora_request_processing', column: 'col1' }, as: null },
+        { expr: { type: 'column_ref', table: 'flora_request_processing', column: 'col2' }, as: null }
     ],
-    from: [{ db: null, table: 't', as: null }],
+    from: [{ db: null, table: 'flora_request_processing', as: null }],
     where: null,
     groupby: null,
     having: null,

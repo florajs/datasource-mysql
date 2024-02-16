@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { afterEach, describe, it } = require('node:test');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');
@@ -19,7 +20,7 @@ describe('init queries', () => {
         await ctx.query('SELECT 1 FROM dual');
         const sqlMode = await ctx.queryOne('SELECT @@sql_mode');
 
-        expect(sqlMode).to.match(/\bANSI\b/);
+        assert.match(sqlMode, /\bANSI\b/);
     });
 
     it('should execute single init query', async () => {
@@ -31,7 +32,7 @@ describe('init queries', () => {
         await ctx.query('SELECT 1 FROM dual');
         const maxExecutionTime = await ctx.queryOne('SELECT @@max_execution_time');
 
-        expect(maxExecutionTime).to.equal(1337);
+        assert.equal(maxExecutionTime, 1337);
     });
 
     it('should execute multiple init queries', async () => {
@@ -49,8 +50,8 @@ describe('init queries', () => {
             ctx.queryOne('SELECT @@max_execution_time')
         ]);
 
-        expect(sqlMode).to.contain('ANSI_QUOTES');
-        expect(maxExecutionTime).to.equal(1337);
+        assert.match(sqlMode, /\bANSI_QUOTES\b/);
+        assert.equal(maxExecutionTime, 1337);
     });
 
     it('should execute custom init function', async () => {
@@ -70,7 +71,7 @@ describe('init queries', () => {
         await ctx.query('SELECT 1 FROM dual');
         const maxExecutionTime = await ctx.queryOne('SELECT @@max_execution_time');
 
-        expect(maxExecutionTime).to.equal(1337);
+        assert.equal(maxExecutionTime, 1337);
     });
 
     it('should handle server specific init queries', async () => {
@@ -89,23 +90,19 @@ describe('init queries', () => {
             ctx.queryOne('SELECT @@max_execution_time')
         ]);
 
-        expect(sqlMode).to.contain('ANSI_QUOTES');
-        expect(maxExecutionTime).to.equal(1337);
+        assert.match(sqlMode, /\bANSI_QUOTES\b/);
+        assert.equal(maxExecutionTime, 1337);
     });
 
     it('should handle errors', async () => {
-        const config = { ...ciCfg, onConnect: 'SELECT nonExistentAttr FROM t' };
+        const config = { ...ciCfg, onConnect: 'SELECT nonExistentAttr FROM dual' };
 
         ds = FloraMysqlFactory.create(config);
         const ctx = ds.getContext(ctxCfg);
 
-        try {
-            await ctx.query('SELECT 1 FROM dual');
-        } catch (err) {
-            expect(err).to.include({
-                code: 'ER_BAD_FIELD_ERROR',
-                message: `ER_BAD_FIELD_ERROR: Unknown column 'nonExistentAttr' in 'field list'`
-            });
-        }
+        await assert.rejects(async () => await ctx.query('SELECT 1 FROM dual'), {
+            code: 'ER_BAD_FIELD_ERROR',
+            message: `ER_BAD_FIELD_ERROR: Unknown column 'nonExistentAttr' in 'field list'`
+        });
     });
 });

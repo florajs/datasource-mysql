@@ -34,7 +34,7 @@ function hasSqlEquivalent(attribute, columns) {
 function checkSqlEquivalents(attributes, columns) {
     attributes.forEach((attribute) => {
         if (!hasSqlEquivalent(attribute, columns)) {
-            throw new Error('Attribute "' + attribute + '" is not provided by SQL query');
+            throw new ImplementationError('Attribute "' + attribute + '" is not provided by SQL query');
         }
     });
 }

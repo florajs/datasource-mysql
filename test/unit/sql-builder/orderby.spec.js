@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { beforeEach, describe, it } = require('node:test');
 
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
@@ -8,13 +9,7 @@ const astFixture = require('./fixture');
 describe('query-builder (order)', () => {
     let queryAst;
 
-    beforeEach(() => {
-        queryAst = JSON.parse(JSON.stringify(astFixture));
-    });
-
-    afterEach(() => {
-        queryAst = null;
-    });
+    beforeEach(() => (queryAst = structuredClone(astFixture)));
 
     it('should order by one attribute', () => {
         const ast = queryBuilder({
@@ -22,7 +17,7 @@ describe('query-builder (order)', () => {
             order: [{ attribute: 'col1', direction: 'asc' }]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             {
                 expr: { type: 'column_ref', table: 't', column: 'col1' },
                 type: 'ASC'
@@ -36,7 +31,7 @@ describe('query-builder (order)', () => {
             order: [{ attribute: 'col1', direction: 'ASC' }]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             {
                 expr: { type: 'column_ref', table: 't', column: 'col1' },
                 type: 'ASC'
@@ -45,12 +40,17 @@ describe('query-builder (order)', () => {
     });
 
     it('should throw on invalid direction', () => {
-        expect(() => {
-            queryBuilder({
-                queryAst,
-                order: [{ attribute: 'col1', direction: 'invalid' }]
-            });
-        }).to.throw(Error, /Invalid order direction/);
+        assert.throws(
+            () =>
+                queryBuilder({
+                    queryAst,
+                    order: [{ attribute: 'col1', direction: 'invalid' }]
+                }),
+            {
+                name: 'Error',
+                message: /Invalid order direction/
+            }
+        );
     });
 
     it('should order by one attribute (random)', () => {
@@ -59,7 +59,7 @@ describe('query-builder (order)', () => {
             order: [{ attribute: 'col1', direction: 'random' }]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             {
                 expr: { type: 'function', name: 'RAND', args: { type: 'expr_list', value: [] } },
                 type: ''
@@ -73,7 +73,7 @@ describe('query-builder (order)', () => {
             order: [{ attribute: 'col1', direction: 'rAnDoM' }]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             {
                 expr: { type: 'function', name: 'RAND', args: { type: 'expr_list', value: [] } },
                 type: ''
@@ -87,7 +87,7 @@ describe('query-builder (order)', () => {
             order: [{ attribute: 'columnAlias', direction: 'desc' }]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             {
                 expr: { type: 'column_ref', table: 't', column: 'col3' },
                 type: 'DESC'
@@ -104,7 +104,7 @@ describe('query-builder (order)', () => {
             ]
         });
 
-        expect(ast.orderby).to.eql([
+        assert.deepEqual(ast.orderby, [
             { expr: { type: 'column_ref', table: 't', column: 'col1' }, type: 'ASC' },
             { expr: { type: 'column_ref', table: 't', column: 'col2' }, type: 'DESC' }
         ]);

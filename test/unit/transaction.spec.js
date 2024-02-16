@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { describe, it } = require('node:test');
 const Transaction = require('../../lib/transaction');
 
 describe('transaction', () => {
@@ -21,7 +22,7 @@ describe('transaction', () => {
             'quoteIdentifier'
         ].forEach((method) => {
             it(`should have ${method} method`, () => {
-                expect(Transaction.prototype[method]).to.be.a('function');
+                assert.ok(typeof Transaction.prototype[method] === 'function');
             });
         });
     });
@@ -31,22 +32,24 @@ describe('transaction', () => {
             const trx = new Transaction({});
             const expr = trx.raw('NOW()');
 
-            expect(expr).to.be.an('object');
-            expect(expr.toSqlString).to.be.a('function');
-            expect(expr.toSqlString()).to.equal('NOW()');
+            assert.ok(typeof expr === 'object');
+            assert.ok(typeof expr.toSqlString === 'function');
+            assert.equal(expr.toSqlString(), 'NOW()');
         });
     });
 
     describe('#quote', () => {
         it('should quote values', () => {
             const trx = new Transaction({});
-            expect(trx.quote(`foo\\b'ar`)).to.equal(`'foo\\\\b\\'ar'`);
+
+            assert.equal(trx.quote(`foo\\b'ar`), `'foo\\\\b\\'ar'`);
         });
 
         describe('#quoteIdentifier', () => {
             it('should quote identifiers', () => {
                 const trx = new Transaction({});
-                expect(trx.quoteIdentifier('table')).to.equal('`table`');
+
+                assert.equal(trx.quoteIdentifier('table'), '`table`');
             });
         });
     });

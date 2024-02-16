@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { beforeEach, describe, it } = require('node:test');
 
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
@@ -8,13 +9,7 @@ const astFixture = require('./fixture');
 describe('query-builder (where)', () => {
     let queryAst;
 
-    beforeEach(() => {
-        queryAst = JSON.parse(JSON.stringify(astFixture));
-    });
-
-    afterEach(() => {
-        queryAst = null;
-    });
+    beforeEach(() => (queryAst = structuredClone(astFixture)));
 
     it('should add single "AND" condition', () => {
         const ast = queryBuilder({
@@ -22,7 +17,7 @@ describe('query-builder (where)', () => {
             filter: [[{ attribute: 'col1', operator: 'equal', value: 0 }]]
         });
 
-        expect(ast.where).to.be.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: '=',
             left: { type: 'column_ref', table: 't', column: 'col1' },
@@ -41,7 +36,7 @@ describe('query-builder (where)', () => {
             ]
         });
 
-        expect(ast.where).to.be.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'AND',
             left: {
@@ -62,7 +57,7 @@ describe('query-builder (where)', () => {
     it('should remove empty "AND"/"OR" conditions', () => {
         const ast = queryBuilder({ queryAst, filter: [[]] });
 
-        expect(ast.where).to.be.null;
+        assert.equal(ast.where, null);
     });
 
     it('should add mulitple "OR" conditions', () => {
@@ -74,7 +69,7 @@ describe('query-builder (where)', () => {
             ]
         });
 
-        expect(ast.where).to.be.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'OR',
             left: {
@@ -110,7 +105,7 @@ describe('query-builder (where)', () => {
             filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]]
         });
 
-        expect(ast.where).to.be.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'AND',
             left: {
@@ -151,7 +146,7 @@ describe('query-builder (where)', () => {
             ]
         });
 
-        expect(ast.where).to.be.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'AND',
             left: {
@@ -199,8 +194,10 @@ describe('query-builder (where)', () => {
             filter: [[{ attribute: 'col2', operator: 'greater', value: 100 }]]
         });
 
-        expect(ast.where.left).to.have.property('parentheses', true);
-        expect(ast.where.right).to.have.property('parentheses', true);
+        assert.ok(Object.hasOwn(ast.where.left, 'parentheses'));
+        assert.equal(ast.where.left.parentheses, true);
+        assert.ok(Object.hasOwn(ast.where.right, 'parentheses'));
+        assert.equal(ast.where.right.parentheses, true);
     });
 
     it('should support arrays as attribute filters', () => {
@@ -235,7 +232,7 @@ describe('query-builder (where)', () => {
             ]
         });
 
-        expect(ast.where).to.eql({
+        assert.deepEqual(ast.where, {
             type: 'binary_expr',
             operator: 'OR',
             left: {
@@ -281,7 +278,7 @@ describe('query-builder (where)', () => {
                 filter: [[{ attribute: 'col1', operator: filterOperator, value: null }]]
             });
 
-            expect(ast.where).to.eql({
+            assert.deepEqual(ast.where, {
                 type: 'binary_expr',
                 operator: sqlOperator,
                 left: { type: 'column_ref', table: 't', column: 'col1' },

@@ -6,13 +6,5 @@
     },
     "parserOptions": {
         "ecmaVersion": 2022
-    },
-    "overrides": [
-        {
-            "files": ["test/**/*.js"],
-            "env": {
-                "mocha": true
-            }
-        }
-    ]
+    }
 }

@@ -1,6 +1,7 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
+const { beforeEach, describe, it } = require('node:test');
 const optimize = require('../../lib/sql-query-optimizer');
 
 describe('SQL query optimizer', () => {
@@ -11,7 +12,7 @@ describe('SQL query optimizer', () => {
         const initialAST = structuredClone(ast);
         optimize(ast, ['col1']);
 
-        expect(initialAST).to.eql(ast);
+        assert.deepEqual(ast, initialAST);
     });
 
     it('should remove unused columns/attributes from AST', () => {
@@ -31,7 +32,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['col1', 'alias']);
-        expect(optimizedAst.columns).to.eql([
+
+        assert.deepEqual(optimizedAst.columns, [
             // SELECT t.col1, t.col3 AS alias FROM t1
             { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null },
             { expr: { type: 'column_ref', table: 't', column: 'col3' }, as: 'alias' }
@@ -69,7 +71,8 @@ describe('SQL query optimizer', () => {
         const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
-        expect(optimizedAst.from).to.eql(initialAST.from);
+
+        assert.deepEqual(optimizedAst.from, initialAST.from);
     });
 
     it('should remove unreferenced LEFT JOINs from AST', () => {
@@ -102,7 +105,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['col1']);
-        expect(optimizedAst.from).to.eql([{ db: null, table: 't', as: null }]); // SELECT t1.col1 FROM t
+
+        assert.deepEqual(optimizedAst.from, [{ db: null, table: 't', as: null }]);
     });
 
     it('should pay attention to table aliases', () => {
@@ -154,7 +158,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['col1', 'col3']);
-        expect(optimizedAst.from).to.eql([
+
+        assert.deepEqual(optimizedAst.from, [
             // SELECT t1.col1, alias.col3 FROM t LEFT JOIN t3 AS alias ON t1.id = alias.id
             { db: null, table: 't', as: null },
             {
@@ -213,7 +218,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['col1']);
-        expect(optimizedAst.from).to.eql(ast.from);
+
+        assert.deepEqual(optimizedAst.from, ast.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in GROUP BY clause', () => {
@@ -247,7 +253,8 @@ describe('SQL query optimizer', () => {
         const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
-        expect(optimizedAst.from).to.eql(initialAST.from);
+
+        assert.deepEqual(optimizedAst.from, initialAST.from);
     });
 
     it('should not remove LEFT JOIN if table is referenced in ORDER BY clause', () => {
@@ -279,7 +286,8 @@ describe('SQL query optimizer', () => {
         const initialAST = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['col1']);
-        expect(optimizedAst.from).to.eql(initialAST.from);
+
+        assert.deepEqual(optimizedAst.from, initialAST.from);
     });
 
     it('should not remove "parent" table/LEFT JOIN if "child" table/LEFT JOIN is needed', () => {
@@ -371,7 +379,7 @@ describe('SQL query optimizer', () => {
            LEFT JOIN country AS c ON instrument.countryId = c.id
            LEFT JOIN country_translation AS ctde ON c.id = ctde.countryId AND ctde.lang = 'de'
          */
-        expect(optimizedAst.from).to.eql([
+        assert.deepEqual(optimizedAst.from, [
             { db: null, table: 'instrument', as: null },
             {
                 db: null,
@@ -487,7 +495,7 @@ describe('SQL query optimizer', () => {
         };
         const optimizedAst = optimize(ast, ['id', 'name']);
 
-        expect(optimizedAst.from).to.eql([
+        assert.deepEqual(optimizedAst.from, [
             { db: null, table: 't1', as: null },
             {
                 db: null,
@@ -547,7 +555,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['id']);
-        expect(optimizedAst.columns).to.eql([
+
+        assert.deepEqual(optimizedAst.columns, [
             { expr: { type: 'column_ref', table: 't', column: 'id' }, as: null },
             {
                 expr: {
@@ -597,7 +606,8 @@ describe('SQL query optimizer', () => {
         };
 
         const optimizedAst = optimize(ast, ['id']);
-        expect(optimizedAst.columns).to.eql([
+
+        assert.deepEqual(optimizedAst.columns, [
             { expr: { type: 'column_ref', table: null, column: 'id' }, as: null },
             {
                 expr: {
@@ -685,7 +695,9 @@ describe('SQL query optimizer', () => {
             const optimizedAst = optimize(ast, ['col1'], true);
             const [, { expr: subSelect }] = optimizedAst.from;
 
-            expect(subSelect.columns).to.eql([{ expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null }]);
+            assert.deepEqual(subSelect.columns, [
+                { expr: { type: 'column_ref', table: 't', column: 'col1' }, as: null }
+            ]);
         });
 
         it('should optimize from clause', () => {
@@ -706,7 +718,7 @@ describe('SQL query optimizer', () => {
             const optimizedAst = optimize(ast, ['col1'], true);
             const [, { expr: subSelect }] = optimizedAst.from;
 
-            expect(subSelect.from).to.eql([{ db: null, table: 't', as: null }]);
+            assert.deepEqual(subSelect.from, [{ db: null, table: 't', as: null }]);
         });
     });
 
@@ -759,6 +771,7 @@ describe('SQL query optimizer', () => {
         const originalAst = structuredClone(ast);
 
         const optimizedAst = optimize(ast, ['id']);
-        expect(optimizedAst).to.eql(originalAst);
+
+        assert.deepEqual(optimizedAst, originalAst);
     });
 });
