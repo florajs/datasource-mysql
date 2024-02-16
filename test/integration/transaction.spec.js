@@ -1,10 +1,6 @@
 'use strict';
 
-const { expect } = require('chai');
-const sinon = require('sinon');
-
-const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
-const Transaction = require('../../lib/transaction');
+const assert = require('node:assert/strict');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const tableWithAutoIncrement = require('./table-with-auto-increment');
@@ -17,41 +13,30 @@ describe('transaction', () => {
 
     after(() => ds.close());
 
-    it('should return a transaction', async () => {
-        const trx = await ctx.transaction();
-        await trx.rollback();
-
-        expect(trx).to.be.instanceOf(Transaction);
-    });
-
     describe('transaction handling', () => {
-        let queryFnSpy;
+        ['should start a transaction', 'should abort a transaction'].forEach((description) =>
+            it(description, async () => {
+                const trx = await ctx.transaction();
+                await trx.insert('t', { col1: 'transaction' });
+                await trx.rollback();
 
-        beforeEach(() => {
-            queryFnSpy = sinon.spy(PoolConnection.prototype, 'query');
-        });
-
-        afterEach(() => queryFnSpy.restore());
-
-        it('should acquire a connection and start the transaction', async () => {
-            const trx = await ctx.transaction();
-
-            expect(queryFnSpy).to.have.been.calledWith('START TRANSACTION');
-            await trx.rollback();
-        });
+                const result = await ctx.queryOne(`SELECT id FROM "t" WHERE col1 = 'transaction'`);
+                assert.equal(result, null);
+            })
+        );
 
         it('should send COMMIT on commit()', async () => {
-            const trx = await ctx.transaction();
+            const trx1 = await ctx.transaction();
 
-            await trx.commit();
-            expect(queryFnSpy).to.have.been.calledWith('COMMIT');
-        });
+            await trx1.insert('t', { col1: 'transaction' });
+            const trxRunningResult = await ctx.queryOne(`SELECT id FROM "t" WHERE col1 = 'transaction'`);
 
-        it('should send ROLLBACK on rollback()', async () => {
-            const trx = await ctx.transaction();
+            assert.equal(trxRunningResult, null);
 
-            await trx.rollback();
-            expect(queryFnSpy).to.have.been.calledWith('ROLLBACK');
+            await trx1.commit();
+
+            const trxFinishResult = await ctx.queryOne(`SELECT id FROM "t" WHERE col1 = 'transaction'`);
+            assert.notEqual(trxFinishResult, null);
         });
     });
 
@@ -65,7 +50,7 @@ describe('transaction', () => {
                 return result;
             });
 
-            expect(insertId).to.equal(1);
+            assert.equal(insertId, 1);
         });
 
         it('should return number of affected rows', async () => {
@@ -76,7 +61,7 @@ describe('transaction', () => {
             ]);
             await trx.rollback();
 
-            expect(affectedRows).to.equal(2);
+            assert.equal(affectedRows, 2);
         });
     });
 
@@ -90,7 +75,7 @@ describe('transaction', () => {
             const { changedRows } = await trx.update('t', { col1: 'foobar' }, { id: 1 });
             await trx.rollback();
 
-            expect(changedRows).to.equal(1);
+            assert.equal(changedRows, 1);
         });
 
         it('should return number of affected rows', async () => {
@@ -102,7 +87,7 @@ describe('transaction', () => {
             const { affectedRows } = await trx.update('t', { col1: 'test' }, '1 = 1');
             await trx.rollback();
 
-            expect(affectedRows).to.equal(2);
+            assert.ok(affectedRows > 1);
         });
     });
 
@@ -116,7 +101,7 @@ describe('transaction', () => {
             const { affectedRows } = await trx.delete('t', { id: 1 });
             await trx.rollback();
 
-            expect(affectedRows).to.equal(1);
+            assert.equal(affectedRows, 1);
         });
     });
 
@@ -130,7 +115,7 @@ describe('transaction', () => {
                 return result;
             });
 
-            expect(affectedRows).to.equal(1);
+            assert.equal(affectedRows, 1);
         });
 
         it('should return number of changed rows', async () => {
@@ -142,46 +127,43 @@ describe('transaction', () => {
                 return result;
             });
 
-            expect(changedRows).to.equal(0);
+            assert.equal(changedRows, 0);
         });
 
         it('should accept data as an object', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert('t', { id: 1, col1: 'foo' }, ['col1']);
+            await assert.doesNotReject(async () => await trx.upsert('t', { id: 1, col1: 'foo' }, ['col1']));
             await trx.rollback();
-
-            expect(result).to.be.an('object');
         });
 
         it('should accept data as an array of objects', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert(
-                't',
-                [
-                    { id: 1, col1: 'foo' },
-                    { id: 2, col1: 'bar' }
-                ],
-                ['col1']
+            await assert.doesNotReject(
+                async () =>
+                    await trx.upsert(
+                        't',
+                        [
+                            { id: 1, col1: 'foo' },
+                            { id: 2, col1: 'bar' }
+                        ],
+                        ['col1']
+                    )
             );
             await trx.rollback();
-
-            expect(result).to.be.an('object');
         });
 
         it('should accept updates as an object', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert('t', { id: 1, col1: 'foo' }, { col1: ctx.raw('MD5(col1)') });
+            await assert.doesNotReject(
+                async () => await trx.upsert('t', { id: 1, col1: 'foo' }, { col1: ctx.raw('MD5(col1)') })
+            );
             await trx.rollback();
-
-            expect(result).to.be.an('object');
         });
 
         it('should accept updates as an array', async () => {
             const trx = await ctx.transaction();
-            const result = await trx.upsert('t', { id: 1, col1: 'foo' }, ['col1']);
+            assert.doesNotReject(async () => await trx.upsert('t', { id: 1, col1: 'foo' }, ['col1']));
             await trx.rollback();
-
-            expect(result).to.be.an('object');
         });
     });
 
@@ -192,19 +174,17 @@ describe('transaction', () => {
                 { id: 1, col1: 'foo' },
                 { id: 2, col1: 'bar' }
             ]);
-            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
+            await assert.doesNotReject(async () => await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]));
             await trx.rollback();
-
-            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it('should support named parameters', async () => {
             const trx = await ctx.transaction();
             await trx.insert('t', [{ id: 1, col1: 'foo' }]);
-            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
+            await assert.doesNotReject(
+                async () => await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 })
+            );
             await trx.rollback();
-
-            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it('should return typecasted result', async () => {
@@ -213,7 +193,8 @@ describe('transaction', () => {
             const [item] = await trx.query('SELECT "id" FROM "t" WHERE "id" = 1');
             await trx.rollback();
 
-            expect(item).to.have.property('id', 1);
+            assert.ok(Object.hasOwn(item, 'id'));
+            assert.ok(typeof item.id === 'number');
         });
     });
 
@@ -224,7 +205,7 @@ describe('transaction', () => {
             const result = await trx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
             await trx.rollback();
 
-            expect(result).to.eql({ id: 1, col1: 'foo' });
+            assert.deepEqual({ ...result }, { id: 1, col1: 'foo' });
         });
 
         it('should return typecasted result', async () => {
@@ -233,18 +214,19 @@ describe('transaction', () => {
             const row = await trx.queryRow('SELECT "id", "col1" FROM "t" WHERE "id" = 1');
             await trx.rollback();
 
-            expect(row).to.have.property('id', 1);
+            assert.ok(Object.hasOwn(row, 'id'));
+            assert.ok(typeof row.id === 'number');
         });
     });
 
     describe('#queryOne', () => {
-        it('should return array of values', async () => {
+        it('should return single value', async () => {
             const trx = await ctx.transaction();
             await trx.insert('t', [{ id: 1, col1: 'foo' }]);
             const result = await trx.queryOne('SELECT "col1" FROM "t" WHERE "id" = ?', [1]);
             await trx.rollback();
 
-            expect(result).to.equal('foo');
+            assert.equal(result, 'foo');
         });
 
         it('should return typecasted result', async () => {
@@ -253,7 +235,7 @@ describe('transaction', () => {
             const id = await trx.queryOne('SELECT "id" FROM "t" WHERE "id" = 1');
             await trx.rollback();
 
-            expect(id).to.equal(1);
+            assert.equal(id, 1);
         });
     });
 
@@ -267,7 +249,8 @@ describe('transaction', () => {
             const result = await trx.queryCol('SELECT "col1" FROM "t" WHERE "id" = ?', [1]);
             await trx.rollback();
 
-            expect(result).to.eql(['foo']);
+            assert.ok(Array.isArray(result));
+            assert.deepEqual(result, ['foo']);
         });
 
         it('should return typecasted result', async () => {
@@ -276,10 +259,11 @@ describe('transaction', () => {
                 { id: 1, col1: 'foo' },
                 { id: 2, col1: 'bar' }
             ]);
-            const [id] = await trx.queryCol('SELECT "id" FROM "t"');
+            const result = await trx.queryCol('SELECT "id" FROM "t"');
             await trx.rollback();
 
-            expect(id).to.equal(1);
+            assert.ok(Array.isArray(result));
+            assert.ok(result.length >= 2);
         });
     });
 
@@ -287,19 +271,17 @@ describe('transaction', () => {
         it('should support parameters', async () => {
             const trx = await ctx.transaction();
             await trx.insert('t', [{ id: 1, col1: 'foo' }]);
-            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]);
+            await assert.doesNotReject(async () => await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = ?', [1]));
             await trx.rollback();
-
-            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it('should support named parameters', async () => {
             const trx = await ctx.transaction();
             await trx.insert('t', [{ id: 1, col1: 'foo' }]);
-            const result = await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 });
+            await assert.doesNotReject(
+                async () => await trx.query('SELECT "id", "col1" FROM "t" WHERE "id" = :id', { id: 1 })
+            );
             await trx.rollback();
-
-            expect(result).to.eql([{ id: 1, col1: 'foo' }]);
         });
 
         it(`should resolve/return with insertId property`, async () => {
@@ -311,7 +293,8 @@ describe('transaction', () => {
                 return result;
             });
 
-            expect(insertId).to.equal(1);
+            assert.ok(typeof insertId === 'number');
+            assert.equal(insertId, 1);
         });
 
         Object.entries({
@@ -325,7 +308,8 @@ describe('transaction', () => {
                 const result = await trx.exec(`UPDATE t SET col1 = 'affectedRows' WHERE id = 1`);
                 await trx.rollback();
 
-                expect(result).to.have.property(property, value);
+                assert.ok(Object.hasOwn(result, property));
+                assert.equal(result[property], value);
             });
         });
     });

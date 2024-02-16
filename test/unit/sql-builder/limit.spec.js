@@ -1,6 +1,6 @@
 'use strict';
 
-const { expect } = require('chai');
+const assert = require('node:assert/strict');
 
 const queryBuilder = require('../../../lib/sql-query-builder');
 const astFixture = require('./fixture');
@@ -8,13 +8,7 @@ const astFixture = require('./fixture');
 describe('query-builder (limit)', () => {
     let queryAst;
 
-    beforeEach(() => {
-        queryAst = JSON.parse(JSON.stringify(astFixture));
-    });
-
-    afterEach(() => {
-        queryAst = null;
-    });
+    beforeEach(() => (queryAst = structuredClone(astFixture)));
 
     it('should set limit', () => {
         const ast = queryBuilder({
@@ -22,7 +16,7 @@ describe('query-builder (limit)', () => {
             limit: 17
         });
 
-        expect(ast.limit).to.eql([
+        assert.deepEqual(ast.limit, [
             { type: 'number', value: 0 },
             { type: 'number', value: 17 }
         ]);
@@ -35,7 +29,7 @@ describe('query-builder (limit)', () => {
             page: 3
         });
 
-        expect(ast.limit).to.eql([
+        assert.deepEqual(ast.limit, [
             { type: 'number', value: 20 },
             { type: 'number', value: 10 }
         ]);

@@ -1,14 +1,12 @@
 'use strict';
 
+const assert = require('node:assert/strict');
+const { mock } = require('node:test');
 const chai = require('chai');
-const { expect } = chai;
-const sinon = require('sinon');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');
-
-chai.use(require('sinon-chai'));
 
 describe('flora request processing', () => {
     const ds = FloraMysqlFactory.create(ciCfg);
@@ -33,11 +31,13 @@ describe('flora request processing', () => {
             database
         });
 
-        expect(result).to.have.property('totalCount').and.to.be.null;
-        expect(result).to.have.property('data').and.to.be.an('array');
+        assert.ok(Object.hasOwn(result, 'totalCount'));
+        assert.equal(result.totalCount, null);
+        assert.ok(Object.hasOwn(result, 'data'));
+        assert.ok(Array.isArray(result.data));
 
         const data = result.data.map(({ id, col1 }) => ({ id: parseInt(id, 10), col1 }));
-        expect(data).to.eql([
+        assert.deepEqual(data, [
             { id: 1, col1: 'foo' },
             { id: 2, col1: 'bar' }
         ]);
@@ -51,7 +51,10 @@ describe('flora request processing', () => {
         });
         const [item] = data;
 
-        expect(item).to.be.an('object').and.to.have.property('id').and.to.eql(Buffer.from('1'));
+        assert.ok(typeof item === 'object');
+        assert.ok(Object.hasOwn(item, 'id'));
+        assert.ok(item.id instanceof Buffer);
+        assert.equal(item.id.toString(), '1');
     });
 
     it('should query available results if "page" attribute is set in request', async () => {
@@ -63,11 +66,11 @@ describe('flora request processing', () => {
             page: 2
         });
 
-        expect(result).to.have.property('totalCount').and.to.equal(2);
+        assert.ok(Object.hasOwn(result, 'totalCount'));
+        assert.equal(result.totalCount, 2);
     });
 
     it('should respect useMaster flag', async () => {
-        const querySpy = sinon.spy(ds, '_query');
         const floraRequest = {
             database,
             useMaster: true,
@@ -77,14 +80,19 @@ describe('flora request processing', () => {
             page: 2
         };
 
+        mock.method(ds, '_query');
         await ds.process(floraRequest);
 
-        expect(querySpy).to.have.been.calledWithMatch({ type: 'MASTER' });
-        querySpy.restore();
+        const [call] = ds._query.mock.calls;
+        const [ctx] = call.arguments;
+        assert.ok(Object.hasOwn(ctx, 'type'));
+        assert.equal(ctx.type, 'MASTER');
+
+        ds._query.mock.restore();
     });
 
     it('should use modified query AST', async () => {
-        const querySpy = sinon.spy(ds, '_query');
+        mock.method(ds, '_query');
         const floraRequest = {
             database,
             attributes: ['col1'],
@@ -103,11 +111,11 @@ describe('flora request processing', () => {
 
         await ds.process(floraRequest);
 
-        expect(querySpy).to.have.been.calledWith(
-            sinon.match.object,
-            sinon.match('WHERE "t"."id" < 0'),
-            sinon.match.any
-        );
-        querySpy.restore();
+        const [call] = ds._query.mock.calls;
+        const [, sql] = call.arguments;
+
+        assert.equal(sql, 'SELECT "t"."col1" FROM "t" WHERE "t"."id" < 0');
+
+        ds._query.mock.restore();
     });
 });
