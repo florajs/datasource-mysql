@@ -2,7 +2,6 @@
 
 const assert = require('node:assert/strict');
 const { mock } = require('node:test');
-const chai = require('chai');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
