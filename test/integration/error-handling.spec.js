@@ -19,8 +19,8 @@ describe('error handling', () => {
             database
         };
 
-        assert.rejects(async () => await ds.process(floraRequest), {
-            name: 'Error',
+        await assert.rejects(async () => await ds.process(floraRequest), {
+            name: 'ImplementationError',
             message: 'Attribute "nonexistentAttr" is not provided by SQL query'
         });
     });
@@ -32,8 +32,8 @@ describe('error handling', () => {
             database
         };
 
-        assert.rejects(async () => await ds.process(floraRequest), {
-            name: 'Error',
+        await assert.rejects(async () => await ds.process(floraRequest), {
+            name: 'ImplementationError',
             message: 'Attribute "nonexistentAttr" is not provided by SQL query'
         });
     });
@@ -47,15 +47,15 @@ describe('error handling', () => {
             _explain
         };
 
-        assert.rejects(
+        await assert.rejects(
             async () => await ds.process(floraRequest),
             (err) => {
                 assert.ok(err instanceof Error);
 
-                assert.ok(Object.hasOwn(err, 'sql'));
-                assert.equal(err.sql, 'SELECT "t"."col1" FROM "nonexistent_table"');
+                assert.ok(Object.hasOwn(_explain, 'sql'));
+                assert.equal(_explain.sql, 'SELECT "t"."col1" FROM "nonexistent_table"');
 
-                assert.ok(Object.hasOwn(err, 'host'));
+                assert.ok(Object.hasOwn(_explain, 'host'));
 
                 return true;
             }
@@ -71,7 +71,7 @@ describe('error handling', () => {
             _explain
         };
 
-        assert.rejects(async () => await ds.process(floraRequest), {
+        await assert.rejects(async () => await ds.process(floraRequest), {
             name: 'Error',
             message: /Unknown database 'nonexistent_database'/
         });
