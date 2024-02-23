@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { mock } = require('node:test');
+const { after, describe, it, mock } = require('node:test');
 const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -12,7 +12,7 @@ describe('datasource-mysql', () => {
     const db = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
     const ctx = ds.getContext({ db, useMaster: true });
 
-    after(() => ds.close());
+    after(async () => await ds.close());
 
     describe('query method', () => {
         it('should release pool connections manually', async () => {

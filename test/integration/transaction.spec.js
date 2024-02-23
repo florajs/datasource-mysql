@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { after, describe, it } = require('node:test');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const tableWithAutoIncrement = require('./table-with-auto-increment');

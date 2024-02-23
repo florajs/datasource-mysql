@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { afterEach, describe, it } = require('node:test');
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');
@@ -10,7 +11,7 @@ describe('init queries', () => {
     const ctxCfg = { db, useMaster: true };
     let ds;
 
-    afterEach(() => ds.close());
+    afterEach(async () => await ds.close());
 
     it('should set sql_mode to ANSI if no init queries are defined', async () => {
         ds = FloraMysqlFactory.create(ciCfg);

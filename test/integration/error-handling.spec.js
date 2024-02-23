@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { after, describe, it } = require('node:test');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -10,7 +11,7 @@ describe('error handling', () => {
     const ds = FloraMysqlFactory.create(ciCfg);
     const database = process.env.MYSQL_DATABASE || 'flora_mysql_testdb';
 
-    after(() => ds.close());
+    after(async () => await ds.close());
 
     it('should return an error if selected attribute has no corresponding column', async () => {
         const floraRequest = {
