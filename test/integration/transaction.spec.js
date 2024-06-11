@@ -175,11 +175,15 @@ describe('transaction', () => {
             await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(32))`);
             await ctx.transaction(async (trx) => {
                 await trx.insert(table, { id: 1, col1: 'foo' });
-                await trx.upsert(table, { id: 1, col1: 'bar' }, { col1: ctx.raw('MD5(col1)') });
+                await trx.upsert(
+                    table,
+                    { id: 1, col1: 'bar' },
+                    { col1: ctx.raw(`CONCAT(${table}.col1, \`new\`.col1)`) }
+                );
             });
 
-            const hash = await ctx.queryOne(`SELECT col1 FROM ${table} WHERE id = 1`);
-            assert.equal(hash, 'acbd18db4cc2f85cedef654fccc4a4d8');
+            const value = await ctx.queryOne(`SELECT col1 FROM ${table} WHERE id = 1`);
+            assert.equal(value, 'foobar');
         });
 
         it('should accept updates as an array', async () => {

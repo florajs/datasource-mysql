@@ -334,20 +334,34 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [
-                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE \`col1\` = VALUES(\`col1\`), \`col2\` = VALUES(\`col2\`)`
+                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new\` ON DUPLICATE KEY UPDATE \`col1\` = \`new\`.\`col1\`, \`col2\` = \`new\`.\`col2\``
             ]);
         });
 
         it('should accept assignment list as an object', async () => {
-            await ctx.upsert(
-                't',
-                { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') },
-                { col1: 'foo', col2: ctx.raw(ctx.quoteIdentifier('col2') + ' + 1') }
-            );
+            await ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }, { col1: 'foo' });
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [
-                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) ON DUPLICATE KEY UPDATE \`col1\` = 'foo', \`col2\` = \`col2\` + 1`
+                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new\` ON DUPLICATE KEY UPDATE \`col1\` = 'foo'`
+            ]);
+        });
+
+        it('must not use alias for raw values', async () => {
+            await ctx.upsert('t', { id: 1, ts: '2000-01-01 00:00:00' }, { ts: ctx.raw('NOW()') });
+
+            const [call] = ctx.exec.mock.calls;
+            assert.deepEqual(call.arguments, [
+                `INSERT INTO \`t\` (\`id\`, \`ts\`) VALUES (1, '2000-01-01 00:00:00') AS \`new\` ON DUPLICATE KEY UPDATE \`ts\` = NOW()`
+            ]);
+        });
+
+        it('should support custom alias', async () => {
+            await ctx.upsert('t', { id: 1, col1: 'val1' }, ['col1'], 'funkyAlias');
+
+            const [call] = ctx.exec.mock.calls;
+            assert.deepEqual(call.arguments, [
+                `INSERT INTO \`t\` (\`id\`, \`col1\`) VALUES (1, 'val1') AS \`funkyAlias\` ON DUPLICATE KEY UPDATE \`col1\` = \`funkyAlias\`.\`col1\``
             ]);
         });
     });
