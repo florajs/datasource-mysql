@@ -109,6 +109,79 @@ describe('SQL query optimizer', () => {
         assert.deepEqual(optimizedAst.from, [{ db: null, table: 't', as: null }]);
     });
 
+    it('should not remove JOIN dependencies from AST', () => {
+        /* should not remove t1 LEFT JOIN because it's required for JOINs on t2/t3
+         * SELECT t.id
+         * FROM t
+         * LEFT JOIN t1 ON t.id = t1.id
+         * LEFT JOIN t2 ON t1.id = t2.id
+         * LEFT JOIN t3 ON t2.id = t3.id
+         * WHERE t3.id = 1
+         */
+        const from = [
+            { db: null, table: 't', as: null },
+            {
+                db: null,
+                table: 't1',
+                as: null,
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't', column: 'id' },
+                    right: { type: 'column_ref', table: 't1', column: 'id' }
+                }
+            },
+            {
+                db: null,
+                table: 't2',
+                as: null,
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't1', column: 'id' },
+                    right: { type: 'column_ref', table: 't2', column: 'id' }
+                }
+            },
+            {
+                db: null,
+                table: 't3',
+                as: null,
+                join: 'LEFT JOIN',
+                on: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't2', column: 'id' },
+                    right: { type: 'column_ref', table: 't3', column: 'id' }
+                }
+            }
+        ];
+        const optimizedAst = optimize(
+            {
+                with: null,
+                type: 'select',
+                options: null,
+                distinct: null,
+                columns: [{ expr: { type: 'column_ref', table: 't', column: 'id' }, as: null }],
+                from,
+                where: {
+                    type: 'binary_expr',
+                    operator: '=',
+                    left: { type: 'column_ref', table: 't3', column: 'id' },
+                    right: { type: 'number', value: 1 }
+                },
+                groupby: null,
+                having: null,
+                orderby: null,
+                limit: null
+            },
+            ['id']
+        );
+
+        assert.deepEqual(optimizedAst.from, from);
+    });
+
     it('should pay attention to table aliases', () => {
         /**
          * t3 must not be removed because it's used by it's alias
