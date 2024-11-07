@@ -264,6 +264,7 @@ class DataSource {
             port: serverCfg.port || 3306,
             user: serverCfg.user || this._config.user,
             password: serverCfg.password || this._config.password,
+            charset: serverCfg.charset || this._config.charset,
             database,
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
