@@ -1,6 +1,6 @@
 {
   "name": "@florajs/datasource-mysql",
-  "version": "4.1.0",
+  "version": "4.0.4",
   "description": "MySQL connection for Flora",
   "main": "index.js",
   "scripts": {
