@@ -334,7 +334,7 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [
-                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new\` ON DUPLICATE KEY UPDATE \`col1\` = \`new\`.\`col1\`, \`col2\` = \`new\`.\`col2\``
+                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new_values\` ON DUPLICATE KEY UPDATE \`col1\` = \`new_values\`.\`col1\`, \`col2\` = \`new_values\`.\`col2\``
             ]);
         });
 
@@ -343,7 +343,7 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [
-                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new\` ON DUPLICATE KEY UPDATE \`col1\` = 'foo'`
+                `INSERT INTO \`t\` (\`col1\`, \`col2\`, \`col3\`) VALUES ('val1', 1, NOW()) AS \`new_values\` ON DUPLICATE KEY UPDATE \`col1\` = 'foo'`
             ]);
         });
 
@@ -352,7 +352,7 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [
-                `INSERT INTO \`t\` (\`id\`, \`ts\`) VALUES (1, '2000-01-01 00:00:00') AS \`new\` ON DUPLICATE KEY UPDATE \`ts\` = NOW()`
+                `INSERT INTO \`t\` (\`id\`, \`ts\`) VALUES (1, '2000-01-01 00:00:00') AS \`new_values\` ON DUPLICATE KEY UPDATE \`ts\` = NOW()`
             ]);
         });
 

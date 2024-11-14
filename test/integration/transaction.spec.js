@@ -178,7 +178,7 @@ describe('transaction', () => {
                 await trx.upsert(
                     table,
                     { id: 1, col1: 'bar' },
-                    { col1: ctx.raw(`CONCAT(${table}.col1, \`new\`.col1)`) }
+                    { col1: ctx.raw(`CONCAT(${table}.col1, \`new_values\`.col1)`) }
                 );
             });
 
