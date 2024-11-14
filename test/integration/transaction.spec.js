@@ -150,20 +150,20 @@ describe('transaction', () => {
         it('should accept data as an array of objects', async () => {
             const table = 'trx_upsert_data_array';
 
-            await ctx.exec(`CREATE TABLE ${table} (id INT, col1 VARCHAR(10))`);
-            await ctx.transaction(
-                async (trx) =>
-                    await trx.upsert(
-                        table,
-                        [
-                            { id: 1, col1: 'foo' },
-                            { id: 2, col1: 'bar' }
-                        ],
-                        ['col1']
-                    )
-            );
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
+            await ctx.transaction(async (trx) => {
+                await trx.insert(table, { id: 1, col1: 'foobar' });
+                await trx.upsert(
+                    table,
+                    [
+                        { id: 1, col1: 'foo' },
+                        { id: 2, col1: 'bar' }
+                    ],
+                    ['col1']
+                );
+            });
 
-            const result = await ctx.query(`SELECT id, col1 FROM ${table}`);
+            const result = await ctx.query(`SELECT id, col1 FROM ${table} ORDER BY id`);
             assert.equal(result.length, 2);
             assert.deepEqual({ ...result[0] }, { id: 1, col1: 'foo' });
             assert.deepEqual({ ...result[1] }, { id: 2, col1: 'bar' });
