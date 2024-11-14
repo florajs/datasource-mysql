@@ -198,6 +198,24 @@ describe('transaction', () => {
             const result = await ctx.queryOne(`SELECT col1 FROM ${table} WHERE id = 1`);
             assert.equal(result, 'bar');
         });
+
+        it('should use alias parameter', async () => {
+            const table = 'trx_upsert_update_object_custom_alias';
+
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(32))`);
+            await ctx.transaction(async (trx) => {
+                await trx.insert(table, { id: 1, col1: 'foo' });
+                await trx.upsert(
+                    table,
+                    { id: 1, col1: 'bar' },
+                    { col1: ctx.raw(`CONCAT(${table}.col1, \`customAlias\`.col1)`) },
+                    'customAlias'
+                );
+            });
+
+            const value = await ctx.queryOne(`SELECT col1 FROM ${table} WHERE id = 1`);
+            assert.equal(value, 'foobar');
+        });
     });
 
     describe('#query', () => {
