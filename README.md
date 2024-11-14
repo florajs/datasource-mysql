@@ -12,7 +12,7 @@ MySQL data source for [Flora](https://github.com/florajs/flora), based on the [m
 
 ```js
 module.exports = {
-    …
+    // …
     dataSources: {
         mysql: {
             constructor: require('@florajs/datasource-mysql'),
@@ -24,7 +24,7 @@ module.exports = {
                         password: '…',
                         masters: [{ host: 'db01' }],
                         slaves: [{ host: 'db02' }, { host: 'db03' }],
-                    }
+                    },
                     specialServer: {
                         user: 'dbuser2',
                         password: '…',
@@ -33,7 +33,8 @@ module.exports = {
                 },
             },
         },
-        …
+        // …
+    },
 };
 ```
 
@@ -96,7 +97,7 @@ db.insert('profiles', {
 
 // Upsert (insert or update)
 db.upsert(
-    'profiles', 
+    'profiles',
     { id: 1000, firstname: 'Max' },
     [ 'firstname' ] // Update firstname to "Max" if profile with id 1000 already exists
 );
@@ -117,21 +118,22 @@ db.delete('profiles', { id: 1000 });
 ```js
 const trx = await db.transaction();
 try {
-    await trx.update('profiles', …);
-    await trx.insert('log', …);
+    await trx.update('profiles', { firstname: 'John', lastname: 'Doe' }, { userId: 1337 });
+    await trx.insert('log', { userId: 1337, msg: 'Changes applied' });
     await trx.commit();
 } catch (err) {
     try {
         // Ignore rollback errors
         await trx.rollback();
-    } catch (ignoreErr) { }
-    throw err;
+    } catch (ignoreErr) {
+        throw err;
+    }
 }
 
 // Same as above, but shorter:
 await db.transaction(async (trx) => {
-    await trx.update('profiles', …);
-    await trx.insert('log', …);
+    await trx.update('profiles', { firstname: 'John', lastname: 'Doe' }, { userId: 1337 });
+    await trx.insert('log', { userId: 1337, msg: 'Changes applied' });
 });
 ```
 
