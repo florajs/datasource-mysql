@@ -294,6 +294,13 @@ describe('context', () => {
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [`UPDATE \`t\` SET \`col1\` = 'val1' WHERE \`col2\` IN (1, 'abc', NULL)`]);
         });
+
+        it('should reject empty arrays in where clause', async () => {
+            await assert.rejects(async () => ctx.update('t', { col1: 'val1' }, { col1: [] }), {
+                name: 'ImplementationError',
+                message: 'Empty arrays in WHERE clause are not supported'
+            });
+        });
     });
 
     describe('#delete', () => {
@@ -329,6 +336,13 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [`DELETE FROM \`t\` WHERE \`col1\` IN (1, 'abc', NULL)`]);
+        });
+
+        it('should reject empty arrays in where clause', async () => {
+            await assert.rejects(async () => ctx.delete('t', { col1: [] }), {
+                name: 'ImplementationError',
+                message: 'Empty arrays in WHERE clause are not supported'
+            });
         });
     });
 
