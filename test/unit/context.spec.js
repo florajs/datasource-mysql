@@ -287,6 +287,13 @@ describe('context', () => {
             });
             assert.equal(ctx.exec.mock.callCount(), 0);
         });
+
+        it('should handle array values in where clause', async () => {
+            await ctx.update('t', { col1: 'val1' }, { col2: [1, 'abc', null] });
+
+            const [call] = ctx.exec.mock.calls;
+            assert.deepEqual(call.arguments, [`UPDATE \`t\` SET \`col1\` = 'val1' WHERE \`col2\` IN (1, 'abc', NULL)`]);
+        });
     });
 
     describe('#delete', () => {
@@ -315,6 +322,13 @@ describe('context', () => {
                 message: 'where expression is not set'
             });
             assert.equal(ctx.exec.mock.callCount(), 0);
+        });
+
+        it('should handle array values in where clause', async () => {
+            await ctx.delete('t', { col1: [1, 'abc', null] });
+
+            const [call] = ctx.exec.mock.calls;
+            assert.deepEqual(call.arguments, [`DELETE FROM \`t\` WHERE \`col1\` IN (1, 'abc', NULL)`]);
         });
     });
 
