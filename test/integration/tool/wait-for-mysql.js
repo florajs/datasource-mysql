@@ -1,6 +1,6 @@
 'use strict';
 
-const mysql = require('mysql');
+const mysql = require('mysql2');
 const [, , host, port, database] = process.argv;
 
 const connection = mysql.createConnection({ user: 'root', database, host, port });

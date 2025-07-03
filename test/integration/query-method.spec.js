@@ -2,7 +2,7 @@
 
 const assert = require('node:assert/strict');
 const { after, describe, it, mock } = require('node:test');
-const PoolConnection = require('../../node_modules/mysql/lib/PoolConnection');
+const PoolConnection = require('mysql2/promise').PromisePoolConnection;
 
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
 const ciCfg = require('./ci-config');

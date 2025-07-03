@@ -12,7 +12,6 @@ describe('transaction', () => {
     const ctx = ds.getContext({ db });
 
     after(() => ds.close());
-
     describe('transaction handling', () => {
         it('should send COMMIT on commit()', async () => {
             const table = 'trx_commit';
