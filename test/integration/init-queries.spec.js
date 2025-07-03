@@ -57,13 +57,7 @@ describe('init queries', () => {
     it('should execute custom init function', async () => {
         const config = {
             ...ciCfg,
-            onConnect: (connection) =>
-                new Promise((resolve, reject) => {
-                    connection.query('SET SESSION max_execution_time = 1337', (err) => {
-                        if (err) return reject(err);
-                        resolve();
-                    });
-                })
+            onConnect: (connection) => connection.query('SET SESSION max_execution_time = 1337')
         };
 
         ds = FloraMysqlFactory.create(config);
@@ -102,7 +96,7 @@ describe('init queries', () => {
 
         await assert.rejects(async () => await ctx.query('SELECT 1 FROM dual'), {
             code: 'ER_BAD_FIELD_ERROR',
-            message: `ER_BAD_FIELD_ERROR: Unknown column 'nonExistentAttr' in 'field list'`
+            message: `Unknown column 'nonExistentAttr' in 'field list'`
         });
     });
 });

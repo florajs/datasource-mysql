@@ -1,6 +1,6 @@
 'use strict';
 
-const mysql = require('mysql');
+const mysql = require('mysql2/promise');
 const { Parser } = require('@florajs/sql-parser');
 const astUtil = require('@florajs/sql-parser').util;
 const { ImplementationError } = require('@florajs/errors');
@@ -41,30 +41,21 @@ function checkSqlEquivalents(attributes, columns) {
 
 /**
  * Initialize pool connection (proper error handling
- * is quiet impossible in during pool connection event)
+ * is quite impossible in during pool connection event)
  *
- * @param {Connection} connection
+ * @param {import('mysql2/promise').PoolConnection} connection
  * @param {Array.<string|Array.<string>|Function>} initConfigs
  * @returns {Promise}
  */
 function initConnection(connection, initConfigs) {
-    function query(sql) {
-        return new Promise((resolve, reject) => {
-            connection.query(sql, (err) => {
-                if (err) return reject(err);
-                return resolve();
-            });
-        });
-    }
-
     const initQueries = initConfigs.map((initCfg) => {
         if (typeof initCfg === 'string') {
-            return query(initCfg);
+            return connection.query(initCfg);
         }
 
         if (Array.isArray(initCfg)) {
             return initCfg.every((item) => typeof item === 'string')
-                ? Promise.all(initCfg.map(query))
+                ? Promise.all(initCfg.map((sql) => connection.query(sql)))
                 : Promise.reject(new Error('All items must be of type string'));
         }
 
@@ -140,6 +131,7 @@ class DataSource {
     constructor(api, config) {
         this._log = api.log.child({ component: 'datasource-mysql' });
         this._config = config;
+        /** @type {{ [server: string]: { [database: string]: import('mysql2/promise').PoolCluster } }} */
         this._pools = {};
         this._status = config._status;
 
@@ -183,7 +175,6 @@ class DataSource {
      */
     async process(request) {
         const { server = 'default', database, useMaster = false, _explain = {} } = request;
-        const typeCast = false;
         let sql;
 
         if (!Object.hasOwn(request, 'queryAst')) this.buildSqlAst(request);
@@ -196,8 +187,9 @@ class DataSource {
         if (request.page) sql += '; SELECT FOUND_ROWS() AS totalCount';
         if (request._status) request._status.set({ server, database, sql });
 
-        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, typeCast, _explain)
+        return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, _explain)
             .then(({ results }) => {
+                // console.log('>>>>>', { results });
                 return {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
@@ -215,16 +207,12 @@ class DataSource {
     close() {
         const connectionPools = [];
 
-        function drain(pool) {
-            return new Promise((resolve) => pool.end(resolve));
-        }
-
-        Object.keys(this._pools).forEach((server) => {
-            Object.keys(this._pools[server]).forEach((database) => {
+        for (const [server, dbs] of Object.entries(this._pools)) {
+            for (const [database, pool] of Object.entries(dbs)) {
                 this._log.debug('closing MySQL pool "%s" at "%s"', database, server);
-                connectionPools.push(drain(this._pools[server][database]));
-            });
-        });
+                connectionPools.push(pool.end());
+            }
+        }
 
         return Promise.all(connectionPools);
     }
@@ -269,7 +257,8 @@ class DataSource {
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             dateStrings: true, // force date types to be returned as strings
-            multipleStatements: true // pagination queries
+            multipleStatements: true, // pagination queries,
+            enableKeepAlive: true
         };
 
         return ['masters', 'slaves']
@@ -285,7 +274,7 @@ class DataSource {
     /**
      * @param {string} server
      * @param {string} database
-     * @returns {Object}
+     * @returns {import('mysql2/promise').PoolCluster}
      * @private
      */
     _getConnectionPool(server, database) {
@@ -317,27 +306,23 @@ class DataSource {
      * @param {string=}     ctx.server
      * @param {string}      ctx.db
      * @param {string}      sql
-     * @param {boolean=}    typeCast
      * @param {Object=}     explain
      * @returns {Promise}
      * @private
      */
-    _query(ctx, sql, typeCast = true, explain = {}) {
-        return this._getConnection(ctx).then((connection) => {
-            const { host } = connection.config;
-
-            explain.host = host;
-            if (this._status) this._status.increment('dataSourceQueries');
-            this._log.trace({ host, sql }, 'executing query');
-
-            return new Promise((resolve, reject) => {
-                connection.query({ sql, typeCast }, (err, results, fields) => {
-                    connection.release();
-                    if (err) return reject(err);
-                    return resolve({ results, fields });
-                });
-            });
-        });
+    async _query(ctx, sql, explain = {}) {
+        /** @type {import('mysql2/promise').PoolConnection} */
+        const connection = await this._getConnection(ctx);
+        const { host } = connection.config;
+        explain.host = host;
+        this._status?.increment('dataSourceQueries');
+        this._log.trace({ host, sql }, 'executing query');
+        try {
+            const [results, fields] = await connection.query({ sql });
+            return { results, fields };
+        } finally {
+            connection.release();
+        }
     }
 
     /**
@@ -348,38 +333,33 @@ class DataSource {
      * @returns {Promise}
      * @private
      */
-    _getConnection({ type, server, db }) {
-        return new Promise((resolve, reject) => {
-            this._getConnectionPool(server, db).getConnection(`${type}*`, (err, connection) => {
-                if (err) {
-                    if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
-                        return resolve(this._getConnection({ type: 'MASTER', server, db }));
-                    }
-                    return reject(err);
-                }
-                return resolve(connection);
-            });
-        }).then((connection) => {
-            if (Object.hasOwn(connection, '_floraInitialized')) return connection;
-
-            const config = this._config;
-            const init = [Object.hasOwn(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
-            if (Object.hasOwn(config, server) && Object.hasOwn(config[server], 'onConnect'))
-                init.push(config[server].onConnect);
-
-            const socket = connection._socket;
-            if (typeof socket === 'object' && typeof socket.setKeepAlive === 'function') {
-                socket.setKeepAlive(true);
+    async _getConnection({ type, server, db }) {
+        /** @type {import('mysql2/promise').PoolConnection} */
+        let connection;
+        try {
+            connection = await this._getConnectionPool(server, db).getConnection(`${type}*`);
+        } catch (err) {
+            if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
+                return await this._getConnection({ type: 'MASTER', server, db });
             }
+            throw err;
+        }
 
-            this._log.trace('initialize connection');
-            return initConnection(connection, init)
-                .then(() => Object.defineProperty(connection, '_floraInitialized', { value: true }))
-                .then(() => {
-                    if (this._status) this._status.increment('dataSourceConnects');
-                })
-                .then(() => connection);
-        });
+        if (Object.hasOwn(connection, '_floraInitialized')) return connection;
+
+        const config = this._config;
+        const init = [Object.hasOwn(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
+        if (Object.hasOwn(config, server) && Object.hasOwn(config[server], 'onConnect')) {
+            init.push(config[server].onConnect);
+        }
+
+        this._log.trace('initialize connection');
+        await initConnection(connection, init);
+
+        Object.defineProperty(connection, '_floraInitialized', { value: true });
+        this._status?.increment('dataSourceConnects');
+
+        return connection;
     }
 }
 

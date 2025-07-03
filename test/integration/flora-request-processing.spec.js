@@ -41,20 +41,6 @@ describe('flora request processing', () => {
         ]);
     });
 
-    it('should return result w/o type casting', async () => {
-        const { data } = await ds.process({
-            attributes: ['id'],
-            queryAstRaw: astTpl,
-            database
-        });
-        const [item] = data;
-
-        assert.ok(typeof item === 'object');
-        assert.ok(Object.hasOwn(item, 'id'));
-        assert.ok(item.id instanceof Buffer);
-        assert.equal(item.id.toString(), '1');
-    });
-
     it('should query available results if "page" attribute is set in request', async () => {
         const result = await ds.process({
             database,
