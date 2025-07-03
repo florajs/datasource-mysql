@@ -189,7 +189,7 @@ class DataSource {
 
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, _explain)
             .then(({ results }) => {
-                // console.log('>>>>>', { results });
+
                 return {
                     data: !request.page ? results : results[0],
                     totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
