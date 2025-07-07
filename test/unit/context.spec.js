@@ -350,8 +350,8 @@ describe('context', () => {
         beforeEach(() => mock.method(ctx, 'exec', async () => Promise.resolve({ affectedRows: 1 })));
         afterEach(() => ctx.exec.mock.restore());
 
-        it('should throw an Implementation error if update parameter is missing', () => {
-            assert.throws(() => ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }), {
+        it('should throw an Implementation error if update parameter is missing', async () => {
+            await assert.rejects(() => ctx.upsert('t', { col1: 'val1', col2: 1, col3: ctx.raw('NOW()') }), {
                 name: 'ImplementationError',
                 message: 'Update parameter must be either an object or an array of strings'
             });
