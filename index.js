@@ -188,13 +188,10 @@ class DataSource {
         if (request._status) request._status.set({ server, database, sql });
 
         return this._query({ type: useMaster ? 'MASTER' : 'SLAVE', server, db: database }, sql, _explain)
-            .then(({ results }) => {
-
-                return {
-                    data: !request.page ? results : results[0],
-                    totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
-                };
-            })
+            .then(({ results }) => ({
+                data: !request.page ? results : results[0],
+                totalCount: !request.page ? null : parseInt(results[1][0].totalCount, 10)
+            }))
             .catch((err) => {
                 this._log.info(err);
                 throw err;
