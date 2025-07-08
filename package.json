@@ -43,7 +43,7 @@
     }
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
     "@florajs/errors": "^4.0.0",
