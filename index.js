@@ -332,9 +332,9 @@ class DataSource {
      */
     async _getConnection({ type, server, db }) {
         /** @type {import('mysql2/promise').PoolConnection} */
-        let connection;
+        let poolConnection;
         try {
-            connection = await this._getConnectionPool(server, db).getConnection(`${type}*`);
+            poolConnection = await this._getConnectionPool(server, db).getConnection(`${type}*`);
         } catch (err) {
             if (type === 'SLAVE' && err.code === 'POOL_NOEXIST') {
                 return await this._getConnection({ type: 'MASTER', server, db });
@@ -342,7 +342,7 @@ class DataSource {
             throw err;
         }
 
-        if (Object.hasOwn(connection, '_floraInitialized')) return connection;
+        if (Object.hasOwn(poolConnection.connection, '_floraInitialized')) return poolConnection;
 
         const config = this._config;
         const init = [Object.hasOwn(config, 'onConnect') ? config.onConnect : "SET SESSION sql_mode = 'ANSI'"];
@@ -351,12 +351,12 @@ class DataSource {
         }
 
         this._log.trace('initialize connection');
-        await initConnection(connection, init);
+        await initConnection(poolConnection, init);
 
-        Object.defineProperty(connection, '_floraInitialized', { value: true });
+        Object.defineProperty(poolConnection.connection, '_floraInitialized', { value: true });
         this._status?.increment('dataSourceConnects');
 
-        return connection;
+        return poolConnection;
     }
 }
 
