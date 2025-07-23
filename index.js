@@ -254,6 +254,7 @@ class DataSource {
             connectTimeout: serverCfg.connectTimeout || this._config.connectTimeout || 3000,
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             dateStrings: true, // force date types to be returned as strings
+            decimalNumbers: true, // convert DECIMALs to numbers
             multipleStatements: true, // pagination queries,
             enableKeepAlive: true
         };

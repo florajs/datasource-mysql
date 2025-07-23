@@ -399,4 +399,22 @@ describe('context', () => {
             );
         });
     });
+
+    describe('typecasting', () => {
+        [
+            { description: 'typecasting arithmetic operation', query: 'SELECT 1.23 + 4.56', expected: 5.79 },
+            {
+                description: 'typecasting SUM function result',
+                query: 'SELECT SUM(num) FROM (VALUES ROW(1), ROW(2.3)) AS t(num)',
+                expected: 3.3
+            },
+            {
+                description: 'typecasting AVG function result',
+                query: 'SELECT AVG(num) FROM (VALUES ROW(1), ROW(2)) AS t(num)',
+                expected: 1.5
+            }
+        ].forEach(({ description, query, expected }) =>
+            it(description, async () => assert.equal(await ctx.queryOne(query), expected))
+        );
+    });
 });
