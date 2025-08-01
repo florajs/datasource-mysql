@@ -31,10 +31,10 @@ describe('mysql data source', () => {
         it('should generate AST from SQL query', () => {
             const resourceConfig = {
                 database: 'test',
-                query: 'SELECT flora_request_processing.id, flora_request_processing.col1, flora_request_processing.col2 FROM flora_request_processing'
+                query: 'SELECT flora_request_processing.id, flora_request_processing.col1, flora_request_processing.dataCol FROM flora_request_processing'
             };
 
-            ds.prepare(resourceConfig, ['id', 'col1', 'col2']);
+            ds.prepare(resourceConfig, ['id', 'col1', 'dataCol']);
 
             assert.ok(Object.hasOwn(resourceConfig, 'queryAstRaw'));
             assert.deepEqual(resourceConfig.queryAstRaw, astTpl);
@@ -43,14 +43,14 @@ describe('mysql data source', () => {
         it('should prepare search attributes', () => {
             const resourceConfig = {
                 database: 'test',
-                searchable: 'col1,col2',
-                query: 'SELECT t.col1, t.col2 FROM t'
+                searchable: 'col1,dataCol',
+                query: 'SELECT t.col1, t.dataCol FROM t'
             };
 
-            ds.prepare(resourceConfig, ['col1', 'col2']);
+            ds.prepare(resourceConfig, ['col1', 'dataCol']);
 
             assert.ok(Array.isArray(resourceConfig.searchable));
-            assert.deepEqual(resourceConfig.searchable, ['col1', 'col2']);
+            assert.deepEqual(resourceConfig.searchable, ['col1', 'dataCol']);
         });
 
         describe('error handling', () => {
@@ -98,28 +98,28 @@ describe('mysql data source', () => {
             it('should throw an error if an attribute is not available in SQL query', () => {
                 const resourceConfig = { database: 'test', query: 'SELECT t.col1 FROM t' };
 
-                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'col2']), {
+                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'dataCol']), {
                     name: 'ImplementationError',
-                    message: 'Attribute "col2" is not provided by SQL query'
+                    message: 'Attribute "dataCol" is not provided by SQL query'
                 });
             });
 
             it('should throw an error if an attribute is not available as column alias', () => {
                 const resourceConfig = { database: 'test', query: 'SELECT t.someWeirdColumnName AS col1 FROM t' };
 
-                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'col2']), {
+                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'dataCol']), {
                     name: 'ImplementationError',
-                    message: 'Attribute "col2" is not provided by SQL query'
+                    message: 'Attribute "dataCol" is not provided by SQL query'
                 });
             });
 
             it('should throw an error if columns are not fully qualified', () => {
                 const resourceConfig = {
                     database: 'test',
-                    query: 'SELECT t1.col1, attr AS col2 FROM t1 JOIN t2 ON t1.id = t2.id'
+                    query: 'SELECT t1.col1, attr AS dataCol FROM t1 JOIN t2 ON t1.id = t2.id'
                 };
 
-                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'col2']), {
+                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'dataCol']), {
                     name: 'ImplementationError',
                     message: 'Column "attr" must be fully qualified'
                 });
@@ -128,7 +128,7 @@ describe('mysql data source', () => {
             it('should throw an error if columns are not unique', () => {
                 const resourceConfig = { database: 'test', query: 'SELECT t.col1, someAttr AS col1 FROM t' };
 
-                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'col2']), { name: 'ImplementationError' });
+                assert.throws(() => ds.prepare(resourceConfig, ['col1', 'dataCol']), { name: 'ImplementationError' });
             });
 
             it('should throw an error if search attribute is not available in AST', () => {
@@ -147,7 +147,7 @@ describe('mysql data source', () => {
 
         it('should generate AST from data source config if no SQL query is available', () => {
             const resourceConfig = { database: 'test', table: 'flora_request_processing' };
-            const attributes = ['id', 'col1', 'col2'];
+            const attributes = ['id', 'col1', 'dataCol'];
 
             ds.prepare(resourceConfig, attributes);
 

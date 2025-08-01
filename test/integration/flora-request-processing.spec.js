@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { before, after, describe, it, mock } = require('node:test');
+const { before, after, afterEach, describe, it, mock } = require('node:test');
 
 const astTpl = require('../ast-tpl');
 const { FloraMysqlFactory } = require('../FloraMysqlFactory');
@@ -14,15 +14,25 @@ describe('flora request processing', () => {
     const table = 'flora_request_processing';
 
     before(async () => {
-        await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10), col2 VARCHAR(10))`);
+        await ctx.exec(
+            `CREATE TABLE ${table} (
+               id INT PRIMARY KEY,
+               col1 VARCHAR(10) DEFAULT NULL,
+               dataCol JSON DEFAULT NULL
+            )`
+        );
+    });
+    after(() => ds.close());
+    afterEach(async () => {
+        const db = ds.getContext({ db: database });
+        await db.exec(`TRUNCATE ${db.quoteIdentifier(table)}`);
+    });
+
+    it('should handle flora requests', async () => {
         await ctx.insert(table, [
             { id: 1, col1: 'foo' },
             { id: 2, col1: 'bar' }
         ]);
-    });
-    after(() => ds.close());
-
-    it('should handle flora requests', async () => {
         const result = await ds.process({
             attributes: ['id', 'col1'],
             queryAstRaw: astTpl,
@@ -41,6 +51,10 @@ describe('flora request processing', () => {
     });
 
     it('should query available results if "page" attribute is set in request', async () => {
+        await ctx.insert(table, [
+            { id: 1, col1: 'foo' },
+            { id: 2, col1: 'bar' }
+        ]);
         const result = await ds.process({
             database,
             attributes: ['col1'],
@@ -100,5 +114,25 @@ describe('flora request processing', () => {
         assert.equal(sql, `SELECT "${table}"."col1" FROM "${table}" WHERE "${table}"."id" < 0`);
 
         ds._query.mock.restore();
+    });
+
+    it('should not handle stored JSON', async () => {
+        await ctx.insert(table, [{ id: 1, dataCol: '["foo","bar"]' }]);
+        const result = await ds.process({
+            attributes: ['id', 'dataCol'],
+            queryAstRaw: astTpl,
+            database
+        });
+
+        assert.deepEqual(
+            result.data,
+            [
+                {
+                    id: 1,
+                    dataCol: '["foo", "bar"]'
+                }
+            ],
+            'Casting is handled centrally in Flora'
+        );
     });
 });

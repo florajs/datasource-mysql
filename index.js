@@ -255,6 +255,7 @@ class DataSource {
             connectionLimit: serverCfg.poolSize || this._config.poolSize || 10,
             dateStrings: true, // force date types to be returned as strings
             decimalNumbers: true, // convert DECIMALs to numbers
+            jsonStrings: true, // do not parse JSON
             multipleStatements: true, // pagination queries,
             enableKeepAlive: true
         };
