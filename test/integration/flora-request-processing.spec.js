@@ -34,8 +34,7 @@ describe('flora request processing', () => {
         assert.ok(Object.hasOwn(result, 'data'));
         assert.ok(Array.isArray(result.data));
 
-        const data = result.data.map(({ id, col1 }) => ({ id: parseInt(id, 10), col1 }));
-        assert.deepEqual(data, [
+        assert.deepEqual(result.data, [
             { id: 1, col1: 'foo' },
             { id: 2, col1: 'bar' }
         ]);
