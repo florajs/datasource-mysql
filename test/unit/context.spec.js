@@ -293,7 +293,7 @@ describe('context', () => {
 
             const [call] = ctx.exec.mock.calls;
             assert.deepEqual(call.arguments, [`UPDATE \`t\` SET \`col1\` = 'val1' WHERE \`col2\` IS NULL`]);
-        })
+        });
 
         it('should handle array values in where clause', async () => {
             await ctx.update('t', { col1: 'val1' }, { col2: [1, 'abc', null] });
