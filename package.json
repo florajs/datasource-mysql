@@ -23,7 +23,10 @@
   ],
   "homepage": "https://github.com/florajs/datasource-mysql",
   "license": "MIT",
-  "repository": "florajs/datasource-mysql",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florajs/datasource-mysql.git"
+  },
   "files": [
     "index.js",
     "lib/"
