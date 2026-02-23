@@ -257,7 +257,8 @@ class DataSource {
             decimalNumbers: true, // convert DECIMALs to numbers
             jsonStrings: true, // do not parse JSON
             multipleStatements: true, // pagination queries,
-            enableKeepAlive: true
+            enableKeepAlive: true,
+            gracefulEnd: true
         };
 
         return ['masters', 'slaves']
