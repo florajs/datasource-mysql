@@ -50,6 +50,50 @@ describe('flora request processing', () => {
         ]);
     });
 
+    [
+        ['single AND filter', [[{ attribute: 'col1', operator: 'equal', value: 'foo' }]], [{ id: 1, col1: 'foo' }]],
+        [
+            'multiple AND filters',
+            [
+                [
+                    { attribute: 'id', operator: 'between', value: [1, 2] },
+                    { attribute: 'col1', operator: 'equal', value: 'foo' }
+                ]
+            ],
+            [{ id: 1, col1: 'foo' }]
+        ],
+        [
+            'OR filters',
+            [
+                [{ attribute: 'id', operator: 'equal', value: 1 }],
+                [{ attribute: 'col1', operator: 'like', value: 'foo' }]
+            ],
+            [
+                { id: 1, col1: 'foo' },
+                { id: 3, col1: 'foobar' }
+            ]
+        ]
+    ].forEach(([description, filter, expectedResult]) =>
+        it(`should handle single-attribute filters (${description})`, async () => {
+            await ctx.insert(table, [
+                { id: 1, col1: 'foo' },
+                { id: 2, col1: 'bar' },
+                { id: 3, col1: 'foobar' }
+            ]);
+            const result = await ds.process({
+                attributes: ['id', 'col1'],
+                queryAstRaw: astTpl,
+                filter,
+                database
+            });
+
+            assert.ok(Object.hasOwn(result, 'data'));
+            assert.ok(Array.isArray(result.data));
+
+            assert.deepEqual(result.data, expectedResult);
+        })
+    );
+
     it('should query available results if "page" attribute is set in request', async () => {
         await ctx.insert(table, [
             { id: 1, col1: 'foo' },
