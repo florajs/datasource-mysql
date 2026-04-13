@@ -50,49 +50,108 @@ describe('flora request processing', () => {
         ]);
     });
 
-    [
-        ['single AND filter', [[{ attribute: 'col1', operator: 'equal', value: 'foo' }]], [{ id: 1, col1: 'foo' }]],
+    describe('filters', () => {
         [
-            'multiple AND filters',
+            ['single AND filter', [[{ attribute: 'col1', operator: 'equal', value: 'foo' }]], [{ id: 1, col1: 'foo' }]],
             [
+                'multiple AND filters',
                 [
-                    { attribute: 'id', operator: 'between', value: [1, 2] },
-                    { attribute: 'col1', operator: 'equal', value: 'foo' }
+                    [
+                        { attribute: 'id', operator: 'between', value: [1, 2] },
+                        { attribute: 'col1', operator: 'equal', value: 'foo' }
+                    ]
+                ],
+                [{ id: 1, col1: 'foo' }]
+            ],
+            [
+                'OR filters',
+                [
+                    [{ attribute: 'id', operator: 'equal', value: 1 }],
+                    [{ attribute: 'col1', operator: 'like', value: 'foo' }]
+                ],
+                [
+                    { id: 1, col1: 'foo' },
+                    { id: 3, col1: 'foobar' }
                 ]
-            ],
-            [{ id: 1, col1: 'foo' }]
-        ],
-        [
-            'OR filters',
-            [
-                [{ attribute: 'id', operator: 'equal', value: 1 }],
-                [{ attribute: 'col1', operator: 'like', value: 'foo' }]
-            ],
-            [
-                { id: 1, col1: 'foo' },
-                { id: 3, col1: 'foobar' }
             ]
-        ]
-    ].forEach(([description, filter, expectedResult]) =>
-        it(`should handle single-attribute filters (${description})`, async () => {
-            await ctx.insert(table, [
-                { id: 1, col1: 'foo' },
-                { id: 2, col1: 'bar' },
-                { id: 3, col1: 'foobar' }
+        ].forEach(([description, filter, expectedResult]) =>
+            it(`should handle single-attribute filters (${description})`, async () => {
+                await ctx.insert(table, [
+                    { id: 1, col1: 'foo' },
+                    { id: 2, col1: 'bar' },
+                    { id: 3, col1: 'foobar' }
+                ]);
+                const result = await ds.process({
+                    attributes: ['id', 'col1'],
+                    queryAstRaw: astTpl,
+                    filter,
+                    database
+                });
+
+                assert.ok(Object.hasOwn(result, 'data'));
+                assert.ok(Array.isArray(result.data));
+
+                assert.deepEqual(result.data, expectedResult);
+            })
+        );
+
+        it('should handle multi-attribute filters', async () => {
+            const mappingTbl = 'mapping_tbl';
+            const trx = await ctx.transaction();
+            await trx.exec(`CREATE TABLE ${mappingTbl} (
+                tbl_a_id INT NOT NULL,
+                tbl_b_id INT NOT NULL,
+                PRIMARY KEY (tbl_a_id, tbl_b_id)
+            )`);
+            await ctx.insert(mappingTbl, [
+                { tbl_a_id: 1, tbl_b_id: 1 },
+                { tbl_a_id: 2, tbl_b_id: 2 },
+                { tbl_a_id: 3, tbl_b_id: 3 }
             ]);
             const result = await ds.process({
-                attributes: ['id', 'col1'],
-                queryAstRaw: astTpl,
-                filter,
+                attributes: ['tbl_a_id', 'tbl_b_id'],
+                queryAstRaw: {
+                    type: 'select',
+                    options: null,
+                    distinct: null,
+                    columns: [
+                        { expr: { type: 'column_ref', table: mappingTbl, column: 'tbl_a_id' }, as: null },
+                        { expr: { type: 'column_ref', table: mappingTbl, column: 'tbl_b_id' }, as: null }
+                    ],
+                    from: [{ db: null, table: mappingTbl, as: null }],
+                    where: null,
+                    groupby: null,
+                    having: null,
+                    orderby: null,
+                    limit: null,
+                    with: null
+                },
+                filter: [
+                    [
+                        {
+                            attribute: ['tbl_a_id', 'tbl_b_id'],
+                            operator: 'equal',
+                            value: [
+                                [1, 1],
+                                [3, 3]
+                            ]
+                        }
+                    ]
+                ],
                 database
             });
 
             assert.ok(Object.hasOwn(result, 'data'));
             assert.ok(Array.isArray(result.data));
 
-            assert.deepEqual(result.data, expectedResult);
-        })
-    );
+            assert.deepEqual(result.data, [
+                { tbl_a_id: 1, tbl_b_id: 1 },
+                { tbl_a_id: 3, tbl_b_id: 3 }
+            ]);
+
+            await trx.rollback();
+        });
+    });
 
     it('should query available results if "page" attribute is set in request', async () => {
         await ctx.insert(table, [
