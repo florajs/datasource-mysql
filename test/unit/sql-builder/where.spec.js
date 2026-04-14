@@ -234,40 +234,37 @@ describe('query-builder (where)', () => {
 
         assert.deepEqual(ast.where, {
             type: 'binary_expr',
-            operator: 'OR',
+            operator: 'IN',
             left: {
-                type: 'binary_expr',
-                operator: 'AND',
-                left: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'instrumentId' },
-                    right: { type: 'number', value: 133962 }
-                },
-                right: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'exchangeId' },
-                    right: { type: 'number', value: 4 }
-                }
+                type: 'expr_list',
+                value: [
+                    { type: 'column_ref', table: 't', column: 'instrumentId' },
+                    { type: 'column_ref', table: 't', column: 'exchangeId' }
+                ],
+                parentheses: true
             },
             right: {
-                type: 'binary_expr',
-                operator: 'AND',
-                left: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'instrumentId' },
-                    right: { type: 'number', value: 133962 }
-                },
-                right: {
-                    type: 'binary_expr',
-                    operator: '=',
-                    left: { type: 'column_ref', table: 't', column: 'exchangeId' },
-                    right: { type: 'number', value: 22 }
-                }
-            },
-            parentheses: true
+                type: 'expr_list',
+                value: [
+                    {
+                        type: 'expr_list',
+                        value: [
+                            { type: 'number', value: 133962 },
+                            { type: 'number', value: 4 }
+                        ],
+                        parentheses: true
+                    },
+                    {
+                        type: 'expr_list',
+                        value: [
+                            { type: 'number', value: 133962 },
+                            { type: 'number', value: 22 }
+                        ],
+                        parentheses: true
+                    }
+                ],
+                parentheses: true
+            }
         });
     });
 
@@ -285,5 +282,91 @@ describe('query-builder (where)', () => {
                 right: { type: 'null', value: null }
             });
         });
+    });
+
+    [
+        'greater',
+        'notEqual',
+        'greater',
+        'greaterOrEqual',
+        'less',
+        'lessOrEqual',
+        'like',
+        'between',
+        'notBetween'
+    ].forEach((operator) =>
+        it('should throw error for comparison operators with multi-attribute filters', () => {
+            queryAst = {
+                with: null,
+                type: 'select',
+                distinct: null,
+                columns: [
+                    { expr: { type: 'column_ref', table: 't', column: 'instrumentId' }, as: null },
+                    { expr: { type: 'column_ref', table: 't', column: 'exchangeId' }, as: null }
+                ],
+                from: [{ db: null, table: 't', as: null }],
+                where: null,
+                groupby: null,
+                orderby: null,
+                limit: null
+            };
+
+            assert.throws(
+                () =>
+                    queryBuilder({
+                        queryAst,
+                        filter: [
+                            [
+                                {
+                                    attribute: ['instrumentIds', 'exchangeId'],
+                                    operator,
+                                    value: [[1, 2]]
+                                }
+                            ]
+                        ]
+                    }),
+                {
+                    name: 'ImplementationError',
+                    message: `Operator "${operator}" is not supported for multi-attribute filters`
+                }
+            );
+        })
+    );
+
+    it('should throw error for null values with multi-attribute filters', () => {
+        queryAst = {
+            with: null,
+            type: 'select',
+            distinct: null,
+            columns: [
+                { expr: { type: 'column_ref', table: 't', column: 'a' }, as: null },
+                { expr: { type: 'column_ref', table: 't', column: 'b' }, as: null }
+            ],
+            from: [{ db: null, table: 't', as: null }],
+            where: null,
+            groupby: null,
+            orderby: null,
+            limit: null
+        };
+
+        assert.throws(
+            () =>
+                queryBuilder({
+                    queryAst,
+                    filter: [
+                        [
+                            {
+                                attribute: ['a', 'b'],
+                                operator: 'equal',
+                                value: null
+                            }
+                        ]
+                    ]
+                }),
+            {
+                name: 'ImplementationError',
+                message: 'NULL value comparisons are not supported for multi-attribute filters'
+            }
+        );
     });
 });
