@@ -407,4 +407,20 @@ describe('context', () => {
             ]);
         });
     });
+
+    describe('#transaction', () => {
+        it('should release the connection if starting the transaction fails', async (t) => {
+            const beginError = new Error('START TRANSACTION failed');
+            const connection = {
+                query: t.mock.fn(async () => {
+                    throw beginError;
+                }),
+                release: mock.fn()
+            };
+            t.mock.method(ds, '_getConnection', async () => connection);
+
+            await assert.rejects(async () => await ctx.transaction(), beginError);
+            assert.equal(connection.release.mock.callCount(), 1);
+        });
+    });
 });
