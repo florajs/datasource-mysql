@@ -155,4 +155,100 @@ describe('mysql data source', () => {
             assert.deepEqual(resourceConfig.queryAstRaw, astTpl);
         });
     });
+
+    describe('_prepareServerCfg', () => {
+        it('should pass through plain pool options unchanged', () => {
+            const cfg = ds._prepareServerCfg(
+                { host: 'primary', slaves: [{ host: 'replica', connectionLimit: 20, maxIdle: 15, idleTimeout: 20_000 }] },
+                'user'
+            );
+
+            assert.equal(cfg.SLAVE_replica.connectionLimit, 20);
+            assert.equal(cfg.SLAVE_replica.maxIdle, 15);
+            assert.equal(cfg.SLAVE_replica.idleTimeout, 20_000);
+        });
+
+        it('should resolve dbCfg profile by database name', () => {
+            const cfg = ds._prepareServerCfg(
+                {
+                    host: 'primary',
+                    slaves: [
+                        {
+                            host: 'replica',
+                            dbCfg: {
+                                default: { connectionLimit: 20, maxIdle: 6, idleTimeout: 15_000 },
+                                user: { maxIdle: 15 }
+                            }
+                        }
+                    ]
+                },
+                'user'
+            );
+
+            assert.equal(cfg.SLAVE_replica.connectionLimit, 20);
+            assert.equal(cfg.SLAVE_replica.maxIdle, 15);
+            assert.equal(cfg.SLAVE_replica.idleTimeout, 15_000);
+        });
+
+        it('should fall back to the "default" profile for databases without an override', () => {
+            const cfg = ds._prepareServerCfg(
+                {
+                    host: 'primary',
+                    slaves: [
+                        {
+                            host: 'replica',
+                            dbCfg: {
+                                default: { connectionLimit: 20, maxIdle: 6, idleTimeout: 15_000 },
+                                user: { maxIdle: 15 }
+                            }
+                        }
+                    ]
+                },
+                'mobile'
+            );
+
+            assert.equal(cfg.SLAVE_replica.connectionLimit, 20);
+            assert.equal(cfg.SLAVE_replica.maxIdle, 6);
+            assert.equal(cfg.SLAVE_replica.idleTimeout, 15_000);
+        });
+
+        it('should throw if "dbCfg" has no "default" profile', () => {
+            assert.throws(
+                () =>
+                    ds._prepareServerCfg(
+                        { host: 'primary', slaves: [{ host: 'replica', dbCfg: { user: { maxIdle: 15 } } }] },
+                        'mobile'
+                    ),
+                {
+                    name: 'ImplementationError',
+                    message: '"dbCfg" config for host "replica" must include a "default" profile'
+                }
+            );
+        });
+
+        it('should throw if a resolved profile has maxIdle greater than connectionLimit', () => {
+            assert.throws(
+                () =>
+                    ds._prepareServerCfg(
+                        {
+                            host: 'primary',
+                            slaves: [
+                                {
+                                    host: 'replica',
+                                    dbCfg: {
+                                        default: { connectionLimit: 20, maxIdle: 6 },
+                                        user: { connectionLimit: 10, maxIdle: 15 }
+                                    }
+                                }
+                            ]
+                        },
+                        'user'
+                    ),
+                {
+                    name: 'ImplementationError',
+                    message: 'Resolved maxIdle (15) exceeds connectionLimit (10) for host "replica", database "user"'
+                }
+            );
+        });
+    });
 });

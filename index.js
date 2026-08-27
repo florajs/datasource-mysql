@@ -69,6 +69,41 @@ function initConnection(connection, initConfigs) {
     return Promise.all(initQueries);
 }
 
+/**
+ * Resolve a host config that specifies per-database pool profiles via "dbCfg" instead of
+ * flat connectionLimit/maxIdle/idleTimeout values.
+ *
+ * "dbCfg" is an object with a mandatory "default" profile and optional per-database profiles
+ * that are merged on top of it, e.g.:
+ *   dbCfg: {
+ *       default: { connectionLimit: 6, maxIdle: 2, idleTimeout: 10_000 },
+ *       hot_db:  { connectionLimit: 20, maxIdle: 15, idleTimeout: 30_000 },
+ *   }
+ *
+ * @param {Object} hostCfg
+ * @param {string} database
+ * @returns {Object}
+ * @private
+ */
+function resolveHostCfg(hostCfg, database) {
+    if (!Object.hasOwn(hostCfg, 'dbCfg')) return hostCfg;
+
+    const { dbCfg, ...rest } = hostCfg;
+    if (!Object.hasOwn(dbCfg, 'default')) {
+        throw new ImplementationError(`"dbCfg" config for host "${hostCfg.host}" must include a "default" profile`);
+    }
+
+    const resolved = { ...rest, ...dbCfg.default, ...(dbCfg[database] || {}) };
+
+    if (Object.hasOwn(resolved, 'maxIdle') && Object.hasOwn(resolved, 'connectionLimit') && resolved.maxIdle > resolved.connectionLimit) {
+        throw new ImplementationError(
+            `Resolved maxIdle (${resolved.maxIdle}) exceeds connectionLimit (${resolved.connectionLimit}) for host "${hostCfg.host}", database "${database}"`
+        );
+    }
+
+    return resolved;
+}
+
 function astify(dsConfig, attributes) {
     if (typeof dsConfig.database !== 'string') {
         throw new ImplementationError('Database must be specified');
@@ -266,7 +301,7 @@ class DataSource {
             .flatMap((type) => serverCfg[type].map((hostCfg) => ({ type, hostCfg })))
             .reduce((cfg, { type, hostCfg }) => {
                 const serverType = type.slice(0, -1).toUpperCase();
-                cfg[`${serverType.toUpperCase()}_${hostCfg.host}`] = { ...baseCfg, ...hostCfg };
+                cfg[`${serverType}_${hostCfg.host}`] = { ...baseCfg, ...resolveHostCfg(hostCfg, database) };
                 return cfg;
             }, {});
     }
