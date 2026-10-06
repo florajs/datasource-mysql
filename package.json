@@ -51,7 +51,7 @@
   "dependencies": {
     "@florajs/errors": "^4.0.0",
     "@florajs/sql-parser": "^4.0.0",
-    "mysql2": "^3.24.1",
+    "mysql2": "^3.24.5",
     "named-placeholders": "^1.1.6",
     "sql-escaper": "^1.5.1"
   },
