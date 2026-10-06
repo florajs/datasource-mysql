@@ -95,7 +95,11 @@ function resolveHostCfg(hostCfg, database) {
 
     const resolved = { ...rest, ...dbCfg.default, ...(dbCfg[database] || {}) };
 
-    if (Object.hasOwn(resolved, 'maxIdle') && Object.hasOwn(resolved, 'connectionLimit') && resolved.maxIdle > resolved.connectionLimit) {
+    if (
+        Object.hasOwn(resolved, 'maxIdle') &&
+        Object.hasOwn(resolved, 'connectionLimit') &&
+        resolved.maxIdle > resolved.connectionLimit
+    ) {
         throw new ImplementationError(
             `Resolved maxIdle (${resolved.maxIdle}) exceeds connectionLimit (${resolved.connectionLimit}) for host "${hostCfg.host}", database "${database}"`
         );

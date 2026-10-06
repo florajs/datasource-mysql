@@ -159,7 +159,10 @@ describe('mysql data source', () => {
     describe('_prepareServerCfg', () => {
         it('should pass through plain pool options unchanged', () => {
             const cfg = ds._prepareServerCfg(
-                { host: 'primary', slaves: [{ host: 'replica', connectionLimit: 20, maxIdle: 15, idleTimeout: 20_000 }] },
+                {
+                    host: 'primary',
+                    slaves: [{ host: 'replica', connectionLimit: 20, maxIdle: 15, idleTimeout: 20_000 }]
+                },
                 'user'
             );
 
