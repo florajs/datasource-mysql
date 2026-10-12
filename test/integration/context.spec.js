@@ -294,8 +294,13 @@ describe('context', () => {
                 ]);
 
                 const { changedRows } = await ctx.update(table, { col1: 'test' }, { id: 1 });
-
                 assert.equal(changedRows, 1);
+
+                const result = await ctx.query(`SELECT * FROM ${table}`);
+                assert.deepEqual(result, [
+                    { id: 1, col1: 'test' },
+                    { id: 2, col1: 'bar' }
+                ]);
             });
 
             it('should return number of affected rows', async () => {
@@ -308,8 +313,13 @@ describe('context', () => {
                 ]);
 
                 const { affectedRows } = await ctx.update(table, { col1: 'test' }, '1 = 1');
-
                 assert.equal(affectedRows, 2);
+
+                const result = await ctx.query(`SELECT * FROM ${table}`);
+                assert.deepEqual(result, [
+                    { id: 1, col1: 'test' },
+                    { id: 2, col1: 'test' }
+                ]);
             });
         });
 
