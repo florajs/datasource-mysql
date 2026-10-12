@@ -113,21 +113,60 @@ describe('transaction', () => {
     });
 
     describe('#upsert', () => {
-        it('should return number of affected rows', async () => {
-            const table = 'trx_upsert_affected_rows';
+        it('should return affectedRows = 1 when inserting a new row', async () => {
+            const table = 'trx_upsert_insert_new_row';
 
-            await ctx.exec(`CREATE TABLE ${table} (id INT, col1 VARCHAR(10))`);
-            const trx = await ctx.transaction();
-            const { affectedRows } = await trx.upsert(table, { id: 1, col1: 'foobar' }, ['col1']);
-            await trx.commit();
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
+
+            let affectedRows = null;
+            await ctx.transaction(
+                async (trx) => ({ affectedRows } = await trx.upsert(table, { id: 1, col1: 'foo' }, { col1: 'test' }))
+            );
 
             assert.equal(affectedRows, 1);
+
+            const result = await ctx.query(`SELECT id, col1 FROM ${table}`);
+            assert.deepEqual(result, [{ id: 1, col1: 'foo' }]);
+        });
+
+        it('should return affectedRows = 2 when existing row is updated', async () => {
+            const table = 'trx_upsert_update_row';
+
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
+
+            let affectedRows = null;
+            await ctx.transaction(async (trx) => {
+                await trx.insert(table, [{ id: 1, col1: 'foo' }]);
+                ({ affectedRows } = await trx.upsert(table, { id: 1, col1: 'foo' }, { col1: 'test' }));
+            });
+
+            assert.equal(affectedRows, 2);
+
+            const row = await ctx.queryRow(`SELECT id, col1 FROM ${table} WHERE id = 1`);
+            assert.deepEqual(row, { id: 1, col1: 'test' });
+        });
+
+        it('should return affectedRows = 0 when row with identical values exist', { skip: true }, async () => {
+            const table = 'trx_upsert_no_update_identical';
+
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
+
+            let affectedRows = null;
+            await ctx.transaction(async (trx) => {
+                await trx.insert(table, [{ id: 1, col1: 'foo' }]);
+                ({ affectedRows } = await trx.upsert(table, { id: 1, col1: 'foo' }, { col1: 'foo' }));
+            });
+
+            assert.equal(affectedRows, 0);
+
+            const result = await ctx.query(`SELECT * FROM ${table}`);
+            assert.deepEqual(result, [{ id: 1, col1: 'foo' }]);
         });
 
         it('should return number of changed rows', async () => {
             const table = 'trx_upsert_changed_rows';
 
-            await ctx.exec(`CREATE TABLE ${table} (id INT, col1 VARCHAR(10))`);
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
             const trx = await ctx.transaction();
             const { changedRows } = await trx.upsert(table, { id: 1, col1: 'foobar' }, ['col1']);
             await trx.commit();
@@ -138,12 +177,12 @@ describe('transaction', () => {
         it('should accept data as an object', async () => {
             const table = 'trx_upsert_data_object';
 
-            await ctx.exec(`CREATE TABLE ${table} (id INT, col1 VARCHAR(10))`);
+            await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(10))`);
             await ctx.transaction(async (trx) => await trx.upsert(table, { id: 1, col1: 'foo' }, ['col1']));
 
             const result = await ctx.query(`SELECT id, col1 FROM ${table}`);
             assert.equal(result.length, 1);
-            assert.deepEqual({ ...result[0] }, { id: 1, col1: 'foo' });
+            assert.deepEqual(result, [{ id: 1, col1: 'foo' }]);
         });
 
         it('should accept data as an array of objects', async () => {
@@ -164,8 +203,10 @@ describe('transaction', () => {
 
             const result = await ctx.query(`SELECT id, col1 FROM ${table} ORDER BY id`);
             assert.equal(result.length, 2);
-            assert.deepEqual({ ...result[0] }, { id: 1, col1: 'foo' });
-            assert.deepEqual({ ...result[1] }, { id: 2, col1: 'bar' });
+            assert.deepEqual(result, [
+                { id: 1, col1: 'foo' },
+                { id: 2, col1: 'bar' }
+            ]);
         });
 
         it('should accept updates as an object', async () => {
@@ -198,7 +239,7 @@ describe('transaction', () => {
             assert.equal(result, 'bar');
         });
 
-        it('should use alias parameter', async () => {
+        it('should allow referencing new values via custom alias in raw update expressions', async () => {
             const table = 'trx_upsert_update_object_custom_alias';
 
             await ctx.exec(`CREATE TABLE ${table} (id INT PRIMARY KEY, col1 VARCHAR(32))`);
