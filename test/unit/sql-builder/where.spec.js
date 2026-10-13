@@ -326,7 +326,7 @@ describe('query-builder (where)', () => {
                         ]
                     }),
                 {
-                    name: 'ImplementationError',
+                    name: 'RequestError',
                     message: `Operator "${operator}" is not supported for multi-attribute filters`
                 }
             );
@@ -364,7 +364,7 @@ describe('query-builder (where)', () => {
                     ]
                 }),
             {
-                name: 'ImplementationError',
+                name: 'RequestError',
                 message: 'NULL value comparisons are not supported for multi-attribute filters'
             }
         );
